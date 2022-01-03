@@ -224,7 +224,12 @@ void VoiceSession::postTransceiverUpdate(
 	updateBaseUrl();
 	mTransceiverUpdateRequest.reset();
     mSession.setAuthenticationFor(mTransceiverUpdateRequest);
-	mTransceiverUpdateRequest.setRequestBody(txDto);
+
+    // only send the transceivers that have a valid frequency (read: not zero)
+    std::vector<dto::Transceiver> filteredDto;
+    std::copy_if(txDto.begin(), txDto.end(), std::back_inserter(filteredDto), [](dto::Transceiver t){ return t.Frequency > 0; });
+
+	mTransceiverUpdateRequest.setRequestBody(filteredDto);
     mTransceiverUpdateRequest.setCompletionCallback(callback);
     // and now schedule this request to be performed.
     auto &transferManager = mSession.getTransferManager();
