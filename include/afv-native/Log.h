@@ -47,10 +47,10 @@
 #define LOGDUMPHEX(subsystem,buf,len) ::afv_native::__Dumphex(__FILE__,__LINE__, subsystem, buf, len)
 
 namespace afv_native {
-    typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
+    typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut, void* ref);
 
     void __Log(const char *file, int line, const char *subsystem, const char *format, ...);
-    void setLogger(afv_native::log_fn newLogger);
+    void setLogger(afv_native::log_fn newLogger, void* ref);
     void __Dumphex(const char *file, int line, const char *subsystem, const void *buf, size_t len);
 }
 
