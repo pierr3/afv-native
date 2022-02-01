@@ -36,7 +36,7 @@
 
 #include "afv-native/audio/AudioDevice.h"
 
-#include <portaudio/include/portaudio.h>
+#include <portaudio.h>
 
 namespace afv_native {
     namespace audio {

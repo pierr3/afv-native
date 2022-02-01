@@ -35,7 +35,7 @@
 
 #include <memory>
 #include <cstring>
-#include <portaudio/include/portaudio.h>
+#include <portaudio.h>
 
 #include "afv-native/Log.h"
 
@@ -77,27 +77,24 @@ bool PortAudioAudioDevice::open()
     PaStreamFlags devStreamOpts = paNoFlag;
 
     PaStreamParameters inDevParam, outDevParam;
-
-    bool hasInputDevice, hasOutputDevice = true;
-
     //FIXME: we actually need to populate the entire PaStreamParameters struct because of the need to get default latencies.
     if (!getDeviceForName(mInputDeviceName, true, inDevParam)) {
-        hasInputDevice = false;
+        return false;
     }
     if (!getDeviceForName(mOutputDeviceName, false, outDevParam)) {
-        hasOutputDevice = false;
+        return false;
     }
 
     LOG("AudioDevice", "Opening 1 Channel, %dHz Sampling Rate, %d samples per frame", sampleRateHz, frameSizeSamples);
     auto rv = Pa_OpenStream(
-        &mAudioDevice,
-        mSink ? (hasInputDevice ? &inDevParam : nullptr) : nullptr,
-        mSource ? (hasOutputDevice ? &outDevParam : nullptr) : nullptr,
-        sampleRateHz,
-        frameSizeSamples,
-        devStreamOpts,
-        &PortAudioAudioDevice::paAudioCallback,
-        this);
+            &mAudioDevice,
+            mSink ? &inDevParam : nullptr,
+            mSource ? &outDevParam : nullptr,
+            sampleRateHz,
+            frameSizeSamples,
+            devStreamOpts,
+            &PortAudioAudioDevice::paAudioCallback,
+            this);
     if (rv != paNoError) {
         LOG("AudioDevice", "failed to open audio device: %s", Pa_GetErrorText(rv));
         return false;

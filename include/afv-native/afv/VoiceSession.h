@@ -41,6 +41,7 @@
 #include "afv-native/afv/dto/VoiceServerConnectionData.h"
 #include "afv-native/afv/dto/PostCallsignResponse.h"
 #include "afv-native/afv/dto/Transceiver.h"
+#include "afv-native/afv/dto/CrossCoupleGroup.h"
 #include "afv-native/cryptodto/UDPChannel.h"
 #include "afv-native/http/Request.h"
 #include "afv-native/http/RESTRequest.h"
@@ -64,6 +65,11 @@ namespace afv_native {
             BadResponseFromAPIServer,
             Timeout,
         };
+    
+        enum class VoiceSessionType {
+            Pilot = 0,
+            ATC
+        };
 
         class VoiceSession {
         public:
@@ -73,6 +79,7 @@ namespace afv_native {
             virtual ~VoiceSession();
 
             void setCallsign(const std::string &newCallsign);
+            void setType(VoiceSessionType inType);
 
             bool isConnected() const;
 
@@ -81,9 +88,14 @@ namespace afv_native {
             void postTransceiverUpdate(
                     const std::vector<dto::Transceiver> &txDto,
                     std::function<void(http::Request *, bool)> callback);
+            void postCrossCoupleGroupUpdate(
+                    const std::vector<dto::CrossCoupleGroup> &ccDto,
+                    std::function<void(http::Request *, bool)> callback);
             cryptodto::UDPChannel & getUDPChannel();
 
             VoiceSessionError getLastError() const;
+            VoiceSessionType type() const;
+            
 
         protected:
             APISession &mSession;
@@ -93,6 +105,8 @@ namespace afv_native {
             void updateBaseUrl();
 
             cryptodto::UDPChannel mChannel;
+            
+            VoiceSessionType mSessionType;
 
             event::EventCallbackTimer mHeartbeatTimer;
             util::monotime_t mLastHeartbeatReceived;
@@ -127,6 +141,7 @@ namespace afv_native {
             http::RESTRequest mVoiceSessionSetupRequest;
             http::RESTRequest mVoiceSessionTeardownRequest;
             http::RESTRequest mTransceiverUpdateRequest;
+            http::RESTRequest mCrossCoupleGroupUpdateRequest;
         };
     }
 }

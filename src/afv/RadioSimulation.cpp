@@ -96,6 +96,14 @@ RadioSimulation::RadioSimulation(
     }
 }
 
+
+/**  Audio Enters here from The Microphone and exits into either the voiceFilter if enabled, or to the VoiceSink, usually the Opus Encoder
+ *
+ *
+ *
+ *
+ *
+ */
 void RadioSimulation::putAudioFrame(const audio::SampleType *bufferIn)
 {
     // do the peak/Vu calcs
@@ -123,6 +131,12 @@ void RadioSimulation::putAudioFrame(const audio::SampleType *bufferIn)
     }
 }
 
+/** Audio enters here from the Codec Compressor before being sent out on to the network.
+ *
+ *
+ *
+ *
+ */
 void RadioSimulation::processCompressedFrame(std::vector<unsigned char> compressedData)
 {
     if (mChannel != nullptr && mChannel->isOpen()) {
@@ -153,6 +167,21 @@ RadioSimulation::mix_buffers(audio::SampleType* RESTRICT src_dst, const audio::S
     {
         src_dst[i] += (src2_gain * src2[i]);
     }
+}
+
+bool RadioSimulation::getTxActive(unsigned int radio) {
+    if (radio != mTxRadio) {
+        return false;
+    }
+    return mPtt.load();
+}
+
+bool
+RadioSimulation::getRxActive(unsigned int radio)
+{
+    std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
+
+    return (mRadioState[radio].mLastRxCount > 0);
 }
 
 inline bool
@@ -431,26 +460,26 @@ void RadioSimulation::setTxRadio(unsigned int radio)
     mTxRadio = radio;
 }
 
-void RadioSimulation::dtoHandler(const std::string &dtoName, const unsigned char *bufIn, size_t bufLen, void *user_data)
-{
-    auto *thisRs = reinterpret_cast<RadioSimulation *>(user_data);
-    thisRs->instDtoHandler(dtoName, bufIn, bufLen);
-}
-
-void RadioSimulation::instDtoHandler(const std::string &dtoName, const unsigned char *bufIn, size_t bufLen)
-{
-    if (dtoName == "AR") {
-        try {
-            dto::AudioRxOnTransceivers audioIn;
-            auto unpacker = msgpack::unpack(reinterpret_cast<const char *>(bufIn), bufLen);
-            auto msgpackObj = unpacker.get();
-            msgpackObj.convert(audioIn);
-            rxVoicePacket(audioIn);
-        } catch (msgpack::type_error &e) {
-            LOG("radiosimulation", "Error unmarshalling %s packet: %s", dtoName.c_str(), e.what());
-        }
-    }
-}
+//void RadioSimulation::dtoHandler(const std::string &dtoName, const unsigned char *bufIn, size_t bufLen, void *user_data)
+//{
+//    auto *thisRs = reinterpret_cast<RadioSimulation *>(user_data);
+//    thisRs->instDtoHandler(dtoName, bufIn, bufLen);
+//}
+//
+//void RadioSimulation::instDtoHandler(const std::string &dtoName, const unsigned char *bufIn, size_t bufLen)
+//{
+//    if (dtoName == "AR") {
+//        try {
+//            dto::AudioRxOnTransceivers audioIn;
+//            auto unpacker = msgpack::unpack(reinterpret_cast<const char *>(bufIn), bufLen);
+//            auto msgpackObj = unpacker.get();
+//            msgpackObj.convert(audioIn);
+//            rxVoicePacket(audioIn);
+//        } catch (msgpack::type_error &e) {
+//            LOG("radiosimulation", "Error unmarshalling %s packet: %s", dtoName.c_str(), e.what());
+//        }
+//    }
+//}
 
 void RadioSimulation::setUDPChannel(cryptodto::UDPChannel *newChannel)
 {

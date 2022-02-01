@@ -39,6 +39,7 @@
 #include "afv-native/afv/APISession.h"
 #include "afv-native/afv/params.h"
 #include "afv-native/afv/dto/Transceiver.h"
+#include "afv-native/afv/dto/CrossCoupleGroup.h"
 #include "afv-native/afv/dto/voice_server/Heartbeat.h"
 #include "afv-native/http/Request.h"
 #include "afv-native/cryptodto/UDPChannel.h"
@@ -54,12 +55,14 @@ VoiceSession::VoiceSession(APISession &session, const std::string &callsign):
         mVoiceSessionSetupRequest("", http::Method::POST, json()),
         mVoiceSessionTeardownRequest("", http::Method::DEL, json()),
         mTransceiverUpdateRequest("", http::Method::POST, json()),
+        mCrossCoupleGroupUpdateRequest("", http::Method::POST, json()),
         mChannel(session.getEventBase()),
         mHeartbeatTimer(mSession.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)),
         mLastHeartbeatReceived(0),
         mHeartbeatTimeout(mSession.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)),
         mLastError(VoiceSessionError::NoError)
 {
+    mSessionType = VoiceSessionType::Pilot;
     updateBaseUrl();
 }
 
@@ -227,11 +230,39 @@ void VoiceSession::postTransceiverUpdate(
     auto &transferManager = mSession.getTransferManager();
     mTransceiverUpdateRequest.shareState(transferManager);
     mTransceiverUpdateRequest.doAsync(transferManager);
+    
+    
+}
+
+void VoiceSession::postCrossCoupleGroupUpdate(
+        const std::vector<dto::CrossCoupleGroup> &ccDto,
+        std::function<void(http::Request *, bool)> callback)
+{
+    if(mSessionType!=VoiceSessionType::ATC) return;    
+    updateBaseUrl();
+    mCrossCoupleGroupUpdateRequest.reset();
+    mSession.setAuthenticationFor(mCrossCoupleGroupUpdateRequest);
+    mCrossCoupleGroupUpdateRequest.setRequestBody(ccDto);
+    mCrossCoupleGroupUpdateRequest.setCompletionCallback(callback);
+    // and now schedule this request to be performed.
+    auto &transferManager = mSession.getTransferManager();
+    mCrossCoupleGroupUpdateRequest.shareState(transferManager);
+    mCrossCoupleGroupUpdateRequest.doAsync(transferManager);
 }
 
 bool VoiceSession::isConnected() const
 {
     return mChannel.isOpen();
+}
+
+VoiceSessionType VoiceSession::type() const
+{
+    return mSessionType;
+}
+
+void VoiceSession::setType(VoiceSessionType inType)
+{
+    mSessionType = inType;
 }
 
 void VoiceSession::setCallsign(const std::string &newCallsign)
@@ -252,6 +283,7 @@ void VoiceSession::updateBaseUrl()
     mVoiceSessionSetupRequest.setUrl(mBaseUrl);
     mVoiceSessionTeardownRequest.setUrl(mBaseUrl);
     mTransceiverUpdateRequest.setUrl(mBaseUrl + "/transceivers");
+    mCrossCoupleGroupUpdateRequest.setUrl(mBaseUrl + "/crossCoupleGroups");
 }
 
 VoiceSessionError VoiceSession::getLastError() const

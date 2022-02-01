@@ -35,8 +35,8 @@
 #define AFV_NATIVE_REMOTEVOICESOURCE_H
 
 #include <mutex>
-#include <speexdsp/include/speex/speex_jitter.h>
-#include <opus/include/opus.h>
+#include <speex/speex_jitter.h>
+#include <opus/opus.h>
 
 #include "afv-native/afv/dto/interfaces/IAudio.h"
 #include "afv-native/audio/audio_params.h"

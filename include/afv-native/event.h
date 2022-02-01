@@ -46,6 +46,9 @@ namespace afv_native {
         PttOpen,
         PttClosed,
         StationAliasesUpdated,
+        StationTransceiversUpdated,
+        RxOpen, // data is a pointer to an unsigned int containing the frequency
+        RxClosed, // data is a pointer to an unsigned int containing the frequency
         AudioError,
         RxStarted,
         RxStopped

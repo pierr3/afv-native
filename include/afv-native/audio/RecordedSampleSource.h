@@ -47,12 +47,15 @@ namespace afv_native {
             size_t mCurPosition;
             bool mLoop;
             bool mPlay;
+            bool mFirstFrame;
         public:
             RecordedSampleSource(std::shared_ptr<ISampleStorage> src, bool loop);
             virtual ~RecordedSampleSource();
             SourceStatus getAudioFrame(SampleType *bufferOut) override;
 
             bool isPlaying() const;
+            void reset();
+            bool firstFrame();
 
         };
     }

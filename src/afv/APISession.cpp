@@ -63,7 +63,9 @@ APISession::APISession(event_base* evBase, http::TransferManager& tm, std::strin
     mRefreshTokenTimer(mEvBase, std::bind(&APISession::Connect, this)),
     mLastError(APISessionError::NoError),
     mStationAliasRequest(mBaseURL + "/api/v1/stations/aliased", http::Method::GET, nullptr),
-    mState(APISessionState::Disconnected)
+    mState(APISessionState::Disconnected),
+	mStationTransceiversRequest(mBaseURL, http::Method::GET, nullptr),
+	StationTransceiversUpdateCallback()
 {
 }
 
@@ -345,4 +347,61 @@ void APISession::_stationsCallback(http::RESTRequest* req, bool success)
 std::vector<dto::Station> APISession::getStationAliases() const
 {
     return mAliasedStations;
+}
+
+void APISession::requestStationTransceivers(std::string stationName)
+{
+    if(mState!=APISessionState::Running) return;
+    
+    /* start the authentication request */
+    mStationTransceiversRequest.reset();
+    mStationTransceiversRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stationName + "/transceivers/allDistinctObeyExclusions");
+    setAuthenticationFor(mStationTransceiversRequest);
+    mStationTransceiversRequest.setCompletionCallback(
+            [this,stationName](http::Request *req, bool success) {
+                auto restreq = dynamic_cast<http::RESTRequest *>(req);
+                assert(restreq != nullptr); // shouldn't be possible
+                this->_stationTransceiversCallback(restreq, success, stationName);
+            });
+    mStationTransceiversRequest.shareState(mTransferManager);
+    mStationTransceiversRequest.doAsync(mTransferManager);
+}
+
+void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName)
+{
+    if (success && req->getStatusCode() == 200) {
+        auto jsReturn = req->getResponse();
+
+        if (!jsReturn.is_array()) {
+            LOG("APISession", "station transceivers data returned wasn't an array.  Ignoring.");
+        } else {
+            mStationTransceivers[stationName].clear();
+            
+            for (const auto &sJson: jsReturn) {
+                dto::StationTransceiver st;
+                try {
+                    sJson.get_to(st);
+                    mStationTransceivers[stationName].emplace_back(st);
+                } catch (nlohmann::json::exception &e) {
+                    LOG("APISession", "couldn't decode station transceivers: %s", e.what());
+                }
+            }
+            LOG("APISession", "got %d station transceivers.", mStationTransceivers["station"].size());
+            StationTransceiversUpdateCallback.invokeAll();
+        }
+    } else {
+        if (!success) {
+            LOG("APISession", "curl internal error during station receivers retrieval: %s", req->getCurlError().c_str());
+            // raiseError(APISessionError::ConnectionError);
+        } else {
+            LOG("APISession", "got error from API server getting station transceivers: Response Code %d", req->getStatusCode());
+        }
+    }
+    // cleanup and remove
+    //mStationTransceiversRequest.reset();
+}
+
+std::map<std::string, std::vector<dto::StationTransceiver>> APISession::getStationTransceivers() const
+{
+    return std::move(mStationTransceivers);
 }

@@ -56,8 +56,8 @@ RemoteVoiceSource::RemoteVoiceSource():
     mJitterBuffer = jitter_buffer_init(1);
     jitter_buffer_ctl(mJitterBuffer, JITTER_BUFFER_SET_DESTROY_CALLBACK, reinterpret_cast<void *>(::free));
 
-    spx_uint32_t jitterMargin = 0;
-    jitter_buffer_ctl(mJitterBuffer, JITTER_BUFFER_SET_MARGIN, &jitterMargin);
+    //spx_uint32_t jitterMargin = 3;
+    //jitter_buffer_ctl(mJitterBuffer, JITTER_BUFFER_SET_MARGIN, &jitterMargin);
 
     int opus_status;
     mDecoder = opus_decoder_create(sampleRateHz, 1, &opus_status);
