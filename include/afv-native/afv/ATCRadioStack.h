@@ -121,6 +121,7 @@ namespace afv_native {
             void setClientPosition(double lat, double lon, double amslm, double aglm);
             void addFrequency(unsigned int freq, bool onHeadset);
             void removeFrequency(unsigned int freq);
+            bool isFrequencyActive(unsigned int freq);
             
             bool getTxActive(unsigned int freq);
             bool getRxActive(unsigned int freq);

@@ -82,6 +82,7 @@
         "set": "cpp",
         "stack": "cpp",
         "valarray": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "__functional_03": "cpp"
     }
 }

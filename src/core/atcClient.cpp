@@ -513,6 +513,10 @@ void ATCClient::addFrequency(unsigned int freq, bool onHeadset)
     mATCRadioStack->addFrequency(freq,  onHeadset);
 }
 
+bool ATCClient::isFrequencyActive(unsigned int freq) {
+    return mATCRadioStack->isFrequencyActive(freq);
+}
+
 void ATCClient::removeFrequency(unsigned int freq)
 {
     mATCRadioStack->removeFrequency(freq);

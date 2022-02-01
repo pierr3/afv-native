@@ -221,6 +221,7 @@ namespace afv_native {
         
         void addFrequency(unsigned int freq, bool onHeadset);
         void removeFrequency(unsigned int freq);
+        bool isFrequencyActive(unsigned int freq);
         void linkTransceivers(std::string callsign, unsigned int freq);
         
         void setTick(std::shared_ptr<audio::ITick> tick);

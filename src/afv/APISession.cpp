@@ -386,7 +386,7 @@ void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool succe
                     LOG("APISession", "couldn't decode station transceivers: %s", e.what());
                 }
             }
-            LOG("APISession", "got %d station transceivers.", mStationTransceivers["station"].size());
+            LOG("APISession", "got %d station transceivers.", mStationTransceivers[stationName].size());
             StationTransceiversUpdateCallback.invokeAll();
         }
     } else {

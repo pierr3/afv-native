@@ -65,5 +65,6 @@ namespace afv_native::api {
 
             AFV_NATIVE_EXPORT void AddFrequency(unsigned int freq);
             AFV_NATIVE_EXPORT void RemoveFrequency(unsigned int freq);
+            AFV_NATIVE_EXPORT void IsFrequencyActive(unsigned int freq);
     };
 }
