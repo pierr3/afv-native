@@ -483,6 +483,20 @@ bool ATCClient::getTxActive(unsigned int freq) {
     return false;
 }
 
+bool ATCClient::GetTxState(unsigned int freq) {
+    if (mATCRadioStack) {
+        return mATCRadioStack->getTxState(freq);
+    }
+    return false;
+};
+
+bool ATCClient::GetRxState(unsigned int freq) {
+    if (mATCRadioStack) {
+        return mATCRadioStack->getRxState(freq);
+    }
+    return false;
+};
+
 void ATCClient::setOnHeadset(unsigned int freq, bool onHeadset)
 {
     mATCRadioStack->setOnHeadset(freq, onHeadset);
@@ -497,6 +511,11 @@ void ATCClient::requestStationTransceivers(std::string inStation)
 void ATCClient::addFrequency(unsigned int freq, bool onHeadset)
 {
     mATCRadioStack->addFrequency(freq,  onHeadset);
+}
+
+void ATCClient::removeFrequency(unsigned int freq)
+{
+    mATCRadioStack->removeFrequency(freq);
 }
 
 void ATCClient::linkTransceivers(std::string callsign, unsigned int freq)

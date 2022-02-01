@@ -182,6 +182,22 @@ void afv_native::api::atcClient::SetRx(unsigned int freq, bool active) {
     client->setRx(freq, active);
 }
 
+bool afv_native::api::atcClient::GetTxActive(unsigned int freq) {
+    return client->getTxActive(freq);
+};
+
+bool afv_native::api::atcClient::GetRxActive(unsigned int freq) {
+    return client->getRxActive(freq);
+};
+
+bool afv_native::api::atcClient::GetTxState(unsigned int freq) {
+    return client->GetTxState(freq);
+};
+
+bool afv_native::api::atcClient::GetRxState(unsigned int freq) {
+    return client->GetRxState(freq);
+};
+
 void afv_native::api::atcClient::UseTransceiversFromStation(std::string station, int freq) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->linkTransceivers(station, freq);
@@ -191,6 +207,10 @@ int afv_native::api::atcClient::GetTransceiverCountForStation(std::string statio
     auto tcs = client->getStationTransceivers();
     return tcs[station].size();
 };
+
+void afv_native::api::atcClient::FetchTransceiverInfo(std::string station) {
+    client->requestStationTransceivers(station);
+}
 
 void afv_native::api::atcClient::SetPtt(bool pttState) {
     std::lock_guard<std::mutex> lock(afvMutex);
@@ -204,4 +224,9 @@ std::string afv_native::api::atcClient::LastTransmitOnFreq(unsigned int freq) {
 void afv_native::api::atcClient::AddFrequency(unsigned int freq) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->addFrequency(freq, true);
+}
+
+void afv_native::api::atcClient::RemoveFrequency(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->removeFrequency(freq);
 }

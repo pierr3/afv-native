@@ -209,6 +209,9 @@ namespace afv_native {
          * @return true if the radio is transmitting from the mic, false otherwise.
          */
         bool getTxActive(unsigned int radioNumber);
+
+        bool GetTxState(unsigned int freq);
+        bool GetRxState(unsigned int freq);
         
         /** requestStationTransceivers requests the list of transceivers associated with the named station
          *
@@ -217,6 +220,7 @@ namespace afv_native {
         void requestStationTransceivers(std::string inStation);
         
         void addFrequency(unsigned int freq, bool onHeadset);
+        void removeFrequency(unsigned int freq);
         void linkTransceivers(std::string callsign, unsigned int freq);
         
         void setTick(std::shared_ptr<audio::ITick> tick);

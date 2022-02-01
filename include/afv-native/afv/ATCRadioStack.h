@@ -120,10 +120,14 @@ namespace afv_native {
             void setCallsign(const std::string &newCallsign);
             void setClientPosition(double lat, double lon, double amslm, double aglm);
             void addFrequency(unsigned int freq, bool onHeadset);
+            void removeFrequency(unsigned int freq);
             
             bool getTxActive(unsigned int freq);
             bool getRxActive(unsigned int freq);
             
+            bool getRxState(unsigned int freq);
+            bool getTxState(unsigned int freq);
+
             void setRx(unsigned int freq, bool rx);
             void setTx(unsigned int freq, bool tx);
             

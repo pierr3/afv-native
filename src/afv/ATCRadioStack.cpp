@@ -529,6 +529,19 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset)
     mRadioState[freq].mBypassEffects=false;
 }
 
+void ATCRadioStack::removeFrequency(unsigned int freq) {
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    mRadioState.erase(freq);
+}
+
+bool ATCRadioStack::getRxState(unsigned int freq) {
+    return mRadioState.count(freq) != 0 ? mRadioState[freq].rx : false;
+};
+
+bool ATCRadioStack::getTxState(unsigned int freq) {
+    return mRadioState.count(freq) != 0 ? mRadioState[freq].tx : false;
+};
+
 void ATCRadioStack::setCallsign(const std::string &newCallsign)
 {
     mCallsign = newCallsign;
