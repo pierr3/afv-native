@@ -268,6 +268,9 @@ namespace afv_native {
         std::string mAudioInputDeviceName;
         std::string mAudioOutputDeviceName;
         std::string mAudioSpeakerDeviceName;
+
+        int linkNewTransceiversFrequencyFlag = -1;
+        std::string linkNewStationCallsign = "";
         
     public:
     };

@@ -182,6 +182,16 @@ void afv_native::api::atcClient::SetRx(unsigned int freq, bool active) {
     client->setRx(freq, active);
 }
 
+void afv_native::api::atcClient::UseTransceiversFromStation(std::string station, int freq) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->linkTransceivers(station, freq);
+};
+
+int afv_native::api::atcClient::GetTransceiverCountForStation(std::string station) {
+    auto tcs = client->getStationTransceivers();
+    return tcs[station].size();
+};
+
 void afv_native::api::atcClient::SetPtt(bool pttState) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setPtt(pttState);

@@ -284,4 +284,6 @@ generate_export_header(afv_native EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/exports/a
 #		PATTERN "*.h" # select header files
 #		)
 
+file(COPY ${AFV_EXPORT_HEADERS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/exports)
+
 set_target_properties(afv_native PROPERTIES OUTPUT_NAME "afv")

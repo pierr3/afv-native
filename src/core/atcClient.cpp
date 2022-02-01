@@ -429,8 +429,21 @@ void ATCClient::aliasUpdateCallback()
 
 void ATCClient::stationTransceiversUpdateCallback()
 {
+    // We can now link any pending new transceivers if we had requested them
+    if (linkNewTransceiversFrequencyFlag > 0) {
+
+        auto transceivers = getStationTransceivers();
+        if(transceivers[linkNewStationCallsign].size()>0)
+            this->linkTransceivers(linkNewStationCallsign, linkNewTransceiversFrequencyFlag);
+        else
+            LOG("ATCClient", "Tried to acquire new transceivers but did not find any for station");
+
+
+        linkNewTransceiversFrequencyFlag = -1;
+        linkNewStationCallsign = "";
+    }
+
     ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, nullptr);
-    
 }
 
 std::map<std::string, std::vector<afv::dto::StationTransceiver>> ATCClient::getStationTransceivers() const
@@ -497,7 +510,9 @@ void ATCClient::linkTransceivers(std::string callsign, unsigned int freq)
     }
     else
     {
-        //TODO: We need to request the transceivers from this station & set a flag to push them here when they arrive
+        linkNewTransceiversFrequencyFlag = freq;
+        linkNewStationCallsign = callsign;
+        this->requestStationTransceivers(callsign);
     }
 }
 
