@@ -14,7 +14,7 @@ if(MSVC)
 	endif()
 endif(MSVC)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 set(AFV_NATIVE_HEADERS
 	include/afv-native/AtcClient.h
@@ -86,21 +86,18 @@ set(AFV_NATIVE_HEADERS
 	include/afv-native/util/ChainedCallback.h
 	include/afv-native/util/monotime.h
 	include/afv-native/utility.h)
-	
+
 add_library(afv_native SHARED
 		${AFV_NATIVE_HEADERS}
 		src/afv/APISession.cpp
-        src/afv/ATCRadioStack.cpp
 		src/afv/EffectResources.cpp
 		src/afv/RadioSimulation.cpp
 		src/afv/RemoteVoiceSource.cpp
 		src/afv/VoiceCompressionSink.cpp
 		src/afv/VoiceSession.cpp
 		src/afv/dto/AuthRequest.cpp
-        src/afv/dto/CrossCoupleGroup.cpp
 		src/afv/dto/PostCallsignResponse.cpp
 		src/afv/dto/Station.cpp
-        src/afv/dto/StationTransceiver.cpp
 		src/afv/dto/Transceiver.cpp
 		src/afv/dto/VoiceServerConnectionData.cpp
 		src/audio/AudioDevice.cpp
@@ -111,13 +108,9 @@ add_library(afv_native SHARED
 		src/audio/SineToneSource.cpp
 		src/audio/SinkFrameSizeAdjuster.cpp
 		src/audio/SourceFrameSizeAdjuster.cpp
-        src/audio/SourceToSinkAdapter.cpp
 		src/audio/SpeexPreprocessor.cpp
-		src/audio/VHFFilterSource.cpp
 		src/audio/WavFile.cpp
 		src/audio/WavSampleStorage.cpp
-        src/core/AtcClient.cpp
-        src/core/AtisClient.cpp
 		src/core/Client.cpp
 		src/core/Log.cpp
 		src/cryptodto/Channel.cpp
@@ -133,7 +126,6 @@ add_library(afv_native SHARED
 		src/http/RESTRequest.cpp
 		src/util/base64.cpp
 		src/util/monotime.cpp
-		src/NativeWrapper.cpp
 		src/audio/PortAudioAudioDevice.cpp
 		src/audio/PortAudioAudioDevice.h
 		extern/simpleSource/SimpleComp.cpp
@@ -145,6 +137,15 @@ add_library(afv_native SHARED
 		extern/simpleSource/SimpleGate.h
 		extern/simpleSource/SimpleHeader.h
 		extern/simpleSource/SimpleLimit.cpp
+		extern/simpleSource/SimpleLimit.h
+		src/audio/VHFFilterSource.cpp
+		src/afv/ATCRadioStack.cpp
+		src/afv/dto/CrossCoupleGroup.cpp
+		src/afv/dto/StationTransceiver.cpp
+		src/audio/SourceToSinkAdapter.cpp
+		src/audio/VHFFilterSource.cpp
+		src/core/AtcClient.cpp
+		src/core/AtisClient.cpp
 		extern/simpleSource/SimpleLimit.h)
 		
 # organise sources in generated projects.
@@ -153,21 +154,56 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include/afv-native PREFIX "Headers
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/extern PREFIX "Third Party" FILES ${AFV_NATIVE_THIRDPARTY_SOURCES})
 
 if(WIN32)
-	set(OPUS_URL https://github.com/xpilot-project/opus/releases/download/2.0.0/windows-opus.lib)
+	set(OPUS_URL https://github.com/xpilot-project/opus/releases/download/xpilot/windows-opus.lib)
 	set(OPUS_LIBARY_PATH ${CMAKE_BINARY_DIR}/import/windows-opus.lib)
 	
-	set(PORTAUDIO_URL https://github.com/xpilot-project/portaudio/releases/download/2.0.0/windows-portaudio_static_x64.lib)
+	set(PORTAUDIO_URL https://github.com/xpilot-project/portaudio/releases/download/xpilot/windows-portaudio_static_x64.lib)
 	set(PORTAUDIO_LIBRARY_PATH ${CMAKE_BINARY_DIR}/import/windows-portaudio_static_x64.lib)
 		
-	set(SPEEXDSP_URL https://github.com/xpilot-project/speexdsp/releases/download/2.0.0/windows-speexdsp.lib)
+	set(SPEEXDSP_URL https://github.com/xpilot-project/speexdsp/releases/download/xpilot/windows-speexdsp.lib)
 	set(SPEEXDSP_LIBRARY_PATH ${CMAKE_BINARY_DIR}/import/windows-speexdsp.lib)
-elseif(UNIX)
-elseif(APPLE)
+
+	file(DOWNLOAD ${OPUS_URL} ${OPUS_LIBARY_PATH})
+	file(DOWNLOAD ${PORTAUDIO_URL} ${PORTAUDIO_LIBRARY_PATH})
+	file(DOWNLOAD ${SPEEXDSP_URL} ${SPEEXDSP_LIBRARY_PATH})
 endif()
 
-file(DOWNLOAD ${OPUS_URL} ${OPUS_LIBARY_PATH})
-file(DOWNLOAD ${PORTAUDIO_URL} ${PORTAUDIO_LIBRARY_PATH})
-file(DOWNLOAD ${SPEEXDSP_URL} ${SPEEXDSP_LIBRARY_PATH})
+if(APPLE)
+	execute_process(
+			COMMAND brew --prefix opus
+			RESULT_VARIABLE BREW_OPUS
+			OUTPUT_VARIABLE BREW_OPUS_PREFIX
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if (BREW_OPUS EQUAL 0 AND EXISTS "${BREW_OPUS_PREFIX}")
+        message(STATUS "Found Opus keg installed by Homebrew at ${BREW_OPUS_PREFIX}")
+        set(OPUS_LIBARY_PATH "${BREW_OPUS_PREFIX}/lib/libopus.a")
+		set(OPUS_LIBRARY_INCLUDE "${BREW_OPUS_PREFIX}/include")
+    endif()
+
+	execute_process(
+			COMMAND brew --prefix portaudio
+			RESULT_VARIABLE BREW_PORTAUDIO
+			OUTPUT_VARIABLE BREW_PORTAUDIO_PREFIX
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if (BREW_PORTAUDIO EQUAL 0 AND EXISTS "${BREW_PORTAUDIO_PREFIX}")
+        message(STATUS "Found PortAudio keg installed by Homebrew at ${BREW_PORTAUDIO_PREFIX}")
+        set(PORTAUDIO_LIBRARY_PATH "${BREW_PORTAUDIO_PREFIX}/lib/libportaudio.a")
+		set(PORTAUDIO_LIBRARY_INCLUDE "${BREW_PORTAUDIO_PREFIX}/include")
+    endif()
+		
+	execute_process(
+			COMMAND brew --prefix speexdsp
+			RESULT_VARIABLE BREW_SPEEX
+			OUTPUT_VARIABLE BREW_SPEEX_PREFIX
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if (BREW_SPEEX EQUAL 0 AND EXISTS "${BREW_SPEEX_PREFIX}")
+        message(STATUS "Found SpeexDSP keg installed by Homebrew at ${BREW_SPEEX_PREFIX}")
+        set(SPEEXDSP_LIBRARY_PATH "${BREW_SPEEX_PREFIX}/lib/libspeexdsp.a")
+		set(SPEEXDSP_LIBRARY_INCLUDE "${BREW_SPEEX_PREFIX}/include")
+    endif()
+endif()
+
+
 
 if(APPLE)
 find_library(CORE_AUDIO CoreAudio)
@@ -192,16 +228,16 @@ target_link_libraries(afv_native
 	${CORE_FOUNDATION}
 	${CORE_SERVICES})
 else()
-target_link_libraries(afv_native
-	PUBLIC
-	CONAN_PKG::openssl
-	CONAN_PKG::msgpack
-	CONAN_PKG::nlohmann_json
-	CONAN_PKG::libcurl
-	CONAN_PKG::libevent
-	${OPUS_LIBARY_PATH}
-	${PORTAUDIO_LIBRARY_PATH}
-	${SPEEXDSP_LIBRARY_PATH})
+	target_link_libraries(afv_native
+		PUBLIC
+		CONAN_PKG::openssl
+		CONAN_PKG::msgpack
+		CONAN_PKG::nlohmann_json
+		CONAN_PKG::libcurl
+		CONAN_PKG::libevent
+		${OPUS_LIBARY_PATH}
+		${PORTAUDIO_LIBRARY_PATH}
+		${SPEEXDSP_LIBRARY_PATH})
 endif()
 
 target_include_directories(afv_native
@@ -210,7 +246,10 @@ target_include_directories(afv_native
 		${CMAKE_SOURCE_DIR}/extern/simpleSource
 		PUBLIC
 		${CMAKE_SOURCE_DIR}/include
-		${CMAKE_SOURCE_DIR}/extern)
+		${CMAKE_SOURCE_DIR}/extern
+		${SPEEXDSP_LIBRARY_INCLUDE}
+		${OPUS_LIBRARY_INCLUDE}
+		${PORTAUDIO_LIBRARY_INCLUDE})
 
 if(MSVC)
 	# I hate to do this this way, but we must force MSVC to define the standard math macros whereever the afv headers
@@ -229,3 +268,5 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/include" # source directory
 		FILES_MATCHING # install only matched files
 		PATTERN "*.h" # select header files
 		)
+
+set_target_properties(afv_native PROPERTIES OUTPUT_NAME "afv")

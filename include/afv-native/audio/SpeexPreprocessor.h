@@ -36,6 +36,7 @@
 
 #include <memory>
 #include <speex/speex_preprocess.h>
+#include <math.h>
 
 #include "afv-native/audio/ISampleSink.h"
 
