@@ -165,6 +165,13 @@ void afv_native::api::atcClient::StopAudio() {
     client->stopAudio();
 }
 
+bool afv_native::api::atcClient::IsAudioRunning() {
+    if (!client->mAudioDevice)
+        return false;
+    else
+        return true;
+}
+
 void afv_native::api::atcClient::SetTx(unsigned int freq, bool active) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setTx(freq, active);

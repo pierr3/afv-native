@@ -52,6 +52,7 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "iostream": "cpp",
-        "iterator": "cpp"
+        "iterator": "cpp",
+        "deque": "cpp"
     }
 }

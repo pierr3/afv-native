@@ -221,7 +221,7 @@ namespace afv_native {
         
         void setTick(std::shared_ptr<audio::ITick> tick);
         
-
+        std::shared_ptr<audio::AudioDevice> mAudioDevice;
     protected:
 
         struct event_base *mEvBase;
@@ -231,7 +231,6 @@ namespace afv_native {
         afv::APISession mAPISession;
         afv::VoiceSession mVoiceSession;
         std::shared_ptr<afv::ATCRadioStack> mATCRadioStack;
-        std::shared_ptr<audio::AudioDevice> mAudioDevice;
         std::shared_ptr<audio::AudioDevice> mSpeakerDevice;
         
 
