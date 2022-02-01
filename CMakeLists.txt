@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(afv_native LANGUAGES CXX)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
+include(GenerateExportHeader)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -85,7 +86,8 @@ set(AFV_NATIVE_HEADERS
 	include/afv-native/util/base64.h
 	include/afv-native/util/ChainedCallback.h
 	include/afv-native/util/monotime.h
-	include/afv-native/utility.h)
+	include/afv-native/utility.h
+	include/afv-native/AFVatcClientWrapper.h)
 
 add_library(afv_native SHARED
 		${AFV_NATIVE_HEADERS}
@@ -146,7 +148,8 @@ add_library(afv_native SHARED
 		src/audio/VHFFilterSource.cpp
 		src/core/AtcClient.cpp
 		src/core/AtisClient.cpp
-		extern/simpleSource/SimpleLimit.h)
+		extern/simpleSource/SimpleLimit.h
+		src/AFVatcClientWrapper.cpp)
 		
 # organise sources in generated projects.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source" FILES ${AFV_NATIVE_SOURCES})
@@ -249,7 +252,8 @@ target_include_directories(afv_native
 		${CMAKE_SOURCE_DIR}/extern
 		${SPEEXDSP_LIBRARY_INCLUDE}
 		${OPUS_LIBRARY_INCLUDE}
-		${PORTAUDIO_LIBRARY_INCLUDE})
+		${PORTAUDIO_LIBRARY_INCLUDE}
+		${CMAKE_BINARY_DIR}/exports)
 
 if(MSVC)
 	# I hate to do this this way, but we must force MSVC to define the standard math macros whereever the afv headers
@@ -257,16 +261,27 @@ if(MSVC)
 	target_compile_definitions(afv_native PUBLIC _USE_MATH_DEFINES)
 endif()
 
+set(AFV_EXPORT_HEADERS 
+	include/afv-native/AFVatcClientWrapper.h)
+
+set_target_properties(afv_native
+    PROPERTIES
+    PUBLIC_HEADER "${AFV_EXPORT_HEADERS}"
+)
+
 install(TARGETS afv_native
 		RUNTIME DESTINATION bin
 		LIBRARY DESTINATION lib
 		ARCHIVE DESTINATION lib
+		PUBLIC_HEADER DESTINATION exports
 		)
 
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/include" # source directory
-		DESTINATION "." # target directory
-		FILES_MATCHING # install only matched files
-		PATTERN "*.h" # select header files
-		)
+generate_export_header(afv_native EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/exports/afv_native_export.h)
+
+#install(DIRECTORY "${CMAKE_SOURCE_DIR}/include" # source directory
+#		DESTINATION "." # target directory
+#		FILES_MATCHING # install only matched files
+#		PATTERN "*.h" # select header files
+#		)
 
 set_target_properties(afv_native PROPERTIES OUTPUT_NAME "afv")
