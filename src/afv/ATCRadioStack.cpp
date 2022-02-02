@@ -415,6 +415,27 @@ std::vector<afv::dto::Transceiver> ATCRadioStack::makeTransceiverDto()
     return std::move(retSet);
 }
 
+std::vector<afv::dto::CrossCoupleGroup> ATCRadioStack::makeCrossCoupleGroupDto() {
+    // We only use one large group of coupled transceivers
+    afv::dto::CrossCoupleGroup group(0, {});
+
+    for (auto &state: mRadioState)
+    {
+        // There are transceivers and they need to be coupled
+        if(state.second.transceivers.size()!=0 && state.second.xc)
+        {
+            for (auto &trans: state.second.transceivers)
+            {
+                group.TransceiverIDs.push_back(trans.ID);
+            }
+        }
+    }
+
+    std::vector<afv::dto::CrossCoupleGroup> bucket;
+    bucket.push_back(group);
+    return std::move(bucket);
+}
+
 
 void ATCRadioStack::putAudioFrame(const audio::SampleType *bufferIn)
 {
@@ -546,6 +567,10 @@ bool ATCRadioStack::getTxState(unsigned int freq) {
     return mRadioState.count(freq) != 0 ? mRadioState[freq].tx : false;
 };
 
+bool ATCRadioStack::getXcState(unsigned int freq) {
+    return mRadioState.count(freq) != 0 ? mRadioState[freq].xc : false;
+};
+
 void ATCRadioStack::setCallsign(const std::string &newCallsign)
 {
     mCallsign = newCallsign;
@@ -560,31 +585,41 @@ void ATCRadioStack::setGain(unsigned int freq, float gain)
 void ATCRadioStack::setTx(unsigned int freq, bool tx)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    if (tx==false && mRadioState[freq].rx==false)
+    if (tx==false && mRadioState[freq].rx==false && mRadioState[freq].xc==false)
     {
         mRadioState.erase(freq);
         return;
     }
     if(mRadioState[freq].tx==tx) return;
     
-    
     mRadioState[freq].tx=tx;
     mRadioState[freq].Frequency=freq;
-
-    
-    
 }
 
 void ATCRadioStack::setRx(unsigned int freq, bool rx)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    if (rx==false && mRadioState[freq].tx==false)
+    if (rx==false && mRadioState[freq].tx==false && mRadioState[freq].xc==false)
     {
         mRadioState.erase(freq);
         return;
     }
     if(mRadioState[freq].rx==rx) return;
     mRadioState[freq].rx=rx;
+    mRadioState[freq].Frequency=freq;
+}
+
+void ATCRadioStack::setXc(unsigned int freq, bool xc)
+{
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    if (xc==false && mRadioState[freq].rx==false && mRadioState[freq].tx==false)
+    {
+        mRadioState.erase(freq);
+        return;
+    }
+    if(mRadioState[freq].xc==xc) return;
+    
+    mRadioState[freq].xc=xc;
     mRadioState[freq].Frequency=freq;
 }
 

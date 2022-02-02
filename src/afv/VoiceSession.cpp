@@ -238,7 +238,7 @@ void VoiceSession::postCrossCoupleGroupUpdate(
         const std::vector<dto::CrossCoupleGroup> &ccDto,
         std::function<void(http::Request *, bool)> callback)
 {
-    if(mSessionType!=VoiceSessionType::ATC) return;    
+    //if(mSessionType!=VoiceSessionType::ATC) return;    
     updateBaseUrl();
     mCrossCoupleGroupUpdateRequest.reset();
     mSession.setAuthenticationFor(mCrossCoupleGroupUpdateRequest);

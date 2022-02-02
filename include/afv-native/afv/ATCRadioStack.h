@@ -32,6 +32,7 @@
 #include "afv-native/cryptodto/UDPChannel.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/util/ChainedCallback.h"
+#include "afv-native/afv/dto/CrossCoupleGroup.h"
 
 
 namespace afv_native {
@@ -98,6 +99,7 @@ namespace afv_native {
             bool onHeadset = true; // If we're not on the headset, we're on the Speaker
             bool tx = false;
             bool rx = false;
+            bool xc = false;
             std::vector<dto::Transceiver> transceivers;
         };
 
@@ -128,14 +130,17 @@ namespace afv_native {
             
             bool getRxState(unsigned int freq);
             bool getTxState(unsigned int freq);
+            bool getXcState(unsigned int freq);
 
             void setRx(unsigned int freq, bool rx);
             void setTx(unsigned int freq, bool tx);
+            void setXc(unsigned int freq, bool xc);
             
             void setTick(std::shared_ptr<audio::ITick> tick);
             
             void setTransceivers(unsigned int freq, std::vector<afv::dto::StationTransceiver> transceivers);
             std::vector<afv::dto::Transceiver> makeTransceiverDto();
+            std::vector<afv::dto::CrossCoupleGroup> makeCrossCoupleGroupDto();
             void setOnHeadset(unsigned int freq, bool onHeadset);
             void setGain(unsigned int freq, float gain);
             

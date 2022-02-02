@@ -171,6 +171,12 @@ if(WIN32)
 	file(DOWNLOAD ${SPEEXDSP_URL} ${SPEEXDSP_LIBRARY_PATH})
 endif()
 
+if (LINUX)
+
+	# Add here and define the path for opus, portaudio and speexdsp
+
+endif()
+
 if(APPLE)
 	execute_process(
 			COMMAND brew --prefix opus
@@ -209,27 +215,27 @@ endif()
 
 
 if(APPLE)
-find_library(CORE_AUDIO CoreAudio)
-find_library(AUDIO_TOOLBOX AudioToolbox)
-find_library(AUDIO_UNIT AudioUnit)
-find_library(CORE_FOUNDATION CoreFoundation)
-find_library(CORE_SERVICES CoreServices)
+	find_library(CORE_AUDIO CoreAudio)
+	find_library(AUDIO_TOOLBOX AudioToolbox)
+	find_library(AUDIO_UNIT AudioUnit)
+	find_library(CORE_FOUNDATION CoreFoundation)
+	find_library(CORE_SERVICES CoreServices)
 
-target_link_libraries(afv_native
-	PUBLIC
-	CONAN_PKG::openssl
-	CONAN_PKG::msgpack
-	CONAN_PKG::nlohmann_json
-	CONAN_PKG::libcurl
-	CONAN_PKG::libevent
-	${OPUS_LIBARY_PATH}
-	${PORTAUDIO_LIBRARY_PATH}
-	${SPEEXDSP_LIBRARY_PATH}
-	${CORE_AUDIO}
-	${AUDIO_TOOLBOX}
-	${AUDIO_UNIT}
-	${CORE_FOUNDATION}
-	${CORE_SERVICES})
+	target_link_libraries(afv_native
+		PUBLIC
+		CONAN_PKG::openssl
+		CONAN_PKG::msgpack
+		CONAN_PKG::nlohmann_json
+		CONAN_PKG::libcurl
+		CONAN_PKG::libevent
+		${OPUS_LIBARY_PATH}
+		${PORTAUDIO_LIBRARY_PATH}
+		${SPEEXDSP_LIBRARY_PATH}
+		${CORE_AUDIO}
+		${AUDIO_TOOLBOX}
+		${AUDIO_UNIT}
+		${CORE_FOUNDATION}
+		${CORE_SERVICES})
 else()
 	target_link_libraries(afv_native
 		PUBLIC

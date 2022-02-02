@@ -88,6 +88,8 @@ namespace afv_native {
         
         void setRx(unsigned int freq, bool active);
 
+        void setXc(unsigned int freq, bool active);
+
         /** sets the (linear) gain to be applied to radioNum */
         void setRadioGain(unsigned int radioNum, float gain);
 
@@ -212,6 +214,7 @@ namespace afv_native {
 
         bool GetTxState(unsigned int freq);
         bool GetRxState(unsigned int freq);
+        bool GetXcState(unsigned int freq);
         
         /** requestStationTransceivers requests the list of transceivers associated with the named station
          *

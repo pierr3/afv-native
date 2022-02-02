@@ -182,6 +182,11 @@ void afv_native::api::atcClient::SetRx(unsigned int freq, bool active) {
     client->setRx(freq, active);
 }
 
+void afv_native::api::atcClient::SetXc(unsigned int freq, bool active) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setXc(freq, active);
+}
+
 bool afv_native::api::atcClient::GetTxActive(unsigned int freq) {
     return client->getTxActive(freq);
 };
@@ -191,6 +196,10 @@ bool afv_native::api::atcClient::GetRxActive(unsigned int freq) {
 };
 
 bool afv_native::api::atcClient::GetTxState(unsigned int freq) {
+    return client->GetTxState(freq);
+};
+
+bool afv_native::api::atcClient::GetXcState(unsigned int freq) {
     return client->GetTxState(freq);
 };
 

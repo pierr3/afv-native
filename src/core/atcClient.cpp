@@ -89,6 +89,11 @@ void ATCClient::setRx(unsigned int freq, bool active)
     queueTransceiverUpdate();
 }
 
+void ATCClient::setXc(unsigned int freq, bool active)
+{
+    mATCRadioStack->setXc(freq, active);
+    queueTransceiverUpdate();
+}
 
 bool ATCClient::connect()
 {
@@ -286,6 +291,15 @@ void ATCClient::sendTransceiverUpdate()
                     this->unguardPtt();
                 }
             });
+
+    // We now also update any cross coupled transceivers
+    mVoiceSession.postCrossCoupleGroupUpdate(mATCRadioStack->makeCrossCoupleGroupDto(), 
+    [this](http::Request *r, bool success) {
+        if (!success) {
+            LOG("ATCClient", "Failed to post cross couple transceivers update with code %s", std::to_string(r->getStatusCode()).c_str());
+        }
+    });
+    
     mTransceiverUpdateTimer.enable(afv::afvATCTransceiverUpdateIntervalMs);
 }
 
@@ -486,6 +500,13 @@ bool ATCClient::getTxActive(unsigned int freq) {
 bool ATCClient::GetTxState(unsigned int freq) {
     if (mATCRadioStack) {
         return mATCRadioStack->getTxState(freq);
+    }
+    return false;
+};
+
+bool ATCClient::GetXcState(unsigned int freq) {
+    if (mATCRadioStack) {
+        return mATCRadioStack->getXcState(freq);
     }
     return false;
 };
