@@ -200,7 +200,7 @@ bool afv_native::api::atcClient::GetTxState(unsigned int freq) {
 };
 
 bool afv_native::api::atcClient::GetXcState(unsigned int freq) {
-    return client->GetTxState(freq);
+    return client->GetXcState(freq);
 };
 
 bool afv_native::api::atcClient::GetRxState(unsigned int freq) {
