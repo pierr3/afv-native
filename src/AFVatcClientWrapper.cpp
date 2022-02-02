@@ -231,7 +231,7 @@ void afv_native::api::atcClient::RemoveFrequency(unsigned int freq) {
     client->removeFrequency(freq);
 }
 
-void afv_native::api::atcClient::IsFrequencyActive(unsigned int freq) {
+bool afv_native::api::atcClient::IsFrequencyActive(unsigned int freq) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->isFrequencyActive(freq);
+    return client->isFrequencyActive(freq);
 }

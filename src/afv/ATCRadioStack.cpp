@@ -560,11 +560,11 @@ void ATCRadioStack::setGain(unsigned int freq, float gain)
 void ATCRadioStack::setTx(unsigned int freq, bool tx)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    //if (tx==false && mRadioState[freq].rx==false)
-    //{
-    //    mRadioState.erase(freq);
-    //    return;
-    //}
+    if (tx==false && mRadioState[freq].rx==false)
+    {
+        mRadioState.erase(freq);
+        return;
+    }
     if(mRadioState[freq].tx==tx) return;
     
     
@@ -578,11 +578,11 @@ void ATCRadioStack::setTx(unsigned int freq, bool tx)
 void ATCRadioStack::setRx(unsigned int freq, bool rx)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    //if (rx==false && mRadioState[freq].tx==false)
-    //{
-    //    mRadioState.erase(freq);
-    //    return;
-    //}
+    if (rx==false && mRadioState[freq].tx==false)
+    {
+        mRadioState.erase(freq);
+        return;
+    }
     if(mRadioState[freq].rx==rx) return;
     mRadioState[freq].rx=rx;
     mRadioState[freq].Frequency=freq;
