@@ -84,7 +84,7 @@ namespace afv_native {
             bool isConnected() const;
 
             bool Connect();
-            void Disconnect(bool do_close = true);
+            void Disconnect(bool do_close = true, bool reconnect = false);
             void postTransceiverUpdate(
                     const std::vector<dto::Transceiver> &txDto,
                     std::function<void(http::Request *, bool)> callback);

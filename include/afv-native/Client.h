@@ -124,6 +124,8 @@ namespace afv_native {
         /** sets the (linear) gain to be applied to radioNum */
         void setRadioGain(unsigned int radioNum, float gain);
 
+        void setMicrophoneVolume(float volume);
+
         /** sets the PTT (push-to-talk) state for the radio.
          *
          * @note If the radio frequencies are out of sync with the server, this will

@@ -106,9 +106,24 @@ RadioSimulation::RadioSimulation(
  */
 void RadioSimulation::putAudioFrame(const audio::SampleType *bufferIn)
 {
+    audio::SampleType *samples = new audio::SampleType[audio::frameSizeSamples];
+    mVoiceFilter->transformFrame(samples, bufferIn);
+
+    float value = 0;
+    for(int i = 0; i < audio::frameSizeSamples; i++) {
+        value = samples[i] * mMicVolume;
+        if(value > 1.0f) {
+            value = 1.0f;
+        }
+        if(value < -1.0f) {
+            value = 1.0f;
+        }
+        samples[i] = value;
+    }
+
     // do the peak/Vu calcs
     {
-        auto *b = bufferIn;
+        auto *b = samples;
         int i = audio::frameSizeSamples - 1;
         audio::SampleType peak = fabs(*(b++));
         while (i-- > 0) {
@@ -119,24 +134,19 @@ void RadioSimulation::putAudioFrame(const audio::SampleType *bufferIn)
         peakDb = std::min(0.0, peakDb);
         mVuMeter.addDatum(peakDb);
     }
+
     if (!mPtt.load() && !mLastFramePtt) {
         // Tick the sequence over when we have no Ptt as the compressed endpoint wont' get called to do that.
         std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
         return;
     }
     if (mVoiceFilter) {
-        mVoiceFilter->putAudioFrame(bufferIn);
+        mVoiceFilter->putAudioFrame(samples);
     } else {
-        mVoiceSink->putAudioFrame(bufferIn);
+        mVoiceSink->putAudioFrame(samples);
     }
 }
 
-/** Audio enters here from the Codec Compressor before being sent out on to the network.
- *
- *
- *
- *
- */
 void RadioSimulation::processCompressedFrame(std::vector<unsigned char> compressedData)
 {
     if (mChannel != nullptr && mChannel->isOpen()) {
@@ -459,6 +469,12 @@ void RadioSimulation::setTxRadio(unsigned int radio)
         return;
     }
     mTxRadio = radio;
+    LOG("RadioSimulation", "setTxRadio: %i", radio);
+}
+
+void RadioSimulation::setMicrophoneVolume(float volume)
+{
+    mMicVolume = volume;
 }
 
 //void RadioSimulation::dtoHandler(const std::string &dtoName, const unsigned char *bufIn, size_t bufLen, void *user_data)

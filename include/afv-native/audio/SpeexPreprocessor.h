@@ -53,6 +53,7 @@ namespace afv_native {
             explicit SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream);
             virtual ~SpeexPreprocessor();
             void putAudioFrame(const SampleType *bufferIn) override;
+            void transformFrame(SampleType *bufferOut, SampleType const bufferIn[]);
         };
     }
 }

@@ -188,10 +188,10 @@ void VoiceSession::heartbeatTimedOut()
     util::monotime_t now = util::monotime_get();
     LOG("voicesession", "heartbeat timeout - %d ms elapsed - disconnecting", now - mLastHeartbeatReceived);
     mLastError = VoiceSessionError::Timeout;
-    Disconnect(true);
+    Disconnect(true, true);
 }
 
-void VoiceSession::Disconnect(bool do_close)
+void VoiceSession::Disconnect(bool do_close, bool reconnect)
 {
     if (do_close) {
         mVoiceSessionTeardownRequest.reset();
@@ -215,6 +215,10 @@ void VoiceSession::Disconnect(bool do_close)
         mVoiceSessionTeardownRequest.doAsync(transferManager);
     }
     failSession();
+
+    if(reconnect) {
+        mSession.Connect();
+    }
 }
 
 void VoiceSession::postTransceiverUpdate(
@@ -298,16 +302,6 @@ VoiceSessionError VoiceSession::getLastError() const
 
 void VoiceSession::sessionStateCallback(APISessionState state) {
     switch (state) {
-    case afv::APISessionState::Reconnecting:
-        // disable the heartbeat timeout since we don't have a valid session and we will reestablish shortly.
-        // this will be dealt with either when we shift to Error or Disconnected state (due to API session failure),
-        // or we get the Running update from the API session which will reestablish the heartbeat timer.
-        mHeartbeatTimeout.disable();
-        break;
-    case afv::APISessionState::Running:
-        // this should only fire when we reconnect.
-        Connect();
-        break;
     case afv::APISessionState::Disconnected:
     case afv::APISessionState::Error:
         if (isConnected()) {

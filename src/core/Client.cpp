@@ -438,6 +438,14 @@ void Client::setRadioGain(unsigned int radioNum, float gain)
     mRadioSim->setGain(radioNum, gain);
 }
 
+void Client::setMicrophoneVolume(float volume)
+{
+    if(volume > 18) volume = 18;
+    if(volume < -60) volume = -60;
+    volume = (float)pow(10, volume / 20);
+    mRadioSim->setMicrophoneVolume(volume);
+}
+
 bool Client::getEnableInputFilters() const
 {
     return mRadioSim->getEnableInputFilters();

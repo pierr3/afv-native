@@ -126,6 +126,8 @@ namespace afv_native {
             void setGain(unsigned int radio, float gain);
             void setTxRadio(unsigned int radio);
 
+            void setMicrophoneVolume(float volume);
+
             bool getTxActive(unsigned int radio);
             bool getRxActive(unsigned int radio);
 
@@ -183,6 +185,8 @@ namespace afv_native {
             unsigned int mTxRadio;
             std::atomic<uint32_t> mTxSequence;
             std::vector<RadioState> mRadioState;
+
+            float mMicVolume = 1.0f;
 
             unsigned int mLastReceivedRadio;
 

@@ -61,10 +61,10 @@ SpeexPreprocessor::SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream) :
     speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_DENOISE, &iarg);
     speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_DEREVERB, &iarg);
 
-    iarg = 21747;
+    iarg = 30000;
     speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC_TARGET, &iarg);
 
-    iarg = 80;
+    iarg = 12;
     speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC_MAX_GAIN, &iarg);
 
     iarg = -60;
@@ -90,5 +90,16 @@ void SpeexPreprocessor::putAudioFrame(const SampleType *bufferIn)
     }
     if (mUpstreamSink) {
         mUpstreamSink->putAudioFrame(mOutputFrame);
+    }
+}
+
+void SpeexPreprocessor::transformFrame(SampleType *bufferOut, const SampleType bufferIn[])
+{
+    for (size_t i = 0; i < frameSizeSamples; i++) {
+        mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
+    }
+    speex_preprocess_run(mPreprocessorState, mSpeexFrame);
+    for (size_t i = 0; i < frameSizeSamples; i++) {
+        bufferOut[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
     }
 }
