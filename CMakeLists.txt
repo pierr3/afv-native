@@ -18,8 +18,8 @@ endif(MSVC)
 set(CMAKE_CXX_STANDARD 17)
 
 set(AFV_NATIVE_HEADERS
-	include/afv-native/AtcClient.h
-	include/afv-native/AtisClient.h
+	include/afv-native/atcClient.h
+	include/afv-native/atisClient.h
 	include/afv-native/Client.h
 	include/afv-native/event.h
 	include/afv-native/Log.h
@@ -146,8 +146,8 @@ add_library(afv_native SHARED
 		src/afv/dto/StationTransceiver.cpp
 		src/audio/SourceToSinkAdapter.cpp
 		src/audio/VHFFilterSource.cpp
-		src/core/AtcClient.cpp
-		src/core/AtisClient.cpp
+		src/core/atcClient.cpp
+		src/core/atisClient.cpp
 		extern/simpleSource/SimpleLimit.h
 		src/AFVatcClientWrapper.cpp)
 		
@@ -171,9 +171,16 @@ if(WIN32)
 	file(DOWNLOAD ${SPEEXDSP_URL} ${SPEEXDSP_LIBRARY_PATH})
 endif()
 
-if (LINUX)
+if (UNIX AND NOT APPLE)
 
 	# Add here and define the path for opus, portaudio and speexdsp
+	# From libopus-dev
+	set(OPUS_LIBARY_PATH "/usr/lib/x86_64-linux-gnu/libopus.so")
+	# From portaudio19-dev
+	set(PORTAUDIO_LIBRARY_PATH "/usr/lib/x86_64-linux-gnu/libportaudio.so")
+	#set(OPUS_PORTAUDIO_LIBRARY_INCLUDE "/usr/lib/x86_64-linux-gnu/libportaudio.a")	
+	# From libspeexdsp-dev
+	set(SPEEXDSP_LIBRARY_PATH "/usr/lib/x86_64-linux-gnu/libspeexdsp.so")
 
 endif()
 

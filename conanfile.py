@@ -36,7 +36,7 @@ class AfvNativeConan(ConanFile):
         "nlohmann_json/3.9.1",
         "openssl/1.1.1k",
         "libcurl/7.75.0",
-        "libevent/2.1.12"
+        "libevent/2.1.11"
     ]
     build_requires = [
     ]
