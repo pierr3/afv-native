@@ -171,7 +171,7 @@ namespace afv_native {
             util::ChainedCallback<void(ClientEventType,void*)>  * ClientEventCallback;
             
             std::mutex mStreamMapLock;
-            std::unordered_map<std::string, struct CallsignMeta> mIncomingStreams;
+            std::map<std::string, struct CallsignMeta> mIncomingStreams;
             
             std::mutex mRadioStateLock;
             std::map<unsigned int, ATCRadioState> mRadioState;
