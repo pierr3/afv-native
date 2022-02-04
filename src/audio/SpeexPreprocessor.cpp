@@ -44,7 +44,7 @@ SpeexPreprocessor::SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream) :
 {
     mPreprocessorState = speex_preprocess_state_init(frameSizeSamples, sampleRateHz);
 
-    int arg = 1;
+    /*int arg = 1;
     speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC, &arg);
 
     arg = 30000;
@@ -54,7 +54,24 @@ SpeexPreprocessor::SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream) :
     speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC_MAX_GAIN, &arg);
 
     arg = -60;
-    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC_DECREMENT, &arg);
+    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC_DECREMENT, &arg);*/
+
+    int iarg = 1;
+    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC, &iarg);
+    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_DENOISE, &iarg);
+    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_DEREVERB, &iarg);
+
+    iarg = 21747;
+    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC_TARGET, &iarg);
+
+    iarg = 80;
+    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC_MAX_GAIN, &iarg);
+
+    iarg = -60;
+    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_AGC_DECREMENT, &iarg);
+
+    iarg = -30;
+    speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &iarg);
 }
 
 SpeexPreprocessor::~SpeexPreprocessor()
