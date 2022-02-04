@@ -57,11 +57,11 @@ VHFFilterSource::~VHFFilterSource()
 
 void VHFFilterSource::setupPresets()
 {
-    mFilters.push_back(BiQuadFilter::highPassFilter(44100, 310, 0.25));
-    mFilters.push_back(BiQuadFilter::peakingEQ(44100, 450, 0.75, 17.0));
-    mFilters.push_back(BiQuadFilter::peakingEQ(44100, 1450, 1.0, 25.0));
-    mFilters.push_back(BiQuadFilter::peakingEQ(44100, 2000, 1.0, 25.0));
-    mFilters.push_back(BiQuadFilter::lowPassFilter(44100, 2500, 0.25));
+    mFilters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 310, 0.25));
+    mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 450, 0.75, 17.0));
+    mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 1450, 1.0, 25.0));
+    mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 2000, 1.0, 25.0));
+    mFilters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 2500, 0.25));
 }
 
 /** transformFrame lets use apply this filter to a normal buffer, without following the sink/source flow.
