@@ -42,33 +42,16 @@ library and headers.
 
 ### Prerequisites
 
-To build AFV-native, you will require an up-to-date copy of cmake and conan.
-* [Conan](https://conan.io)
+To build AFV-native, you will require an up-to-date copy of cmake and vcpkg.
 * [CMake](https://cmake.org)
-
-After installing conan, add the XSquawkBox Open-Source and Bincrafters 
-Repository to your search path.
-```shell script
-conan remote add xsquawkbox-public https://api.bintray.com/conan/akuneko/xsquawkbox
-conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-```
-
-This will let you find the packages required that are not published to 
-`conan-center`.
-
-You will also need a suitable compiler.
-
-Tested compilers are:
-* gcc (Linux)
-* MSVC 2019 (Windows)
-* apple-clang (macOS)
 
 ### Building
 
 ```shell script
-$ mkdir build && cd build
-$ conan install ..
-$ cmake ..
+$ git submodule update --recursive --init
+$ vcpkg/bootstrap-vcpkg.sh (or .bat if Win32)
+$ cmake -S . -B build/
+$ cmake --build .
 ```
 
 Then build the project appropriately.
@@ -84,7 +67,7 @@ AFV-native was written with the following assumptions:
 It explictly is written to work with:
 * Win32 x86_64 compiled using MSVC
 * amd64 Linux compiled using gcc
-* Macos compiled using apple-clang.
+* macOs compiled using apple-clang.
 
 Previously, AFV-Native assumed x86/x64, but the rise of compiler
 autovectorisation means that we don't need to explicitly optimise for those 

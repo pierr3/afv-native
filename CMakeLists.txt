@@ -1,19 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
+
 project(afv_native LANGUAGES CXX)
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup(TARGETS)
+
 include(GenerateExportHeader)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-if(MSVC)
-	if(NOT DEFINED CONAN_LINK_RUNTIME AND DEFINED CONAN_SETTINGS_COMPILER_RUNTIME)
-		message(WARNING "Forcing MSVC runtime based on conan profile")
-		# this means Conan is not running the build, so we need to fix our linker flags ourself.... although we can probably cheat...
-		set(CONAN_LINK_RUNTIME "/${CONAN_SETTINGS_COMPILER_RUNTIME}")
-		conan_set_vs_runtime()
-	endif()
-endif(MSVC)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -156,70 +148,25 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source" FILES ${AFV_NA
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include/afv-native PREFIX "Headers" FILES ${AFV_NATIVE_HEADERS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/extern PREFIX "Third Party" FILES ${AFV_NATIVE_THIRDPARTY_SOURCES})
 
-if(WIN32)
-	set(OPUS_URL https://github.com/xpilot-project/opus/releases/download/xpilot/windows-opus.lib)
-	set(OPUS_LIBARY_PATH ${CMAKE_BINARY_DIR}/import/windows-opus.lib)
-	
-	set(PORTAUDIO_URL https://github.com/xpilot-project/portaudio/releases/download/xpilot/windows-portaudio_static_x64.lib)
-	set(PORTAUDIO_LIBRARY_PATH ${CMAKE_BINARY_DIR}/import/windows-portaudio_static_x64.lib)
-		
-	set(SPEEXDSP_URL https://github.com/xpilot-project/speexdsp/releases/download/xpilot/windows-speexdsp.lib)
-	set(SPEEXDSP_LIBRARY_PATH ${CMAKE_BINARY_DIR}/import/windows-speexdsp.lib)
 
-	file(DOWNLOAD ${OPUS_URL} ${OPUS_LIBARY_PATH})
-	file(DOWNLOAD ${PORTAUDIO_URL} ${PORTAUDIO_LIBRARY_PATH})
-	file(DOWNLOAD ${SPEEXDSP_URL} ${SPEEXDSP_LIBRARY_PATH})
+# Finding all the VCPKG packages
+find_package(OpenSSL REQUIRED)
+find_package(cpp-jwt CONFIG REQUIRED)
+find_package(CURL CONFIG REQUIRED)
+find_package(Libevent CONFIG REQUIRED)
+find_package(msgpack CONFIG REQUIRED)
+find_package(Opus CONFIG REQUIRED)
+find_package(portaudio CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+# Speexdsp does not have find_package
+if (UNIX)
+	find_library(SPEEXDSP_LIBRARY libspeexdsp.a)
 endif()
 
-if (UNIX AND NOT APPLE)
-
-	# Add here and define the path for opus, portaudio and speexdsp
-	# From libopus-dev
-	set(OPUS_LIBARY_PATH "/usr/lib/x86_64-linux-gnu/libopus.so")
-	# From portaudio19-dev
-	set(PORTAUDIO_LIBRARY_PATH "/usr/lib/x86_64-linux-gnu/libportaudio.so")
-	#set(OPUS_PORTAUDIO_LIBRARY_INCLUDE "/usr/lib/x86_64-linux-gnu/libportaudio.a")	
-	# From libspeexdsp-dev
-	set(SPEEXDSP_LIBRARY_PATH "/usr/lib/x86_64-linux-gnu/libspeexdsp.so")
-
+if (WIN32)
+	find_library(SPEEXDSP_LIBRARY libspeexdsp.lib)
 endif()
-
-if(APPLE)
-	execute_process(
-			COMMAND brew --prefix opus
-			RESULT_VARIABLE BREW_OPUS
-			OUTPUT_VARIABLE BREW_OPUS_PREFIX
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if (BREW_OPUS EQUAL 0 AND EXISTS "${BREW_OPUS_PREFIX}")
-        message(STATUS "Found Opus keg installed by Homebrew at ${BREW_OPUS_PREFIX}")
-        set(OPUS_LIBARY_PATH "${BREW_OPUS_PREFIX}/lib/libopus.a")
-		set(OPUS_LIBRARY_INCLUDE "${BREW_OPUS_PREFIX}/include")
-    endif()
-
-	execute_process(
-			COMMAND brew --prefix portaudio
-			RESULT_VARIABLE BREW_PORTAUDIO
-			OUTPUT_VARIABLE BREW_PORTAUDIO_PREFIX
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if (BREW_PORTAUDIO EQUAL 0 AND EXISTS "${BREW_PORTAUDIO_PREFIX}")
-        message(STATUS "Found PortAudio keg installed by Homebrew at ${BREW_PORTAUDIO_PREFIX}")
-        set(PORTAUDIO_LIBRARY_PATH "${BREW_PORTAUDIO_PREFIX}/lib/libportaudio.a")
-		set(PORTAUDIO_LIBRARY_INCLUDE "${BREW_PORTAUDIO_PREFIX}/include")
-    endif()
-		
-	execute_process(
-			COMMAND brew --prefix speexdsp
-			RESULT_VARIABLE BREW_SPEEX
-			OUTPUT_VARIABLE BREW_SPEEX_PREFIX
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if (BREW_SPEEX EQUAL 0 AND EXISTS "${BREW_SPEEX_PREFIX}")
-        message(STATUS "Found SpeexDSP keg installed by Homebrew at ${BREW_SPEEX_PREFIX}")
-        set(SPEEXDSP_LIBRARY_PATH "${BREW_SPEEX_PREFIX}/lib/libspeexdsp.a")
-		set(SPEEXDSP_LIBRARY_INCLUDE "${BREW_SPEEX_PREFIX}/include")
-    endif()
-endif()
-
-
 
 if(APPLE)
 	find_library(CORE_AUDIO CoreAudio)
@@ -229,43 +176,31 @@ if(APPLE)
 	find_library(CORE_SERVICES CoreServices)
 
 	target_link_libraries(afv_native
-		PUBLIC
-		CONAN_PKG::openssl
-		CONAN_PKG::msgpack
-		CONAN_PKG::nlohmann_json
-		CONAN_PKG::libcurl
-		CONAN_PKG::libevent
-		${OPUS_LIBARY_PATH}
-		${PORTAUDIO_LIBRARY_PATH}
-		${SPEEXDSP_LIBRARY_PATH}
+		PRIVATE
 		${CORE_AUDIO}
 		${AUDIO_TOOLBOX}
 		${AUDIO_UNIT}
 		${CORE_FOUNDATION}
 		${CORE_SERVICES})
-else()
-	target_link_libraries(afv_native
-		PUBLIC
-		CONAN_PKG::openssl
-		CONAN_PKG::msgpack
-		CONAN_PKG::nlohmann_json
-		CONAN_PKG::libcurl
-		CONAN_PKG::libevent
-		${OPUS_LIBARY_PATH}
-		${PORTAUDIO_LIBRARY_PATH}
-		${SPEEXDSP_LIBRARY_PATH})
 endif()
+
+target_link_libraries(afv_native
+		PRIVATE
+		OpenSSL::SSL OpenSSL::Crypto
+		cpp-jwt::cpp-jwt
+		CURL::libcurl
+		libevent::core libevent::extra libevent::pthreads
+		msgpackc msgpackc-cxx
+		Opus::opus
+		portaudio_static
+		nlohmann_json nlohmann_json::nlohmann_json
+		${SPEEXDSP_LIBRARY})
 
 target_include_directories(afv_native
 		PRIVATE
-		${CMAKE_SOURCE_DIR}/extern/cpp-jwt/include
 		${CMAKE_SOURCE_DIR}/extern/simpleSource
 		PUBLIC
 		${CMAKE_SOURCE_DIR}/include
-		${CMAKE_SOURCE_DIR}/extern
-		${SPEEXDSP_LIBRARY_INCLUDE}
-		${OPUS_LIBRARY_INCLUDE}
-		${PORTAUDIO_LIBRARY_INCLUDE}
 		${CMAKE_BINARY_DIR}/exports)
 
 if(MSVC)
@@ -279,24 +214,14 @@ set(AFV_EXPORT_HEADERS
 
 set_target_properties(afv_native
     PROPERTIES
-    PUBLIC_HEADER "${AFV_EXPORT_HEADERS}"
-)
+    PUBLIC_HEADER "${AFV_EXPORT_HEADERS}")
 
 install(TARGETS afv_native
 		RUNTIME DESTINATION bin
 		LIBRARY DESTINATION lib
 		ARCHIVE DESTINATION lib
-		PUBLIC_HEADER DESTINATION exports
-		)
+		PUBLIC_HEADER DESTINATION exports)
 
 generate_export_header(afv_native EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/exports/afv_native_export.h)
-
-#install(DIRECTORY "${CMAKE_SOURCE_DIR}/include" # source directory
-#		DESTINATION "." # target directory
-#		FILES_MATCHING # install only matched files
-#		PATTERN "*.h" # select header files
-#		)
-
-file(COPY ${AFV_EXPORT_HEADERS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/exports)
 
 set_target_properties(afv_native PROPERTIES OUTPUT_NAME "afv")
