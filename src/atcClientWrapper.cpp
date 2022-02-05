@@ -246,7 +246,10 @@ void afv_native::api::atcClient::UseTransceiversFromStation(std::string station,
 int afv_native::api::atcClient::GetTransceiverCountForStation(
     std::string station) {
   auto tcs = client->getStationTransceivers();
-  return tcs[station].size();
+  if (tcs.find(station) != tcs.end()) {
+    return tcs[station].size();
+  }
+  return 0;
 };
 
 void afv_native::api::atcClient::SetRadiosGain(float gain) {
