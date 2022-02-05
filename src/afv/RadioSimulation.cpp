@@ -575,8 +575,7 @@ void RadioSimulation::setEnableOutputEffects(bool enableEffects)
 void RadioSimulation::setEnableHfSquelch(bool enableSquelch)
 {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
-    for (auto& thisRadio : mRadioState)
-    {
+    for (auto& thisRadio : mRadioState) {
         thisRadio.mHfSquelch = enableSquelch;
     }
 }
