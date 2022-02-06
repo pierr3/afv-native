@@ -398,7 +398,7 @@ void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std:
         } else {
             for (const auto &sJson: jsReturn) {
                 try {
-                    ret.insert({sJson["name"], sJson["frequency"]});
+                    ret.insert({sJson["name"].get<std::string>(), sJson["frequency"].get<int>()});
                 } catch (nlohmann::json::exception &e) {
                     LOG("APISession", "couldn't decode vccs transceivers: %s", e.what());
                 }
