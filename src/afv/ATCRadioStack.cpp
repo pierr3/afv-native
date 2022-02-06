@@ -528,12 +528,14 @@ std::string ATCRadioStack::lastTransmitOnFreq(unsigned int freq)
 bool ATCRadioStack::getTxActive(unsigned int freq)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    if (!isFrequencyActive(freq)) return false;
     if(!mRadioState[freq].tx) return false;
     return mPtt.load();
 }
 bool ATCRadioStack::getRxActive(unsigned int freq)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    if (!isFrequencyActive(freq)) return false;
     if(!mRadioState[freq].rx) return false;
     return (mRadioState[freq].mLastRxCount >0);
 }
