@@ -162,9 +162,6 @@ find_package(nlohmann_json CONFIG REQUIRED)
 # Speexdsp does not have find_package
 if (UNIX)
 	find_library(SPEEXDSP_LIBRARY libspeexdsp.a)
-	if (NOT APPLE)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lGL")
-	endif()
 endif()
 
 if (WIN32)
