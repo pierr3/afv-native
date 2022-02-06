@@ -47,7 +47,7 @@ ATCClient::ATCClient(
 {
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
-    mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this));
+    mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
     mVoiceSession.StateCallback.addCallback(this, std::bind(&ATCClient::voiceStateCallback, this, std::placeholders::_1));
     mATCRadioStack->setupDevices(&ClientEventCallback);
 }
@@ -282,7 +282,6 @@ void ATCClient::sendTransceiverUpdate()
     auto transceiverDto = makeTransceiverDto();
     mTxUpdatePending = true;
 
- 
     mVoiceSession.postTransceiverUpdate(
             transceiverDto,
             [this](http::Request *r, bool success) {
@@ -301,6 +300,10 @@ void ATCClient::sendTransceiverUpdate()
             LOG("ATCClient", "Successfully cross coupled transceivers: %s", r->getResponseBody().c_str());
         }
     });
+
+    // We now also get an update on the transceivers for all active stations
+    // This is to handle child stations transceiver changes
+    //TODO
     
     mTransceiverUpdateTimer.enable(afv::afvATCTransceiverUpdateIntervalMs);
 }
@@ -443,20 +446,29 @@ void ATCClient::aliasUpdateCallback()
     ClientEventCallback.invokeAll(ClientEventType::StationAliasesUpdated, nullptr);
 }
 
-void ATCClient::stationTransceiversUpdateCallback()
+void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
 {
+
+    auto transceivers = getStationTransceivers();
     // We can now link any pending new transceivers if we had requested them
     if (linkNewTransceiversFrequencyFlag > 0) {
 
-        auto transceivers = getStationTransceivers();
-        if(transceivers[linkNewStationCallsign].size()>0)
-            this->linkTransceivers(linkNewStationCallsign, linkNewTransceiversFrequencyFlag);
+        if(transceivers[stationName].size()>0)
+            this->linkTransceivers(stationName, linkNewTransceiversFrequencyFlag);
         else
             LOG("ATCClient", "Tried to acquire new transceivers but did not find any for station");
 
 
         linkNewTransceiversFrequencyFlag = -1;
-        linkNewStationCallsign = "";
+    } else {
+        // We got new station transceivers that we don't need to link immediately, but can wait until the next transceiver update
+
+        auto transceivers = getStationTransceivers();
+        if(transceivers[stationName].size()>0)
+        {
+           // mATCRadioStack->setTransceivers(freq, transceivers[callsign]);
+        }
+
     }
 
     ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, nullptr);
@@ -552,12 +564,10 @@ void ATCClient::linkTransceivers(std::string callsign, unsigned int freq)
     {
         mATCRadioStack->setTransceivers(freq, transceivers[callsign]);
         queueTransceiverUpdate();
-        
     }
     else
     {
         linkNewTransceiversFrequencyFlag = freq;
-        linkNewStationCallsign = callsign;
         this->requestStationTransceivers(callsign);
     }
 }

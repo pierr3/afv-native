@@ -111,7 +111,7 @@ namespace afv_native
             */
             util::ChainedCallback<void(APISessionState)> StateCallback;
             util::ChainedCallback<void(void)> AliasUpdateCallback;
-			util::ChainedCallback<void(void)> StationTransceiversUpdateCallback;
+			util::ChainedCallback<void(std::string)> StationTransceiversUpdateCallback;
         protected:
             void _authenticationCallback(http::RESTRequest* req, bool success);
             void _stationsCallback(http::RESTRequest* req, bool success);

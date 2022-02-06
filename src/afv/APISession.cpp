@@ -387,7 +387,7 @@ void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool succe
                 }
             }
             LOG("APISession", "got %d station transceivers.", mStationTransceivers[stationName].size());
-            StationTransceiversUpdateCallback.invokeAll();
+            StationTransceiversUpdateCallback.invokeAll(stationName);
         }
     } else {
         if (!success) {

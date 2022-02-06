@@ -263,7 +263,7 @@ namespace afv_native {
         void stopTransceiverUpdate();
 
         void aliasUpdateCallback();
-        void stationTransceiversUpdateCallback();
+        void stationTransceiversUpdateCallback(std::string stationName);
         
     private:
         void unguardPtt();
@@ -278,7 +278,7 @@ namespace afv_native {
         std::string mAudioSpeakerDeviceName;
 
         int linkNewTransceiversFrequencyFlag = -1;
-        std::string linkNewStationCallsign = "";
+        std::map<std::string, unsigned int> mPendingTransceiverUpdates;
         
     public:
     };
