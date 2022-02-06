@@ -152,6 +152,11 @@ bool ATCRadioStack::_process_radio(
         std::map<void *, audio::SampleType[audio::frameSizeSamples]> &eqSampleCache,
                                      size_t rxIter, std::shared_ptr<OutputDeviceState> state)
 {
+    if (!isFrequencyActive(rxIter)) {
+        resetRadioFx(rxIter);
+        return false;
+    };
+
     ::memset(state->mChannelBuffer, 0, audio::frameSizeBytes);
     if (mPtt.load() && mRadioState[rxIter].tx) {
         // don't analyze and mix-in the radios transmitting, but suppress the
@@ -272,6 +277,8 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
         
         unsigned int freq = src.second.transceivers.front().Frequency;
         if(freq==0) continue;
+
+        if (!isFrequencyActive(freq)) continue;
   
         bool match = mRadioState[freq].onHeadset == onHeadset;
         bool positiveRTOverride = (!onHeadset && mRadioState[freq].onHeadset && mRT);
@@ -299,6 +306,8 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
 
     for (auto &radio: mRadioState)
     {
+        if (!isFrequencyActive(radio.first)) continue;
+
         bool match = radio.second.onHeadset == onHeadset;
         bool positiveRTOverride = (!onHeadset && radio.second.onHeadset && mRT);
         bool negativeRTOverride = (onHeadset && radio.second.onHeadset && mRT);
