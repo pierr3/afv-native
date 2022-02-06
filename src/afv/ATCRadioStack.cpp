@@ -538,7 +538,7 @@ bool ATCRadioStack::getRxActive(unsigned int freq)
     return (mRadioState[freq].mLastRxCount >0);
 }
 
-void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset)
+void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string statioName)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     {
@@ -548,6 +548,7 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset)
         mRadioState[freq].tx=false;
         mRadioState[freq].rx=true;
         mRadioState[freq].xc=false;
+        mRadioState[freq].stationName = statioName;
         mRadioState[freq].mBypassEffects=false;
     }
 }

@@ -303,8 +303,11 @@ void ATCClient::sendTransceiverUpdate()
 
     // We now also get an update on the transceivers for all active stations
     // This is to handle child stations transceiver changes
-    //TODO
-    
+    for (const auto &el : mATCRadioStack->mRadioState) {
+        if (el.second.stationName.size()>0)
+            this->requestStationTransceivers(el.second.stationName);
+    }
+
     mTransceiverUpdateTimer.enable(afv::afvATCTransceiverUpdateIntervalMs);
 }
 
@@ -458,7 +461,6 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
         else
             LOG("ATCClient", "Tried to acquire new transceivers but did not find any for station");
 
-
         linkNewTransceiversFrequencyFlag = -1;
     } else {
         // We got new station transceivers that we don't need to link immediately, but can wait until the next transceiver update
@@ -466,12 +468,17 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
         auto transceivers = getStationTransceivers();
         if(transceivers[stationName].size()>0)
         {
-           // mATCRadioStack->setTransceivers(freq, transceivers[callsign]);
+            auto it = std::find_if(mATCRadioStack->mRadioState.begin(), mATCRadioStack->mRadioState.end(), [stationName](const auto & t){
+                return t.second.stationName == stationName;
+            });
+            if (it != mATCRadioStack->mRadioState.end()) {
+                mATCRadioStack->setTransceivers(it->second.Frequency, transceivers[stationName]);
+            }
         }
 
     }
 
-    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, nullptr);
+    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, &stationName);
 }
 
 std::map<std::string, std::vector<afv::dto::StationTransceiver>> ATCClient::getStationTransceivers() const
@@ -543,9 +550,9 @@ void ATCClient::requestStationTransceivers(std::string inStation)
     mAPISession.requestStationTransceivers(inStation);
 }
 
-void ATCClient::addFrequency(unsigned int freq, bool onHeadset)
+void ATCClient::addFrequency(unsigned int freq, bool onHeadset, std::string stationName)
 {
-    mATCRadioStack->addFrequency(freq,  onHeadset);
+    mATCRadioStack->addFrequency(freq, onHeadset, stationName);
 }
 
 bool ATCClient::isFrequencyActive(unsigned int freq) {
@@ -576,6 +583,3 @@ void ATCClient::setTick(std::shared_ptr<audio::ITick> tick)
 {
     mATCRadioStack->setTick(tick);    
 }
-
-
-

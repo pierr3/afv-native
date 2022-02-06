@@ -100,6 +100,7 @@ namespace afv_native {
             bool tx = false;
             bool rx = false;
             bool xc = false;
+            std::string stationName = "";
             std::vector<dto::Transceiver> transceivers;
         };
 
@@ -121,7 +122,7 @@ namespace afv_native {
             void setUDPChannel(cryptodto::UDPChannel *newChannel);
             void setCallsign(const std::string &newCallsign);
             void setClientPosition(double lat, double lon, double amslm, double aglm);
-            void addFrequency(unsigned int freq, bool onHeadset);
+            void addFrequency(unsigned int freq, bool onHeadset, std::string statioName = "");
             void removeFrequency(unsigned int freq);
             bool isFrequencyActive(unsigned int freq);
             
@@ -160,6 +161,8 @@ namespace afv_native {
             void reset();
             
             std::atomic<uint32_t> IncomingAudioStreams;
+
+            std::map<unsigned int, ATCRadioState> mRadioState;
             
         protected:
             
@@ -174,7 +177,6 @@ namespace afv_native {
             std::map<std::string, struct CallsignMeta> mIncomingStreams;
             
             std::mutex mRadioStateLock;
-            std::map<unsigned int, ATCRadioState> mRadioState;
             
             std::atomic<bool> mPtt;
             std::atomic<bool> mRT;

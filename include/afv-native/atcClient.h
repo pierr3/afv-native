@@ -222,7 +222,7 @@ namespace afv_native {
          */
         void requestStationTransceivers(std::string inStation);
         
-        void addFrequency(unsigned int freq, bool onHeadset);
+        void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "");
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
         void linkTransceivers(std::string callsign, unsigned int freq);

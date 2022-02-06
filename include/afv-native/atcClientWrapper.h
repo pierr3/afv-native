@@ -65,7 +65,7 @@ namespace afv_native::api {
 
             AFV_NATIVE_EXPORT std::string LastTransmitOnFreq(unsigned int freq);
 
-            AFV_NATIVE_EXPORT void AddFrequency(unsigned int freq);
+            AFV_NATIVE_EXPORT void AddFrequency(unsigned int freq, std::string stationName = "");
             AFV_NATIVE_EXPORT void RemoveFrequency(unsigned int freq);
             AFV_NATIVE_EXPORT bool IsFrequencyActive(unsigned int freq);
     };

@@ -79,7 +79,7 @@ set(AFV_NATIVE_HEADERS
 	include/afv-native/util/ChainedCallback.h
 	include/afv-native/util/monotime.h
 	include/afv-native/utility.h
-	include/afv-native/AFVatcClientWrapper.h)
+	include/afv-native/atcClientWrapper.h)
 
 add_library(afv_native SHARED
 		${AFV_NATIVE_HEADERS}
@@ -141,7 +141,7 @@ add_library(afv_native SHARED
 		src/core/atcClient.cpp
 		src/core/atisClient.cpp
 		extern/simpleSource/SimpleLimit.h
-		src/AFVatcClientWrapper.cpp)
+		src/atcClientWrapper.cpp)
 		
 # organise sources in generated projects.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source" FILES ${AFV_NATIVE_SOURCES})
@@ -210,7 +210,7 @@ if(MSVC)
 endif()
 
 set(AFV_EXPORT_HEADERS 
-	include/afv-native/AFVatcClientWrapper.h)
+	include/afv-native/atcClientWrapper.h)
 
 set_target_properties(afv_native
     PROPERTIES

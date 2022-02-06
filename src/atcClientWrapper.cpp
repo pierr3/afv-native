@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <iterator> 
 
-#include "afv-native/AFVatcClientWrapper.h"
+#include "afv-native/atcClientWrapper.h"
 #include "afv-native/atcClient.h"
 #include <event2/event.h>
 
@@ -32,7 +32,7 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
         #endif
 
         ev_base = event_base_new();
-        // TODO: Add resource path based on platform
+
         client = std::make_unique<afv_native::ATCClient>(ev_base, resourcePath, clientName);
 
         keepAlive = true;
@@ -230,9 +230,9 @@ std::string afv_native::api::atcClient::LastTransmitOnFreq(unsigned int freq) {
     return client->lastTransmitOnFreq(freq);
 }
 
-void afv_native::api::atcClient::AddFrequency(unsigned int freq) {
+void afv_native::api::atcClient::AddFrequency(unsigned int freq, std::string stationName) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->addFrequency(freq, true);
+    client->addFrequency(freq, true, stationName);
 }
 
 void afv_native::api::atcClient::RemoveFrequency(unsigned int freq) {
