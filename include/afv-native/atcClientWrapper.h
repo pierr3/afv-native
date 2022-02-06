@@ -71,6 +71,6 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT void RemoveFrequency(unsigned int freq);
             AFV_NATIVE_EXPORT bool IsFrequencyActive(unsigned int freq);
 
-            AFV_NATIVE_EXPORT void RaiseClientEvent(void(*callback)(afv_native::ClientEventType evt, void* data, void* data2));
+            AFV_NATIVE_EXPORT void RaiseClientEvent(std::function<void(afv_native::ClientEventType, void*, void*)> callback);
     };
 }

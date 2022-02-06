@@ -249,7 +249,7 @@ bool afv_native::api::atcClient::IsFrequencyActive(unsigned int freq) {
     return client->isFrequencyActive(freq);
 }
 
-void afv_native::api::atcClient::RaiseClientEvent(void(*callback)(afv_native::ClientEventType evt, void* data, void* data2))
+void afv_native::api::atcClient::RaiseClientEvent(std::function<void(afv_native::ClientEventType, void*, void*)> callback)
 {
     client->ClientEventCallback.addCallback(nullptr, [callback](afv_native::ClientEventType evt, void* data, void* data2)
     {
