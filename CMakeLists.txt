@@ -165,7 +165,7 @@ if (UNIX)
 endif()
 
 if (WIN32)
-	find_library(SPEEXDSP_LIBRARY libspeexdsp.lib)
+	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
 endif()
 
 if(APPLE)
@@ -184,12 +184,16 @@ if(APPLE)
 		${CORE_SERVICES})
 endif()
 
+if (UNIX)
+	target_link_libraries(afv_native PRIVATE libevent::pthreads)
+endif()
+
 target_link_libraries(afv_native
 		PRIVATE
 		OpenSSL::SSL OpenSSL::Crypto
 		cpp-jwt::cpp-jwt
 		CURL::libcurl
-		libevent::core libevent::extra libevent::pthreads
+		libevent::core libevent::extra
 		msgpackc msgpackc-cxx
 		Opus::opus
 		portaudio_static
