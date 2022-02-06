@@ -542,12 +542,15 @@ bool ATCRadioStack::getRxActive(unsigned int freq)
 void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    mRadioState[freq].Frequency=freq;
-   
-    mRadioState[freq].onHeadset=onHeadset;
-    mRadioState[freq].tx=false;
-    mRadioState[freq].rx=true;
-    mRadioState[freq].mBypassEffects=false;
+    {
+        mRadioState[freq].Frequency=freq;
+    
+        mRadioState[freq].onHeadset=onHeadset;
+        mRadioState[freq].tx=false;
+        mRadioState[freq].rx=true;
+        mRadioState[freq].xc=false;
+        mRadioState[freq].mBypassEffects=false;
+    }
 }
 
 void ATCRadioStack::removeFrequency(unsigned int freq) {
@@ -584,43 +587,32 @@ void ATCRadioStack::setGain(unsigned int freq, float gain)
 
 void ATCRadioStack::setTx(unsigned int freq, bool tx)
 {
-    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    if (tx==false && mRadioState[freq].rx==false && mRadioState[freq].xc==false)
-    {
-        mRadioState.erase(freq);
-        return;
-    }
-    if(mRadioState[freq].tx==tx) return;
-    
-    mRadioState[freq].tx=tx;
-    mRadioState[freq].Frequency=freq;
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);    
+    mRadioState[freq].tx = tx;
+    remove_unused_frequency(freq);
 }
 
 void ATCRadioStack::setRx(unsigned int freq, bool rx)
 {
-    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    if (rx==false && mRadioState[freq].tx==false && mRadioState[freq].xc==false)
-    {
-        mRadioState.erase(freq);
-        return;
-    }
-    if(mRadioState[freq].rx==rx) return;
-    mRadioState[freq].rx=rx;
-    mRadioState[freq].Frequency=freq;
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);    
+    mRadioState[freq].rx = rx;
+    remove_unused_frequency(freq);
 }
 
 void ATCRadioStack::setXc(unsigned int freq, bool xc)
 {
-    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    if (xc==false && mRadioState[freq].rx==false && mRadioState[freq].tx==false)
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);    
+    mRadioState[freq].xc = xc;
+    remove_unused_frequency(freq);
+}
+
+void ATCRadioStack::remove_unused_frequency(unsigned int freq) {
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock); 
     {
-        mRadioState.erase(freq);
-        return;
+        if (!mRadioState[freq].xc && !mRadioState[freq].rx && !mRadioState[freq].tx) {
+            this->removeFrequency(freq);
+        }
     }
-    if(mRadioState[freq].xc==xc) return;
-    
-    mRadioState[freq].xc=xc;
-    mRadioState[freq].Frequency=freq;
 }
 
 void ATCRadioStack::setOnHeadset(unsigned int freq, bool onHeadset)

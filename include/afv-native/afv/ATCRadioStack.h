@@ -211,6 +211,8 @@ namespace afv_native {
             void set_radio_effects(size_t rxIter, float crackleGain, float &whiteNoiseGain);
             
         private:
+            void remove_unused_frequency(unsigned int freq);
+
             bool _process_radio(
                     const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache,
                     std::map<void *, audio::SampleType[audio::frameSizeSamples]> &eqSampleCache,
