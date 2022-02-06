@@ -198,9 +198,9 @@ target_link_libraries(afv_native
 
 target_include_directories(afv_native
 		PRIVATE
-		${CMAKE_SOURCE_DIR}/extern/simpleSource
+		${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource
 		PUBLIC
-		${CMAKE_SOURCE_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_BINARY_DIR}/exports)
 
 if(MSVC)
