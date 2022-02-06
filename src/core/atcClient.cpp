@@ -304,10 +304,10 @@ void ATCClient::sendTransceiverUpdate()
 
     // We now also get an update on the transceivers for all active stations
     // This is to handle child stations transceiver changes
-    for (const auto &el : mATCRadioStack->mRadioState) {
+    /*for (const auto &el : mATCRadioStack->mRadioState) {
         if (el.second.stationName.size()>0)
             this->requestStationTransceivers(el.second.stationName);
-    }
+    }*/
 
     mTransceiverUpdateTimer.enable(afv::afvATCTransceiverUpdateIntervalMs);
 }
@@ -459,6 +459,7 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
 {
 
     auto transceivers = getStationTransceivers();
+    LOG("ATCClient", "Receiving new transceivers for station %s", stationName.c_str());
     // We can now link any pending new transceivers if we had requested them
     if (linkNewTransceiversFrequencyFlag > 0) {
 
@@ -474,7 +475,7 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
         auto transceivers = getStationTransceivers();
         if(transceivers[stationName].size()>0)
         {
-            auto it = std::find_if(mATCRadioStack->mRadioState.begin(), mATCRadioStack->mRadioState.end(), [stationName](const auto & t){
+            auto it = std::find_if(mATCRadioStack->mRadioState.begin(), mATCRadioStack->mRadioState.end(), [&stationName](const auto & t){
                 return t.second.stationName == stationName;
             });
             if (it != mATCRadioStack->mRadioState.end()) {
@@ -586,6 +587,7 @@ void ATCClient::linkTransceivers(std::string callsign, unsigned int freq)
     {
         linkNewTransceiversFrequencyFlag = freq;
         this->requestStationTransceivers(callsign);
+        LOG("ATCClient", "Need to fetch transceivers for station %s", callsign.c_str());
     }
 }
 

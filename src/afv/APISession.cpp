@@ -352,42 +352,42 @@ std::vector<dto::Station> APISession::getStationAliases() const
     return mAliasedStations;
 }
 
-void APISession::requestStationTransceivers(std::string stationName)
+void APISession::requestStationTransceivers(std::string stdName)
 {
     if(mState!=APISessionState::Running) return;
     
     /* start the authentication request */
     mStationTransceiversRequest.reset();
-    mStationTransceiversRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stationName + "/transceivers/allDistinctObeyExclusions");
+    mStationTransceiversRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stdName + "/transceivers/allDistinctObeyExclusions");
     setAuthenticationFor(mStationTransceiversRequest);
     mStationTransceiversRequest.setCompletionCallback(
-            [this,stationName](http::Request *req, bool success) {
+            [this,stdName](http::Request *req, bool success) {
                 auto restreq = dynamic_cast<http::RESTRequest *>(req);
                 assert(restreq != nullptr); // shouldn't be possible
-                this->_stationTransceiversCallback(restreq, success, stationName);
+                this->_stationTransceiversCallback(restreq, success, stdName);
             });
     mStationTransceiversRequest.shareState(mTransferManager);
     mStationTransceiversRequest.doAsync(mTransferManager);
 }
 
-void APISession::requestStationVccs(std::string stationName) {
+void APISession::requestStationVccs(std::string stdName) {
         if(mState!=APISessionState::Running) return;
     
     /* start the authentication request */
     mVccsRequest.reset();
-    mVccsRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stationName + "/vccsStations");
+    mVccsRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stdName + "/vccsStations");
     setAuthenticationFor(mVccsRequest);
     mVccsRequest.setCompletionCallback(
-            [this, stationName](http::Request *req, bool success) {
+            [this, stdName](http::Request *req, bool success) {
                 auto restreq = dynamic_cast<http::RESTRequest *>(req);
                 assert(restreq != nullptr); // shouldn't be possible
-                this->_stationVccsCallback(restreq, success, stationName);
+                this->_stationVccsCallback(restreq, success, stdName);
             });
     mVccsRequest.shareState(mTransferManager);
     mVccsRequest.doAsync(mTransferManager);
 }
 
-void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std::string stationName) {
+void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std::string stdName) {
     if (success && req->getStatusCode() == 200) {
         auto jsReturn = req->getResponse();
 
@@ -405,7 +405,7 @@ void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std:
             }
         }
     
-        StationVccsCallback.invokeAll(stationName, ret);
+        StationVccsCallback.invokeAll(stdName, ret);
     }  else {
         if (!success) {
             LOG("APISession", "curl internal error during station vccs retrieval: %s", req->getCurlError().c_str());
@@ -413,9 +413,10 @@ void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std:
             LOG("APISession", "got error from API server getting vccs: Response Code %d", req->getStatusCode());
         }
     }
+    mVccsRequest.reset();
 }
 
-void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName)
+void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stdName)
 {
     if (success && req->getStatusCode() == 200) {
         auto jsReturn = req->getResponse();
@@ -423,19 +424,19 @@ void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool succe
         if (!jsReturn.is_array()) {
             LOG("APISession", "station transceivers data returned wasn't an array.  Ignoring.");
         } else {
-            mStationTransceivers[stationName].clear();
+            mStationTransceivers[stdName].clear();
             
             for (const auto &sJson: jsReturn) {
                 dto::StationTransceiver st;
                 try {
                     sJson.get_to(st);
-                    mStationTransceivers[stationName].emplace_back(st);
+                    mStationTransceivers[stdName].emplace_back(st);
                 } catch (nlohmann::json::exception &e) {
                     LOG("APISession", "couldn't decode station transceivers: %s", e.what());
                 }
             }
-            LOG("APISession", "got %d station transceivers.", mStationTransceivers[stationName].size());
-            StationTransceiversUpdateCallback.invokeAll(stationName);
+            LOG("APISession", "got %d station transceivers for station %s.", mStationTransceivers[stdName].size(), stdName.c_str());
+            StationTransceiversUpdateCallback.invokeAll(stdName);
         }
     } else {
         if (!success) {
@@ -446,7 +447,7 @@ void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool succe
         }
     }
     // cleanup and remove
-    //mStationTransceiversRequest.reset();
+    mStationTransceiversRequest.reset();
 }
 
 std::map<std::string, std::vector<dto::StationTransceiver>> APISession::getStationTransceivers() const
