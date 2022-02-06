@@ -431,9 +431,7 @@ std::vector<afv::dto::CrossCoupleGroup> ATCRadioStack::makeCrossCoupleGroupDto()
         }
     }
 
-    std::vector<afv::dto::CrossCoupleGroup> bucket;
-    bucket.push_back(group);
-    return std::move(bucket);
+    return { group };
 }
 
 
@@ -536,6 +534,7 @@ bool ATCRadioStack::getTxActive(unsigned int freq)
 bool ATCRadioStack::getRxActive(unsigned int freq)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    if(!mRadioState[freq].rx) return false;
     return (mRadioState[freq].mLastRxCount >0);
 }
 
