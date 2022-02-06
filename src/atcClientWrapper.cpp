@@ -221,6 +221,10 @@ void afv_native::api::atcClient::FetchTransceiverInfo(std::string station) {
     client->requestStationTransceivers(station);
 }
 
+void afv_native::api::atcClient::FetchStationVccs(std::string station) {
+    client->requestStationVccs(station);
+}
+
 void afv_native::api::atcClient::SetPtt(bool pttState) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setPtt(pttState);
@@ -243,4 +247,12 @@ void afv_native::api::atcClient::RemoveFrequency(unsigned int freq) {
 bool afv_native::api::atcClient::IsFrequencyActive(unsigned int freq) {
     std::lock_guard<std::mutex> lock(afvMutex);
     return client->isFrequencyActive(freq);
+}
+
+void afv_native::api::atcClient::RaiseClientEvent(void(*callback)(afv_native::ClientEventType evt, void* data, void* data2))
+{
+    client->ClientEventCallback.addCallback(nullptr, [callback](afv_native::ClientEventType evt, void* data, void* data2)
+    {
+        callback(evt, data, data2);
+    });
 }

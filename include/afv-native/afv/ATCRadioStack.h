@@ -115,7 +115,7 @@ namespace afv_native {
                           std::shared_ptr<EffectResources> resources,
                           cryptodto::UDPChannel *channel);
             virtual ~ATCRadioStack();
-            void setupDevices(util::ChainedCallback<void(ClientEventType,void*)> * eventCallback);
+            void setupDevices(util::ChainedCallback<void(ClientEventType,void*,void*)> * eventCallback);
             void rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt);
             void setPtt(bool pressed);
             void setRT(bool active);
@@ -171,7 +171,7 @@ namespace afv_native {
             cryptodto::UDPChannel *mChannel;
             std::string mCallsign;
             
-            util::ChainedCallback<void(ClientEventType,void*)>  * ClientEventCallback;
+            util::ChainedCallback<void(ClientEventType,void*, void*)>  * ClientEventCallback;
             
             std::mutex mStreamMapLock;
             std::map<std::string, struct CallsignMeta> mIncomingStreams;

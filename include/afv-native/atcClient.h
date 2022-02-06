@@ -175,7 +175,7 @@ namespace afv_native {
          * The second argument is a pointer to data relevant to the callback.  The memory it points to is only
          * guaranteed to be available for the duration of the callback.
          */
-        util::ChainedCallback<void(ClientEventType,void*)>  ClientEventCallback;
+        util::ChainedCallback<void(ClientEventType,void*,void*)>  ClientEventCallback;
 
         /** getStationAliases returns a vector of all the known station aliases.
          *
@@ -221,6 +221,8 @@ namespace afv_native {
          *  @param inStation the name of the station to list the transceivers
          */
         void requestStationTransceivers(std::string inStation);
+
+        void requestStationVccs(std::string inStation);
         
         void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "");
         void removeFrequency(unsigned int freq);
@@ -264,6 +266,7 @@ namespace afv_native {
 
         void aliasUpdateCallback();
         void stationTransceiversUpdateCallback(std::string stationName);
+        void stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs);
         
     private:
         void unguardPtt();

@@ -65,7 +65,10 @@ APISession::APISession(event_base* evBase, http::TransferManager& tm, std::strin
     mStationAliasRequest(mBaseURL + "/api/v1/stations/aliased", http::Method::GET, nullptr),
     mState(APISessionState::Disconnected),
 	mStationTransceiversRequest(mBaseURL, http::Method::GET, nullptr),
-	StationTransceiversUpdateCallback()
+	StationTransceiversUpdateCallback(),
+    StationVccsCallback(),
+    mStationSearchRequest(mBaseURL, http::Method::GET, nullptr),
+    mVccsRequest(mBaseURL, http::Method::GET, nullptr)
 {
 }
 
@@ -365,6 +368,51 @@ void APISession::requestStationTransceivers(std::string stationName)
             });
     mStationTransceiversRequest.shareState(mTransferManager);
     mStationTransceiversRequest.doAsync(mTransferManager);
+}
+
+void APISession::requestStationVccs(std::string stationName) {
+        if(mState!=APISessionState::Running) return;
+    
+    /* start the authentication request */
+    mVccsRequest.reset();
+    mVccsRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stationName + "/vccsStations");
+    setAuthenticationFor(mVccsRequest);
+    mVccsRequest.setCompletionCallback(
+            [this, stationName](http::Request *req, bool success) {
+                auto restreq = dynamic_cast<http::RESTRequest *>(req);
+                assert(restreq != nullptr); // shouldn't be possible
+                this->_stationVccsCallback(restreq, success, stationName);
+            });
+    mVccsRequest.shareState(mTransferManager);
+    mVccsRequest.doAsync(mTransferManager);
+}
+
+void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std::string stationName) {
+    if (success && req->getStatusCode() == 200) {
+        auto jsReturn = req->getResponse();
+
+        std::map<std::string, unsigned int> ret;
+
+        if (!jsReturn.is_array()) {
+            LOG("APISession", "station vccs data returned wasn't an array.  Ignoring.");
+        } else {
+            for (const auto &sJson: jsReturn) {
+                try {
+                    ret.insert({sJson["name"], sJson["frequency"]});
+                } catch (nlohmann::json::exception &e) {
+                    LOG("APISession", "couldn't decode vccs transceivers: %s", e.what());
+                }
+            }
+        }
+    
+        StationVccsCallback.invokeAll(stationName, ret);
+    }  else {
+        if (!success) {
+            LOG("APISession", "curl internal error during station vccs retrieval: %s", req->getCurlError().c_str());
+        } else {
+            LOG("APISession", "got error from API server getting vccs: Response Code %d", req->getStatusCode());
+        }
+    }
 }
 
 void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName)

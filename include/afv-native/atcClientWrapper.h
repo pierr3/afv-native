@@ -1,5 +1,6 @@
 #pragma once
 #include "afv_native_export.h"
+#include "event.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -58,6 +59,7 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT void UseTransceiversFromStation(std::string station, int freq);
 
             AFV_NATIVE_EXPORT void FetchTransceiverInfo(std::string station);
+            AFV_NATIVE_EXPORT void FetchStationVccs(std::string station);
 
             AFV_NATIVE_EXPORT int GetTransceiverCountForStation(std::string station);
 
@@ -68,5 +70,7 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT void AddFrequency(unsigned int freq, std::string stationName = "");
             AFV_NATIVE_EXPORT void RemoveFrequency(unsigned int freq);
             AFV_NATIVE_EXPORT bool IsFrequencyActive(unsigned int freq);
+
+            AFV_NATIVE_EXPORT void RaiseClientEvent(void(*callback)(afv_native::ClientEventType evt, void* data, void* data2));
     };
 }

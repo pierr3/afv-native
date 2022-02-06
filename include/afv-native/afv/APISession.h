@@ -37,6 +37,7 @@
 #include <string>
 #include <memory>
 #include <event2/event.h>
+#include <map>
 
 #include "afv-native/afv/dto/Station.h"
 #include "afv-native/afv/dto/StationTransceiver.h"
@@ -103,6 +104,7 @@ namespace afv_native
 
             void updateStationAliases();
             void requestStationTransceivers(std::string stationName);
+            void requestStationVccs(std::string stationName);
             std::vector<dto::Station> getStationAliases() const;
 			std::map<std::string, std::vector<dto::StationTransceiver>> getStationTransceivers() const;
 
@@ -112,10 +114,12 @@ namespace afv_native
             util::ChainedCallback<void(APISessionState)> StateCallback;
             util::ChainedCallback<void(void)> AliasUpdateCallback;
 			util::ChainedCallback<void(std::string)> StationTransceiversUpdateCallback;
+            util::ChainedCallback<void(std::string, std::map<std::string, unsigned int>)> StationVccsCallback;
         protected:
             void _authenticationCallback(http::RESTRequest* req, bool success);
             void _stationsCallback(http::RESTRequest* req, bool success);
 			void _stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName);
+            void _stationVccsCallback(http::RESTRequest* req, bool success, std::string stationName);
             void setState(APISessionState newState);
             void raiseError(APISessionError error);
 
@@ -136,6 +140,8 @@ namespace afv_native
 
             http::RESTRequest mStationAliasRequest;
 			http::RESTRequest mStationTransceiversRequest;
+            http::RESTRequest mStationSearchRequest;
+            http::RESTRequest mVccsRequest;
             std::vector<dto::Station> mAliasedStations;
 			std::map<std::string, std::vector<dto::StationTransceiver>> mStationTransceivers;
         private:

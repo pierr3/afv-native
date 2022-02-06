@@ -210,7 +210,8 @@ if(MSVC)
 endif()
 
 set(AFV_EXPORT_HEADERS 
-	include/afv-native/atcClientWrapper.h)
+	include/afv-native/atcClientWrapper.h
+	include/afv-native/event.h)
 
 set_target_properties(afv_native
     PROPERTIES

@@ -51,7 +51,8 @@ namespace afv_native {
         RxClosed, // data is a pointer to an unsigned int containing the frequency
         AudioError,
         RxStarted,
-        RxStopped
+        RxStopped,
+        VccsReceived
     };
 }
 

@@ -88,7 +88,7 @@ ATCRadioStack::~ATCRadioStack()
 //    delete[] AudiableAudioStreams;
 }
 
-void ATCRadioStack::setupDevices(util::ChainedCallback<void(ClientEventType,void*)> * eventCallback)
+void ATCRadioStack::setupDevices(util::ChainedCallback<void(ClientEventType,void*, void*)> * eventCallback)
 {
     mHeadsetDevice = std::make_shared<OutputAudioDevice> (shared_from_this(),true);
     mSpeakerDevice = std::make_shared<OutputAudioDevice> (shared_from_this(),false);
@@ -205,7 +205,7 @@ bool ATCRadioStack::_process_radio(
         {
             //Post Begin Voice Receiving Notfication
             unsigned int freq = rxIter;
-            ClientEventCallback->invokeAll(ClientEventType::RxOpen, &freq);
+            ClientEventCallback->invokeAll(ClientEventType::RxOpen, &freq, nullptr);
         }
         if (!mRadioState[rxIter].mBypassEffects) {
             // if FX are enabled, and we muxed any streams, eq the buffer now to apply the bandwidth simulation,
@@ -239,7 +239,7 @@ bool ATCRadioStack::_process_radio(
             mRadioState[rxIter].Click = std::make_shared<audio::RecordedSampleSource>(mResources->mClick, false);
             //Post End Voice Receiving Notification
             unsigned int freq = rxIter;
-            ClientEventCallback->invokeAll(ClientEventType::RxClosed, &freq);
+            ClientEventCallback->invokeAll(ClientEventType::RxClosed, &freq, nullptr);
         }
     }
     mRadioState[rxIter].mLastRxCount = concurrentStreams;

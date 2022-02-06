@@ -48,6 +48,7 @@ ATCClient::ATCClient(
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
+    mAPISession.StationVccsCallback.addCallback(this, std::bind(&ATCClient::stationVccsCallback, this, std::placeholders::_1, std::placeholders::_2));
     mVoiceSession.StateCallback.addCallback(this, std::bind(&ATCClient::voiceStateCallback, this, std::placeholders::_1));
     mATCRadioStack->setupDevices(&ClientEventCallback);
 }
@@ -150,7 +151,7 @@ void ATCClient::voiceStateCallback(afv::VoiceSessionState state)
             startAudio();
         }
         queueTransceiverUpdate();
-        ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnected, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnected, nullptr, nullptr);
         break;
     case afv::VoiceSessionState::Disconnected:
         LOG("afv::ATCClient", "Voice Session Disconnected");
@@ -159,7 +160,7 @@ void ATCClient::voiceStateCallback(afv::VoiceSessionState state)
         // bring down the API session too.
         mAPISession.Disconnect();
         mATCRadioStack->reset();
-        ClientEventCallback.invokeAll(ClientEventType::VoiceServerDisconnected, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::VoiceServerDisconnected, nullptr, nullptr);
         break;
     case afv::VoiceSessionState::Error:
         LOG("afv::ATCClient", "got error from voice session");
@@ -171,9 +172,9 @@ void ATCClient::voiceStateCallback(afv::VoiceSessionState state)
         voiceError = mVoiceSession.getLastError();
         if (voiceError == afv::VoiceSessionError::UDPChannelError) {
             channelErrno = mVoiceSession.getUDPChannel().getLastErrno();
-            ClientEventCallback.invokeAll(ClientEventType::VoiceServerChannelError, &channelErrno);
+            ClientEventCallback.invokeAll(ClientEventType::VoiceServerChannelError, &channelErrno, nullptr);
         } else {
-            ClientEventCallback.invokeAll(ClientEventType::VoiceServerError, &voiceError);
+            ClientEventCallback.invokeAll(ClientEventType::VoiceServerError, &voiceError, nullptr);
         }
         break;
     }
@@ -193,18 +194,18 @@ void ATCClient::sessionStateCallback(afv::APISessionState state)
             mVoiceSession.Connect();
             mAPISession.updateStationAliases();
         }
-        ClientEventCallback.invokeAll(ClientEventType::APIServerConnected, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::APIServerConnected, nullptr, nullptr);
         break;
     case afv::APISessionState::Disconnected:
         LOG("afv_native::ATCClient", "Disconnected from AFV API Server.  Terminating sessions");
         // because we only ever commence a normal API Session teardown from a voicesession hook,
         // we don't need to call into voiceSession in this case only.
-        ClientEventCallback.invokeAll(ClientEventType::APIServerDisconnected, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::APIServerDisconnected, nullptr, nullptr);
         break;
     case afv::APISessionState::Error:
         LOG("afv_native::ATCClient", "Got error from AFV API Server.  Disconnecting session");
         sessionError = mAPISession.getLastError();
-        ClientEventCallback.invokeAll(ClientEventType::APIServerError, &sessionError);
+        ClientEventCallback.invokeAll(ClientEventType::APIServerError, &sessionError, nullptr);
         break;
     default:
         // ignore the other transitions.
@@ -230,7 +231,7 @@ void ATCClient::startAudio()
         if (!mSpeakerDevice->open()) {
             LOG("afv::ATCClient", "Unable to open Speaker audio device.");
             stopAudio();
-            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr);
+            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
         };
     
     
@@ -250,7 +251,7 @@ void ATCClient::startAudio()
     if (!mAudioDevice->open()) {
         LOG("afv::ATCClient", "Unable to open Headset audio device.");
         stopAudio();
-        ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
     };
     
 
@@ -327,7 +328,7 @@ void ATCClient::unguardPtt()
         LOG("ATCClient", "PTT was guarded - checking.");
         mPtt = true;
         mATCRadioStack->setPtt(true);
-        ClientEventCallback.invokeAll(ClientEventType::PttOpen, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::PttOpen, nullptr, nullptr);
     }
 }
 
@@ -354,10 +355,10 @@ void ATCClient::setPtt(bool pttState)
     mATCRadioStack->setPtt(mPtt);
     if (mPtt) {
         LOG("Client", "Opened PTT");
-        ClientEventCallback.invokeAll(ClientEventType::PttOpen, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::PttOpen, nullptr, nullptr);
     } else if (!mWantPtt) {
         LOG("Client", "Closed PTT");
-        ClientEventCallback.invokeAll(ClientEventType::PttClosed, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::PttClosed, nullptr, nullptr);
     }
 }
 
@@ -446,7 +447,12 @@ void ATCClient::setEnableOutputEffects(bool enableEffects)
 
 void ATCClient::aliasUpdateCallback()
 {
-    ClientEventCallback.invokeAll(ClientEventType::StationAliasesUpdated, nullptr);
+    ClientEventCallback.invokeAll(ClientEventType::StationAliasesUpdated, nullptr, nullptr);
+}
+
+void ATCClient::stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs)
+{
+    ClientEventCallback.invokeAll(ClientEventType::VccsReceived, &stationName, &vccs);
 }
 
 void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
@@ -478,7 +484,7 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
 
     }
 
-    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, &stationName);
+    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, &stationName, nullptr);
 }
 
 std::map<std::string, std::vector<afv::dto::StationTransceiver>> ATCClient::getStationTransceivers() const
@@ -548,6 +554,10 @@ void ATCClient::setOnHeadset(unsigned int freq, bool onHeadset)
 void ATCClient::requestStationTransceivers(std::string inStation)
 {
     mAPISession.requestStationTransceivers(inStation);
+}
+
+void ATCClient::requestStationVccs(std::string inStation) {
+    mAPISession.requestStationVccs(inStation);
 }
 
 void ATCClient::addFrequency(unsigned int freq, bool onHeadset, std::string stationName)
