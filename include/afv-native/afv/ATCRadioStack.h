@@ -9,7 +9,10 @@
 #define ATCRadioStack_h
 
 #include <memory>
-#include <unordered_map>
+#include <map>
+#include <vector>
+#include <filesystem>
+#include <thread>
 #include <event2/event.h>
 
 #include "afv-native/event.h"
@@ -118,6 +121,8 @@ namespace afv_native {
             void setupDevices(util::ChainedCallback<void(ClientEventType,void*,void*)> * eventCallback);
             void rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt);
             void setPtt(bool pressed);
+            void setRecordAtis(bool pressed);
+            bool getAtisRecording();
             void setRT(bool active);
             void setUDPChannel(cryptodto::UDPChannel *newChannel);
             void setCallsign(const std::string &newCallsign);
@@ -147,6 +152,10 @@ namespace afv_native {
             
             bool getEnableInputFilters() const;
             void setEnableInputFilters(bool enableInputFilters);
+
+            std::vector<const audio::SampleType*> getRecordedAtisBuffer();
+
+            bool saveAtisBufferToFile(std::string resourcePath);
 
             void setEnableOutputEffects(bool enableEffects);
             std::string lastTransmitOnFreq(unsigned int freq);
@@ -180,7 +189,10 @@ namespace afv_native {
             
             std::atomic<bool> mPtt;
             std::atomic<bool> mRT;
+            std::atomic<bool> mAtisRecord;
             bool mLastFramePtt;
+
+            std::vector<const audio::SampleType*> atisRecordingBuffer;
             
             std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
             std::shared_ptr<OutputAudioDevice> mHeadsetDevice;

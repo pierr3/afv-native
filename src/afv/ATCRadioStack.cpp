@@ -61,6 +61,7 @@ ATCRadioStack::ATCRadioStack(struct event_base * evBase,
     mEvBase(evBase),
     mChannel(),
     mPtt(false),
+    mAtisRecord(false),
     mRT(false),
     IncomingAudioStreams(0),
     mResources(std::move(resources)),
@@ -461,6 +462,12 @@ void ATCRadioStack::putAudioFrame(const audio::SampleType *bufferIn)
         peakDb = std::min(0.0, peakDb);
         mVuMeter.addDatum(peakDb);
     }
+
+    if (!mPtt.load() && !mLastFramePtt && mAtisRecord.load()) {
+        // Capture the packets to record to file
+        atisRecordingBuffer.push_back(bufferIn);
+        return;
+    }
     if (!mPtt.load() && !mLastFramePtt) {
         // Tick the sequence over when we have no Ptt as the compressed endpoint wont' get called to do that.
         std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
@@ -515,6 +522,19 @@ void ATCRadioStack::setPtt(bool pressed)
     mPtt.store(pressed);
 }
 
+void ATCRadioStack::setRecordAtis(bool pressed) 
+{
+    // If we start recording, we clear the buffer and start again
+    if (pressed)
+        atisRecordingBuffer.clear();
+    
+    mAtisRecord.store(pressed);
+}
+
+bool ATCRadioStack::getAtisRecording() {
+    return mAtisRecord.load();
+}
+
 void ATCRadioStack::setRT(bool active)
 {
     mRT.store(active);
@@ -523,6 +543,30 @@ void ATCRadioStack::setRT(bool active)
 double ATCRadioStack::getVu() const
 {
     return std::max(-40.0, mVuMeter.getAverage());
+}
+
+std::vector<const audio::SampleType*> ATCRadioStack::getRecordedAtisBuffer()
+{
+    if (!mAtisRecord.load()) {
+        return std::move(atisRecordingBuffer);
+    }
+    return {};
+}
+
+bool ATCRadioStack::saveAtisBufferToFile(std::string resourcePath) {
+    if (!mAtisRecord.load()) {
+        auto buffer = this->getRecordedAtisBuffer();
+        auto t = std::thread([resourcePath, buffer](){
+            if(std::FILE* f1 = std::fopen(resourcePath.c_str(), "wb")) {
+                std::fwrite(buffer.data(), sizeof buffer[0], buffer.size(), f1);
+                std::fclose(f1);
+            }
+        });
+        t.detach();
+        return true;
+    }
+
+    return false;
 }
 
 double ATCRadioStack::getPeak() const

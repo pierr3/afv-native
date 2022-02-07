@@ -38,6 +38,7 @@ ATCClient::ATCClient(
         mTxUpdatePending(false),
         mWantPtt(false),
         mPtt(false),
+        mAtisRecording(false),
         mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)),
         mClientName(clientName),
         mAudioApi(0),
@@ -269,6 +270,8 @@ void ATCClient::stopAudio()
     }
 }
 
+
+
 std::vector<afv::dto::Transceiver> ATCClient::makeTransceiverDto()
 {
     return std::move(mATCRadioStack->makeTransceiverDto());
@@ -330,6 +333,21 @@ void ATCClient::unguardPtt()
         mATCRadioStack->setPtt(true);
         ClientEventCallback.invokeAll(ClientEventType::PttOpen, nullptr, nullptr);
     }
+}
+
+void ATCClient::setRecordAtis(bool state) {
+    if (!mPtt) {
+        mAtisRecording = !mAtisRecording;
+        mATCRadioStack->setRecordAtis(mAtisRecording);
+    }
+}
+
+bool ATCClient::isAtisRecording() {
+    return mAtisRecording;
+}
+
+bool ATCClient::saveAtisFile(std::string path) {
+    return mATCRadioStack->saveAtisBufferToFile(path);
 }
 
 void ATCClient::setPtt(bool pttState)

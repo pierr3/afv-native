@@ -66,6 +66,10 @@ namespace afv_native::api {
 
             AFV_NATIVE_EXPORT void SetPtt(bool pttState);
 
+            AFV_NATIVE_EXPORT void SetAtisRecording(bool state);
+            AFV_NATIVE_EXPORT bool IsAtisRecording();
+            AFV_NATIVE_EXPORT bool SaveAtisRecording(std::string path);
+
             AFV_NATIVE_EXPORT std::string LastTransmitOnFreq(unsigned int freq);
 
             AFV_NATIVE_EXPORT void AddFrequency(unsigned int freq, std::string stationName = "");

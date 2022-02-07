@@ -102,8 +102,12 @@ namespace afv_native {
          * @param pttState true to start transmitting, false otherwise.
          */
         void setPtt(bool pttState);
+
+        void setRecordAtis(bool atisRecordState);
+        bool isAtisRecording();
         
-        
+        bool saveAtisFile(std::string resourcePath);
+
         void setRT(bool rtState);
         
         void setOnHeadset(unsigned int freq, bool onHeadset);
@@ -252,6 +256,7 @@ namespace afv_native {
         bool mTxUpdatePending;
         bool mWantPtt;
         bool mPtt;
+        bool mAtisRecording;
 
         
         std::vector<afv::dto::Transceiver> makeTransceiverDto();
