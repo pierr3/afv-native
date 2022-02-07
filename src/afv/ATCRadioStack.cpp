@@ -558,7 +558,7 @@ bool ATCRadioStack::saveAtisBufferToFile(std::string resourcePath) {
         auto buffer = this->getRecordedAtisBuffer();
         auto t = std::thread([resourcePath, buffer](){
             if(std::FILE* f1 = std::fopen(resourcePath.c_str(), "wb")) {
-                std::fwrite(buffer.data(), audio::frameSizeSamples, buffer.size(), f1);
+                std::fwrite(buffer.data(), audio::frameSizeBytes, buffer.size(), f1);
                 std::fclose(f1);
             }
         });
