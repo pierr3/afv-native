@@ -185,7 +185,11 @@ if(APPLE)
 endif()
 
 if (UNIX)
-	target_link_libraries(afv_native PRIVATE libevent::pthreads)
+	target_link_libraries(afv_native PRIVATE portaudio_static libevent::pthreads)
+endif()
+
+if (WIN32)
+	target_link_libraries(afv_native PRIVATE portaudio)
 endif()
 
 target_link_libraries(afv_native
@@ -196,7 +200,6 @@ target_link_libraries(afv_native
 		libevent::core libevent::extra
 		msgpackc msgpackc-cxx
 		Opus::opus
-		portaudio_static
 		nlohmann_json nlohmann_json::nlohmann_json
 		${SPEEXDSP_LIBRARY})
 
