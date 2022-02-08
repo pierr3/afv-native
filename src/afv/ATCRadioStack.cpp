@@ -466,6 +466,7 @@ void ATCRadioStack::putAudioFrame(const audio::SampleType *bufferIn)
     if (!mPtt.load() && !mLastFramePtt && mAtisRecord.load()) {
         // Capture the packets to record to file
         atisRecordingBuffer.push_back(bufferIn);
+        std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
         return;
     }
     if (!mPtt.load() && !mLastFramePtt) {
