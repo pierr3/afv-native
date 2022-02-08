@@ -564,7 +564,7 @@ bool ATCRadioStack::saveAtisBufferToFile(std::string resourcePath) {
                 outBuffer.push_back(static_cast<int16_t>(32767.0 * *sample));
 
             if(std::FILE* f1 = std::fopen(resourcePath.c_str(), "wb")) {
-                std::fwrite(outBuffer.data(), sizeof outBuffer[0], outBuffer.size(), f1);
+                std::fwrite(outBuffer.data(), audio::frameSizeSamples, outBuffer.size(), f1);
                 std::fclose(f1);
             }
         });
