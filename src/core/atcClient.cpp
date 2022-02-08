@@ -300,8 +300,6 @@ void ATCClient::sendTransceiverUpdate()
     [this](http::Request *r, bool success) {
         if (!success) {
             LOG("ATCClient", "Failed to post cross couple transceivers update with code %s", std::to_string(r->getStatusCode()).c_str());
-        } else {
-            LOG("ATCClient", "Successfully cross coupled transceivers: %s", r->getResponseBody().c_str());
         }
     });
 

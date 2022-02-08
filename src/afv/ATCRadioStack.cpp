@@ -432,7 +432,7 @@ std::vector<afv::dto::CrossCoupleGroup> ATCRadioStack::makeCrossCoupleGroupDto()
     for (auto &state: mRadioState)
     {
         // There are transceivers and they need to be coupled
-        if(state.second.transceivers.size()!=0 && state.second.xc)
+        if(state.second.transceivers.size()!=0 && state.second.xc && state.second.tx)
         {
             for (auto &trans: state.second.transceivers)
             {
