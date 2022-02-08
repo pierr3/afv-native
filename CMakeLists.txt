@@ -165,7 +165,7 @@ if (UNIX)
 endif()
 
 if (WIN32)
-	find_library(SPEEXDSP_LIBRARY speexdsp.dll)
+	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
 endif()
 
 if(APPLE)

@@ -556,9 +556,15 @@ std::vector<const audio::SampleType*> ATCRadioStack::getRecordedAtisBuffer()
 bool ATCRadioStack::saveAtisBufferToFile(std::string resourcePath) {
     if (!mAtisRecord.load()) {
         auto buffer = this->getRecordedAtisBuffer();
+        
         auto t = std::thread([resourcePath, buffer](){
+            std::vector<int16_t> outBuffer;
+            // Convert to 16bit signed PCM
+            for (auto &sample : buffer)
+                outBuffer.push_back(static_cast<int16_t>(32767.0 * *sample));
+
             if(std::FILE* f1 = std::fopen(resourcePath.c_str(), "wb")) {
-                std::fwrite(buffer.data(), audio::frameSizeBytes, buffer.size(), f1);
+                std::fwrite(outBuffer.data(), sizeof outBuffer[0], outBuffer.size(), f1);
                 std::fclose(f1);
             }
         });
