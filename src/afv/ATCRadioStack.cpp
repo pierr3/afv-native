@@ -553,28 +553,6 @@ std::vector<const audio::SampleType*> ATCRadioStack::getRecordedAtisBuffer()
     return {};
 }
 
-bool ATCRadioStack::saveAtisBufferToFile(std::string resourcePath) {
-    if (!mAtisRecord.load()) {
-        auto buffer = this->getRecordedAtisBuffer();
-        
-        auto t = std::thread([resourcePath, buffer](){
-            std::vector<int16_t> outBuffer;
-            // Convert to 16bit signed PCM
-            for (auto &sample : buffer)
-                outBuffer.push_back(static_cast<int16_t>(32767.0 * *sample));
-
-            if(std::FILE* f1 = std::fopen(resourcePath.c_str(), "wb")) {
-                std::fwrite(outBuffer.data(), audio::frameSizeSamples, outBuffer.size(), f1);
-                std::fclose(f1);
-            }
-        });
-        t.detach();
-        return true;
-    }
-
-    return false;
-}
-
 double ATCRadioStack::getPeak() const
 {
     return std::max(-40.0, mVuMeter.getMax());

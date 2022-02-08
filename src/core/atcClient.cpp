@@ -344,10 +344,6 @@ bool ATCClient::isAtisRecording() {
     return mAtisRecording;
 }
 
-bool ATCClient::saveAtisFile(std::string path) {
-    return mATCRadioStack->saveAtisBufferToFile(path);
-}
-
 void ATCClient::setPtt(bool pttState)
 {
     if (pttState) {

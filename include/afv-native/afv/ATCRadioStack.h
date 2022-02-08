@@ -155,8 +155,6 @@ namespace afv_native {
 
             std::vector<const audio::SampleType*> getRecordedAtisBuffer();
 
-            bool saveAtisBufferToFile(std::string resourcePath);
-
             void setEnableOutputEffects(bool enableEffects);
             std::string lastTransmitOnFreq(unsigned int freq);
             std::shared_ptr<audio::ISampleSource> speakerDevice() { return mSpeakerDevice; }

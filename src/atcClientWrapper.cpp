@@ -256,10 +256,6 @@ bool afv_native::api::atcClient::IsAtisRecording() {
     return client->isAtisRecording();
 }
 
-bool afv_native::api::atcClient::SaveAtisRecording(std::string path) {
-    return client->saveAtisFile(path);
-}
-
 void afv_native::api::atcClient::RaiseClientEvent(std::function<void(afv_native::ClientEventType, void*, void*)> callback)
 {
     client->ClientEventCallback.addCallback(nullptr, [callback](afv_native::ClientEventType evt, void* data, void* data2)

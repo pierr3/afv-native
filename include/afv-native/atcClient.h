@@ -105,8 +105,6 @@ namespace afv_native {
 
         void setRecordAtis(bool atisRecordState);
         bool isAtisRecording();
-        
-        bool saveAtisFile(std::string resourcePath);
 
         void setRT(bool rtState);
         
