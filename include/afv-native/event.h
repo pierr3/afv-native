@@ -52,7 +52,8 @@ namespace afv_native {
         AudioError,
         RxStarted,
         RxStopped,
-        VccsReceived
+        VccsReceived,
+        StationSearchReceived
     };
 }
 

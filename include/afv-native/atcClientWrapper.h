@@ -61,6 +61,7 @@ namespace afv_native::api {
 
             AFV_NATIVE_EXPORT void FetchTransceiverInfo(std::string station);
             AFV_NATIVE_EXPORT void FetchStationVccs(std::string station);
+            AFV_NATIVE_EXPORT void SearchStation(std::string station, unsigned int freq = 0);
 
             AFV_NATIVE_EXPORT int GetTransceiverCountForStation(std::string station);
 

@@ -105,6 +105,7 @@ namespace afv_native
             void updateStationAliases();
             void requestStationTransceivers(std::string stationName);
             void requestStationVccs(std::string stationName);
+            void searchForStation(std::string stationName, unsigned int freq = 0);
             std::vector<dto::Station> getStationAliases() const;
 			std::map<std::string, std::vector<dto::StationTransceiver>> getStationTransceivers() const;
 
@@ -115,11 +116,13 @@ namespace afv_native
             util::ChainedCallback<void(void)> AliasUpdateCallback;
 			util::ChainedCallback<void(std::string)> StationTransceiversUpdateCallback;
             util::ChainedCallback<void(std::string, std::map<std::string, unsigned int>)> StationVccsCallback;
+            util::ChainedCallback<void(bool, std::pair<std::string, unsigned int>)> StationSearchCallback;
         protected:
             void _authenticationCallback(http::RESTRequest* req, bool success);
             void _stationsCallback(http::RESTRequest* req, bool success);
 			void _stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName);
             void _stationVccsCallback(http::RESTRequest* req, bool success, std::string stationName);
+            void _stationSearchCallback(http::RESTRequest* req, bool success, std::string stationName, unsigned int freq);
             void setState(APISessionState newState);
             void raiseError(APISessionError error);
 

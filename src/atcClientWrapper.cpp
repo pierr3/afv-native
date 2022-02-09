@@ -221,6 +221,10 @@ void afv_native::api::atcClient::FetchTransceiverInfo(std::string station) {
     client->requestStationTransceivers(station);
 }
 
+void afv_native::api::atcClient::SearchStation(std::string station, unsigned int freq) {
+    client->searchForStation(station, freq);
+}
+
 void afv_native::api::atcClient::FetchStationVccs(std::string station) {
     client->requestStationVccs(station);
 }

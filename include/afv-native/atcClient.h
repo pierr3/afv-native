@@ -239,6 +239,8 @@ namespace afv_native {
         void linkTransceivers(std::string callsign, unsigned int freq);
         
         void setTick(std::shared_ptr<audio::ITick> tick);
+
+        void searchForStation(std::string callsign, unsigned int freq = 0);
         
         std::shared_ptr<audio::AudioDevice> mAudioDevice;
     protected:
@@ -277,7 +279,11 @@ namespace afv_native {
         void aliasUpdateCallback();
         void stationTransceiversUpdateCallback(std::string stationName);
         void stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs);
+
+        void stationSearchCallback(bool found, std::pair<std::string, unsigned int> data);
         
+        
+
     private:
         void unguardPtt();
     protected:

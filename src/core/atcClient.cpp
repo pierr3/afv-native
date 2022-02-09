@@ -50,6 +50,7 @@ ATCClient::ATCClient(
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
     mAPISession.StationVccsCallback.addCallback(this, std::bind(&ATCClient::stationVccsCallback, this, std::placeholders::_1, std::placeholders::_2));
+    mAPISession.StationSearchCallback.addCallback(this, std::bind(&ATCClient::stationSearchCallback, this, std::placeholders::_1, std::placeholders::_2));
     mVoiceSession.StateCallback.addCallback(this, std::bind(&ATCClient::voiceStateCallback, this, std::placeholders::_1));
     mATCRadioStack->setupDevices(&ClientEventCallback);
 }
@@ -491,6 +492,15 @@ void ATCClient::stationVccsCallback(std::string stationName, std::map<std::strin
     ClientEventCallback.invokeAll(ClientEventType::VccsReceived, &stationName, &vccs);
 }
 
+void ATCClient::stationSearchCallback(bool found, std::pair<std::string, unsigned int> data)
+{
+    ClientEventCallback.invokeAll(ClientEventType::StationSearchReceived, &found, &data);
+}
+
+void ATCClient::searchForStation(std::string callsign, unsigned int freq) {
+    mAPISession.searchForStation(callsign, freq);
+}
+
 void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
 {
 
@@ -528,7 +538,6 @@ std::map<std::string, std::vector<afv::dto::StationTransceiver>> ATCClient::getS
 {
     return mAPISession.getStationTransceivers();   
 }
-
 
 std::vector<afv::dto::Station> ATCClient::getStationAliases() const
 {
