@@ -62,10 +62,12 @@ ATCRadioStack::ATCRadioStack(struct event_base * evBase,
     mChannel(),
     mPtt(false),
     mAtisRecord(false),
+    mAtisPlayback(false),
     mRT(false),
     IncomingAudioStreams(0),
     mResources(std::move(resources)),
     mStreamMapLock(),
+    cacheNum(0),
     mIncomingStreams(),
     mLastFramePtt(false),
     mRadioStateLock(),
@@ -463,15 +465,15 @@ void ATCRadioStack::putAudioFrame(const audio::SampleType *bufferIn)
         mVuMeter.addDatum(peakDb);
     }
 
-    if (!mPtt.load() && !mLastFramePtt && mAtisRecord.load()) {
-        // Capture the packets to record to file
-        atisRecordingBuffer.push_back(bufferIn);
-        std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
-        return;
+    if (mAtisPlayback.load()) {
+        this->sendCachedAtisFrame();
     }
-    if (!mPtt.load() && !mLastFramePtt) {
-        // Tick the sequence over when we have no Ptt as the compressed endpoint wont' get called to do that.
-        std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
+
+    if (!mPtt.load() && !mLastFramePtt && !mAtisRecord.load()) {
+        // Tick the sequence over when we have no Ptt as the compressed endpoint wont' get called to do that. 
+        // If the ATIS is playing back, then that's done above
+        if(!mAtisPlayback.load())
+            std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
         return;
     }
     if (mVoiceFilter) {
@@ -490,6 +492,12 @@ void ATCRadioStack::putAudioFrame(const audio::SampleType *bufferIn)
 void ATCRadioStack::processCompressedFrame(std::vector<unsigned char> compressedData)
 {
     
+    // We're recording the ATIS, we just store the frame and stop there
+    if (mAtisRecord.load()) {
+        mStoredAtisData.push_back(compressedData);
+        return;
+    }
+
     if (mChannel != nullptr && mChannel->isOpen()) {
         dto::AudioTxOnTransceivers audioOutDto;
         {
@@ -526,14 +534,86 @@ void ATCRadioStack::setPtt(bool pressed)
 void ATCRadioStack::setRecordAtis(bool pressed) 
 {
     // If we start recording, we clear the buffer and start again
-    if (pressed)
-        atisRecordingBuffer.clear();
+    if (pressed && !getAtisRecording())
+        mStoredAtisData.clear();
     
     mAtisRecord.store(pressed);
 }
 
 bool ATCRadioStack::getAtisRecording() {
     return mAtisRecord.load();
+}
+
+void ATCRadioStack::startAtisPlayback(std::string atisCallsign) {
+    if (!mAtisRecord.load()) {
+        mAtisCallsign = atisCallsign;
+        mAtisPlayback.store(true);
+    }
+}
+
+void ATCRadioStack::stopAtisPlayback() {
+    mAtisPlayback.store(false);
+    mAtisCallsign = "";
+    // Remove atis stations from active frequencies
+    std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
+    {
+        auto iter = mRadioState.begin();
+        auto endIter = mRadioState.end();
+
+        for(; iter != endIter; ) {
+            if (iter->second.isAtis) {
+                iter = mRadioState.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+    }
+}
+
+bool ATCRadioStack::isAtisPlayingBack() {
+    return mAtisPlayback.load();
+}
+
+void ATCRadioStack::listenToAtis(bool state) {
+    std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
+    for (auto &radio: mRadioState)
+    {
+        if (radio.second.isAtis)
+            radio.second.rx = state;
+    }
+};
+
+bool ATCRadioStack::isAtisListening() {
+    for (auto &radio: mRadioState)
+    {
+        if (radio.second.isAtis && radio.second.rx)
+            return true;
+    }
+    return false;
+};
+
+void ATCRadioStack::sendCachedAtisFrame() {
+    if (mChannel != nullptr && mChannel->isOpen()) {
+        dto::AudioTxOnTransceivers audioOutDto;
+        {
+            std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
+
+            for (auto &radio: mRadioState)
+            {
+                for(auto &trans : radio.second.transceivers)
+                {
+                    if(radio.second.isAtis) audioOutDto.Transceivers.emplace_back(trans.ID);
+                }
+            }
+        }
+        audioOutDto.SequenceCounter = std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
+        audioOutDto.Callsign = mAtisCallsign;
+        audioOutDto.Audio = mStoredAtisData[cacheNum];
+        cacheNum++;
+        if(cacheNum > mStoredAtisData.size()) cacheNum=0;
+        
+        mChannel->sendDto(audioOutDto);
+    }
 }
 
 void ATCRadioStack::setRT(bool active)
@@ -544,14 +624,6 @@ void ATCRadioStack::setRT(bool active)
 double ATCRadioStack::getVu() const
 {
     return std::max(-40.0, mVuMeter.getAverage());
-}
-
-std::vector<const audio::SampleType*> ATCRadioStack::getRecordedAtisBuffer()
-{
-    if (!mAtisRecord.load()) {
-        return std::move(atisRecordingBuffer);
-    }
-    return {};
 }
 
 double ATCRadioStack::getPeak() const
@@ -578,7 +650,7 @@ bool ATCRadioStack::getRxActive(unsigned int freq)
     return (mRadioState[freq].mLastRxCount >0);
 }
 
-void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string statioName)
+void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string stationName)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     {
@@ -588,8 +660,13 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string 
         mRadioState[freq].tx=false;
         mRadioState[freq].rx=true;
         mRadioState[freq].xc=false;
-        mRadioState[freq].stationName = statioName;
+        mRadioState[freq].stationName = stationName;
         mRadioState[freq].mBypassEffects=false;
+
+        if (stationName.find("_ATIS") != std::string::npos) {
+            mRadioState[freq].isAtis = true;
+            mRadioState[freq].rx = false;
+        }
     }
 }
 
@@ -653,7 +730,7 @@ void ATCRadioStack::setXc(unsigned int freq, bool xc)
 }
 
 void ATCRadioStack::remove_unused_frequency(unsigned int freq) {
-    if (!mRadioState[freq].xc && !mRadioState[freq].rx && !mRadioState[freq].tx) {
+    if (!mRadioState[freq].xc && !mRadioState[freq].rx && !mRadioState[freq].tx && !mRadioState[freq].isAtis) {
         mRadioState.erase(freq);
     }
 }

@@ -334,7 +334,7 @@ void ATCClient::unguardPtt()
 }
 
 void ATCClient::setRecordAtis(bool state) {
-    if (!mPtt) {
+    if (!mPtt && mAudioDevice) {
         mAtisRecording = !mAtisRecording;
         mATCRadioStack->setRecordAtis(mAtisRecording);
     }
@@ -343,6 +343,30 @@ void ATCClient::setRecordAtis(bool state) {
 bool ATCClient::isAtisRecording() {
     return mAtisRecording;
 }
+
+void ATCClient::startAtisPlayback(std::string atisCallsign, unsigned int freq) {
+    if (!isAtisRecording() && isVoiceConnected()) {
+        this->addFrequency(freq, true, atisCallsign);
+        this->linkTransceivers(atisCallsign, freq);
+        mATCRadioStack->startAtisPlayback(atisCallsign);
+    }
+};
+
+void ATCClient::stopAtisPlayback() {
+    mATCRadioStack->stopAtisPlayback();
+};
+
+bool ATCClient::isAtisPlayingBack() {
+    return mATCRadioStack->isAtisPlayingBack();
+};
+
+void ATCClient::listenToAtis(bool state) {
+    mATCRadioStack->listenToAtis(state);
+};
+
+bool ATCClient::isAtisListening() {
+    return mATCRadioStack->isAtisListening();
+};
 
 void ATCClient::setPtt(bool pttState)
 {

@@ -103,6 +103,7 @@ namespace afv_native {
             bool tx = false;
             bool rx = false;
             bool xc = false;
+            bool isAtis = false;
             std::string stationName = "";
             std::vector<dto::Transceiver> transceivers;
         };
@@ -127,7 +128,7 @@ namespace afv_native {
             void setUDPChannel(cryptodto::UDPChannel *newChannel);
             void setCallsign(const std::string &newCallsign);
             void setClientPosition(double lat, double lon, double amslm, double aglm);
-            void addFrequency(unsigned int freq, bool onHeadset, std::string statioName = "");
+            void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "");
             void removeFrequency(unsigned int freq);
             bool isFrequencyActive(unsigned int freq);
             
@@ -141,6 +142,13 @@ namespace afv_native {
             void setRx(unsigned int freq, bool rx);
             void setTx(unsigned int freq, bool tx);
             void setXc(unsigned int freq, bool xc);
+
+            void startAtisPlayback(std::string atisCallsign);
+            void stopAtisPlayback();
+            bool isAtisPlayingBack();
+
+            void listenToAtis(bool state);
+            bool isAtisListening();
             
             void setTick(std::shared_ptr<audio::ITick> tick);
             
@@ -153,8 +161,6 @@ namespace afv_native {
             bool getEnableInputFilters() const;
             void setEnableInputFilters(bool enableInputFilters);
 
-            std::vector<const audio::SampleType*> getRecordedAtisBuffer();
-
             void setEnableOutputEffects(bool enableEffects);
             std::string lastTransmitOnFreq(unsigned int freq);
             std::shared_ptr<audio::ISampleSource> speakerDevice() { return mSpeakerDevice; }
@@ -163,6 +169,8 @@ namespace afv_native {
             audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut, bool onHeadset);
             void putAudioFrame(const audio::SampleType *bufferIn) override;
             
+            void sendCachedAtisFrame();
+
             double getVu() const;
             double getPeak() const;
             void reset();
@@ -188,9 +196,11 @@ namespace afv_native {
             std::atomic<bool> mPtt;
             std::atomic<bool> mRT;
             std::atomic<bool> mAtisRecord;
+            std::atomic<bool> mAtisPlayback;
             bool mLastFramePtt;
+            std::string mAtisCallsign;
 
-            std::vector<const audio::SampleType*> atisRecordingBuffer;
+            std::vector<std::vector<unsigned char>> mStoredAtisData;
             
             std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
             std::shared_ptr<OutputAudioDevice> mHeadsetDevice;
@@ -217,7 +227,8 @@ namespace afv_native {
             double mClientAltitudeMSLM;
             double mClientAltitudeGLM;
 
-            
+            unsigned int cacheNum;
+
             void resetRadioFx(unsigned int radio, bool except_click = false);
             bool mix_effect(std::shared_ptr<audio::ISampleSource> effect, float gain, std::shared_ptr<OutputDeviceState> state);
             void set_radio_effects(size_t rxIter, float crackleGain, float &whiteNoiseGain);

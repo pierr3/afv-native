@@ -106,6 +106,13 @@ namespace afv_native {
         void setRecordAtis(bool atisRecordState);
         bool isAtisRecording();
 
+        void startAtisPlayback(std::string atisCallsign, unsigned int freq);
+        void stopAtisPlayback();
+        bool isAtisPlayingBack();
+
+        void listenToAtis(bool state);
+        bool isAtisListening();
+
         void setRT(bool rtState);
         
         void setOnHeadset(unsigned int freq, bool onHeadset);

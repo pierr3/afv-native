@@ -249,11 +249,35 @@ bool afv_native::api::atcClient::IsFrequencyActive(unsigned int freq) {
 }
 
 void afv_native::api::atcClient::SetAtisRecording(bool state) {
+    std::lock_guard<std::mutex> lock(afvMutex);
     client->setRecordAtis(state);
 }
 
 bool afv_native::api::atcClient::IsAtisRecording() {
     return client->isAtisRecording();
+}
+
+void afv_native::api::atcClient::SetAtisListening(bool state) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->listenToAtis(state);
+}
+
+bool afv_native::api::atcClient::IsAtisListening() {
+    return client->isAtisListening();
+}
+
+void afv_native::api::atcClient::StartAtisPlayback(std::string callsign, unsigned int freq) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->startAtisPlayback(callsign, freq);
+}
+
+void afv_native::api::atcClient::StopAtisPlayback() {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->stopAtisPlayback();
+}
+
+bool afv_native::api::atcClient::IsAtisPlayingBack() {
+    return client->isAtisPlayingBack();
 }
 
 void afv_native::api::atcClient::RaiseClientEvent(std::function<void(afv_native::ClientEventType, void*, void*)> callback)

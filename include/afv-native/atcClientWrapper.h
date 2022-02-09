@@ -69,6 +69,13 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT void SetAtisRecording(bool state);
             AFV_NATIVE_EXPORT bool IsAtisRecording();
 
+            AFV_NATIVE_EXPORT void SetAtisListening(bool state);
+            AFV_NATIVE_EXPORT bool IsAtisListening();
+
+            AFV_NATIVE_EXPORT void StartAtisPlayback(std::string callsign, unsigned int freq);
+            AFV_NATIVE_EXPORT void StopAtisPlayback();
+            AFV_NATIVE_EXPORT bool IsAtisPlayingBack();
+
             AFV_NATIVE_EXPORT std::string LastTransmitOnFreq(unsigned int freq);
 
             AFV_NATIVE_EXPORT void AddFrequency(unsigned int freq, std::string stationName = "");
