@@ -106,7 +106,7 @@ RadioSimulation::RadioSimulation(
  */
 void RadioSimulation::putAudioFrame(const audio::SampleType *bufferIn)
 {
-    audio::SampleType *samples = new audio::SampleType[audio::frameSizeSamples];
+    audio::SampleType samples[audio::frameSizeSamples];
     mVoiceFilter->transformFrame(samples, bufferIn);
 
     float value = 0;
