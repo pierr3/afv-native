@@ -50,6 +50,8 @@ const float fxBlockToneFreq = 180.0f;
 const float fxAcBusGain = 0.0028f;
 const float fxVhfWhiteNoiseGain = 0.17f;
 const float fxHfWhiteNoiseGain = 0.16f;
+const double minDb = -40.0;
+const double maxDb = 0.0;
 
 CallsignMeta::CallsignMeta():
         source(),
@@ -130,9 +132,14 @@ void RadioSimulation::putAudioFrame(const audio::SampleType *bufferIn)
             peak = std::max<audio::SampleType>(peak, fabs(*(b++)));
         }
         double peakDb = 20.0 * log10(peak);
-        peakDb = std::max(-40.0, peakDb);
-        peakDb = std::min(0.0, peakDb);
-        mVuMeter.addDatum(peakDb);
+        peakDb = std::max(minDb, peakDb);
+        peakDb = std::min(maxDb, peakDb);
+        double ratio = (peakDb - minDb) / (maxDb - minDb);
+        if(ratio < 0.30)
+            ratio = 0;
+        if(ratio > 1.0)
+            ratio = 1;
+        mVuMeter.addDatum(ratio);
     }
 
     if (!mPtt.load() && !mLastFramePtt) {
