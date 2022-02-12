@@ -23,7 +23,7 @@ const float fxClickGain = 1.3f;
 
 const float fxBlockToneGain = 0.25f;
 
-const float fxWhiteNoiseGain = 0.02f;
+const float fxWhiteNoiseGain = 0.01f;
 
 const float fxBlockToneFreq = 180.0f;
 
