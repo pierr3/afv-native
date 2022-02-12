@@ -19,11 +19,11 @@
 using namespace afv_native;
 using namespace afv_native::afv;
 
-const float fxClickGain = 1.0f;
+const float fxClickGain = 1.3f;
 
-const float fxBlockToneGain = 0.22f;
+const float fxBlockToneGain = 0.25f;
 
-const float fxWhiteNoiseGain = 0.01f;
+const float fxWhiteNoiseGain = 0.17f;
 
 const float fxBlockToneFreq = 180.0f;
 
@@ -184,12 +184,12 @@ bool ATCRadioStack::_process_radio(
 
                 float crackleFactor = 0.0f;
                 if (!mRadioState[rxIter].mBypassEffects) {
-                    crackleFactor = static_cast<float>(
-                            (exp(tx.DistanceRatio) * pow(tx.DistanceRatio, -2.5) / 350.0) - 0.00776652);
+                    crackleFactor = static_cast<float>((exp(tx.DistanceRatio) * pow(tx.DistanceRatio, -4.0) / 350.0) - 0.00776652);
                     crackleFactor = fmax(0.0f, crackleFactor);
-                    crackleFactor = fmin(0.15f, crackleFactor);
+                    crackleFactor = fmin(0.20f, crackleFactor);
 
-                    crackleGain += crackleFactor;
+                    crackleGain += crackleFactor * 2;
+                    voiceGain = 1.0 - crackleFactor * 3.7;
                 }
                 break; // matched once.  dont' bother anymore.
             }

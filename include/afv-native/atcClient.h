@@ -8,7 +8,6 @@
 #ifndef atcClient_h
 #define atcClient_h
 
-#include "afv-native/afv/RadioSimulation.h"
 #include "afv-native/afv/ATCRadioStack.h"
 
 #include <memory>
