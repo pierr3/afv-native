@@ -299,8 +299,18 @@ bool RadioSimulation::_process_radio(
 
     if (concurrentStreams > 0) {
         if (!mRadioState[rxIter].mBypassEffects) {
-            // if FX are enabled, and we muxed any streams, eq the buffer now to apply the bandwidth simulation,
-            // but don't interfere with the effects.
+
+            mRadioState[rxIter].simpleCompressorEffect.transformFrame(mChannelBuffer, mChannelBuffer);
+
+            // limiter effect
+            for(unsigned int i = 0; i < audio::frameSizeSamples; i++)
+            {
+                if(mChannelBuffer[i] > 1.0f)
+                    mChannelBuffer[i] = 1.0f;
+                if(mChannelBuffer[i] < -1.0f)
+                    mChannelBuffer[i] = -1.0f;
+            }
+
             mRadioState[rxIter].vhfFilter.transformFrame(mChannelBuffer, mChannelBuffer);
 
             set_radio_effects(rxIter);
