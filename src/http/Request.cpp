@@ -111,6 +111,7 @@ bool Request::setupHandle()
     curl_easy_setopt(mCurlHandle, CURLOPT_ERRORBUFFER, mCurlErrorBuffer);
     curl_easy_setopt(mCurlHandle, CURLOPT_USERAGENT, "AFV-Native/1.0");
     curl_easy_setopt(mCurlHandle, CURLOPT_NOPROGRESS, 0);
+    curl_easy_setopt(mCurlHandle, CURLOPT_NOSIGNAL, 1);
     curl_easy_setopt(mCurlHandle, CURLOPT_XFERINFOFUNCTION, curlTransferInfoCallback);
     curl_easy_setopt(mCurlHandle, CURLOPT_XFERINFODATA, this);
     curl_easy_setopt(mCurlHandle, CURLOPT_READFUNCTION, curlReadCallback);
