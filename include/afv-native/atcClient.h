@@ -116,6 +116,8 @@ namespace afv_native {
         
         void setOnHeadset(unsigned int freq, bool onHeadset);
 
+        void setRadioGainAll(float gain);
+
         /** setCredentials sets the user Credentials for this client.
          *
          * @note This only affects future attempts to connect.

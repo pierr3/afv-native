@@ -450,6 +450,10 @@ void ATCClient::setRadioGain(unsigned int freq, float gain)
     mATCRadioStack->setGain(freq, gain);
 }
 
+void ATCClient::setRadioGainAll(float gain)
+{
+    mATCRadioStack->setGainAll(gain);
+}
 
 bool ATCClient::getEnableInputFilters() const
 {

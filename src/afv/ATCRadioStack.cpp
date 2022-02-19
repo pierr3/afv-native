@@ -113,8 +113,7 @@ void ATCRadioStack::resetRadioFx(unsigned int freq, bool except_click)
     mRadioState[freq].Crackle.reset();
 }
 
-void
-ATCRadioStack::mix_buffers(audio::SampleType * RESTRICT src_dst, const audio::SampleType * RESTRICT src2, float src2_gain)
+void ATCRadioStack::mix_buffers(audio::SampleType * RESTRICT src_dst, const audio::SampleType * RESTRICT src2, float src2_gain)
 {
     for (int i = 0; i < audio::frameSizeSamples; i++) {
         src_dst[i] += (src2_gain * src2[i]);
@@ -700,6 +699,14 @@ void ATCRadioStack::setGain(unsigned int freq, float gain)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     mRadioState[freq].Gain=gain;
+}
+
+void ATCRadioStack::setGainAll(float gain)
+{
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    for (auto radio : mRadioState) {
+        mRadioState[radio.first].Gain = gain;
+    }
 }
 
 void ATCRadioStack::setTx(unsigned int freq, bool tx)

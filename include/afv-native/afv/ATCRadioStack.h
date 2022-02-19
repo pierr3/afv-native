@@ -157,6 +157,7 @@ namespace afv_native {
             std::vector<afv::dto::CrossCoupleGroup> makeCrossCoupleGroupDto();
             void setOnHeadset(unsigned int freq, bool onHeadset);
             void setGain(unsigned int freq, float gain);
+            void setGainAll(float gain);
             
             bool getEnableInputFilters() const;
             void setEnableInputFilters(bool enableInputFilters);
