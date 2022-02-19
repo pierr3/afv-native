@@ -115,6 +115,7 @@ namespace afv_native {
         void setRT(bool rtState);
         
         void setOnHeadset(unsigned int freq, bool onHeadset);
+        bool getOnHeadset(unsigned int freq);
 
         void setRadioGainAll(float gain);
 

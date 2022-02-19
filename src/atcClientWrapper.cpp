@@ -24,11 +24,11 @@ namespace atcapi
 using namespace atcapi;
 
 afv_native::api::atcClient::atcClient(std::string clientName, std::string resourcePath) {
-     #ifdef WIN32
-        WORD wVersionRequested;
-        WSADATA wsaData;
-        wVersionRequested = MAKEWORD(2, 2);
-        WSAStartup(wVersionRequested, &wsaData);
+        #ifdef WIN32
+            WORD wVersionRequested;
+            WSADATA wsaData;
+            wVersionRequested = MAKEWORD(2, 2);
+            WSAStartup(wVersionRequested, &wsaData);
         #endif
 
         ev_base = event_base_new();
@@ -57,7 +57,7 @@ afv_native::api::atcClient::~atcClient() {
     client.reset();
     isInitialized = false;
     #ifdef WIN32
-    WSACleanup();
+        WSACleanup();
     #endif
 }
 
@@ -190,6 +190,15 @@ void afv_native::api::atcClient::SetRx(unsigned int freq, bool active) {
 void afv_native::api::atcClient::SetXc(unsigned int freq, bool active) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setXc(freq, active);
+}
+
+void afv_native::api::atcClient::SetOnHeadset(unsigned int freq, bool active) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setOnHeadset(freq, active);
+}
+
+bool afv_native::api::atcClient::GetOnHeadset(unsigned int freq) {
+    return client->getOnHeadset(freq);
 }
 
 bool afv_native::api::atcClient::GetTxActive(unsigned int freq) {

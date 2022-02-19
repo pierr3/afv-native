@@ -598,7 +598,11 @@ bool ATCClient::GetRxState(unsigned int freq) {
 void ATCClient::setOnHeadset(unsigned int freq, bool onHeadset)
 {
     mATCRadioStack->setOnHeadset(freq, onHeadset);
-    
+}
+
+bool ATCClient::getOnHeadset(unsigned int freq)
+{
+    return mATCRadioStack->mRadioState[freq].onHeadset;
 }
 
 void ATCClient::requestStationTransceivers(std::string inStation)

@@ -49,9 +49,11 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT void SetTx(unsigned int freq, bool active);
             AFV_NATIVE_EXPORT void SetRx(unsigned int freq, bool active);
             AFV_NATIVE_EXPORT void SetXc(unsigned int freq, bool active);
+            AFV_NATIVE_EXPORT void SetOnHeadset(unsigned int freq, bool active);
 
             AFV_NATIVE_EXPORT bool GetTxActive(unsigned int freq);
             AFV_NATIVE_EXPORT bool GetRxActive(unsigned int freq);
+            AFV_NATIVE_EXPORT bool GetOnHeadset(unsigned int freq);
 
             AFV_NATIVE_EXPORT bool GetTxState(unsigned int freq);
             AFV_NATIVE_EXPORT bool GetRxState(unsigned int freq);
