@@ -32,6 +32,7 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT void SetAudioInputDevice(std::string inputDevice);
             AFV_NATIVE_EXPORT std::vector<std::string> GetAudioInputDevices(unsigned int mAudioApi);
             AFV_NATIVE_EXPORT void SetAudioOutputDevice(std::string outputDevice);
+            AFV_NATIVE_EXPORT void SetAudioSpeakersOutputDevice(std::string outputDevice);
             AFV_NATIVE_EXPORT std::vector<std::string> GetAudioOutputDevices(unsigned int mAudioApi);
 
             AFV_NATIVE_EXPORT double GetInputPeak() const;
@@ -78,6 +79,8 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT bool IsAtisPlayingBack();
 
             AFV_NATIVE_EXPORT std::string LastTransmitOnFreq(unsigned int freq);
+
+            AFV_NATIVE_EXPORT void SetRadiosGain(float gain);
 
             AFV_NATIVE_EXPORT void AddFrequency(unsigned int freq, std::string stationName = "");
             AFV_NATIVE_EXPORT void RemoveFrequency(unsigned int freq);

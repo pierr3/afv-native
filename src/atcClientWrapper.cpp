@@ -115,6 +115,11 @@ void afv_native::api::atcClient::SetAudioOutputDevice(std::string outputDevice) 
     client->setAudioOutputDevice(outputDevice);
 }
 
+void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(std::string outputDevice) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setSpeakerOutputDevice(outputDevice);
+}
+
 std::vector<std::string> afv_native::api::atcClient::GetAudioInputDevices(unsigned int mAudioApi) {
     std::vector<std::string> out;
     auto devices = afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(mAudioApi);
@@ -216,6 +221,11 @@ int afv_native::api::atcClient::GetTransceiverCountForStation(std::string statio
     auto tcs = client->getStationTransceivers();
     return tcs[station].size();
 };
+
+void afv_native::api::atcClient::SetRadiosGain(float gain) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setRadioGainAll(gain);
+}
 
 void afv_native::api::atcClient::FetchTransceiverInfo(std::string station) {
     client->requestStationTransceivers(station);
