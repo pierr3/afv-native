@@ -602,7 +602,7 @@ void ATCClient::setOnHeadset(unsigned int freq, bool onHeadset)
 
 bool ATCClient::getOnHeadset(unsigned int freq)
 {
-    return mATCRadioStack->mRadioState.count(freq) != 0 ? mATCRadioStack->mRadioState[freq].onHeadset : false;
+    return mATCRadioStack->mRadioState.count(freq) != 0 ? mATCRadioStack->mRadioState[freq].onHeadset : true;
 }
 
 void ATCClient::requestStationTransceivers(std::string inStation)
