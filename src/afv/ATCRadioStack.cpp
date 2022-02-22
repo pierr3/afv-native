@@ -177,6 +177,8 @@ bool ATCRadioStack::_process_radio(
         }
         bool mUseStream = false;
         float voiceGain = 1.0f;
+
+        // We need to loop and find the closest transceiver for these calculations
         for (const afv::dto::RxTransceiver &tx: srcPair.second.transceivers) {
             if (tx.Frequency == mRadioState[rxIter].Frequency) {
                 mUseStream = true;
@@ -187,10 +189,19 @@ bool ATCRadioStack::_process_radio(
                     crackleFactor = fmax(0.0f, crackleFactor);
                     crackleFactor = fmin(0.20f, crackleFactor);
 
-                    crackleGain += crackleFactor * 2;
-                    voiceGain = 1.0 - crackleFactor * 3.7;
+                    if (crackleGain == 0.f) {
+                        crackleGain = crackleFactor * 2;
+                        voiceGain = 1.0 - crackleFactor * 3.7;
+                    } else {
+                        crackleGain = fmin(crackleGain, crackleFactor * 2);
+                        voiceGain = fmax(voiceGain, 1.0 - crackleFactor * 3.7);
+                    }
+                } else {
+                    break;
                 }
-                break; // matched once.  dont' bother anymore.
+
+                // Previously we did break, which caused issued with crackle being calculated on far away transceiver
+                //break; // matched once.  dont' bother anymore.
             }
         }
         if (mUseStream) {
