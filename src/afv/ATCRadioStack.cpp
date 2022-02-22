@@ -179,7 +179,28 @@ bool ATCRadioStack::_process_radio(
         float voiceGain = 1.0f;
 
         // We need to loop and find the closest transceiver for these calculations
-        for (const afv::dto::RxTransceiver &tx: srcPair.second.transceivers) {
+        std::vector<afv::dto::RxTransceiver> matchingTransceivers;
+        std::copy_if (srcPair.second.transceivers.begin(), srcPair.second.transceivers.end(), 
+                std::back_inserter(matchingTransceivers), [&](afv::dto::RxTransceiver k){return k.Frequency == mRadioState[rxIter].Frequency;} );
+
+        if (matchingTransceivers.size() > 0) {
+            mUseStream = true;
+            auto closestTransceiver = *std::max_element(matchingTransceivers.begin(), matchingTransceivers.end(), 
+                [](afv::dto::RxTransceiver a, afv::dto::RxTransceiver b) { return (a.DistanceRatio < b.DistanceRatio); });
+
+                if (!mRadioState[rxIter].mBypassEffects) {
+                    float crackleFactor = 0.0f;
+                    crackleFactor = static_cast<float>((exp(closestTransceiver.DistanceRatio) * 
+                                                        pow(closestTransceiver.DistanceRatio, -4.0) / 350.0) - 0.00776652);
+                    crackleFactor = fmax(0.0f, crackleFactor);
+                    crackleFactor = fmin(0.20f, crackleFactor);
+
+                    crackleGain = crackleFactor * 2;
+                    voiceGain = 1.0 - crackleFactor * 3.7;
+                }
+        }
+
+        /*for (const afv::dto::RxTransceiver &tx: srcPair.second.transceivers) {
             if (tx.Frequency == mRadioState[rxIter].Frequency) {
                 mUseStream = true;
 
@@ -203,7 +224,8 @@ bool ATCRadioStack::_process_radio(
                 // Previously we did break, which caused issued with crackle being calculated on far away transceiver
                 //break; // matched once.  dont' bother anymore.
             }
-        }
+        }*/
+        
         if (mUseStream) {
             // then include this stream.
             try {
