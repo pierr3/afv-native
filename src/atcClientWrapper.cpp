@@ -299,6 +299,11 @@ void afv_native::api::atcClient::StopAtisPlayback() {
     client->stopAtisPlayback();
 }
 
+void afv_native::api::atcClient::SetHardware(afv_native::HardwareType hardware) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setHardware(hardware);
+}
+
 bool afv_native::api::atcClient::IsAtisPlayingBack() {
     return client->isAtisPlayingBack();
 }

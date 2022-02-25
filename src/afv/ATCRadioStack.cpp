@@ -682,7 +682,7 @@ bool ATCRadioStack::getRxActive(unsigned int freq)
     return (mRadioState[freq].mLastRxCount >0);
 }
 
-void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string stationName)
+void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string stationName, HardwareType hardware)
 {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     {
@@ -694,7 +694,7 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string 
         mRadioState[freq].xc=false;
         mRadioState[freq].stationName = stationName;
         mRadioState[freq].mBypassEffects=false;
-        mRadioState[freq].vhfFilter = audio::VHFFilterSource();
+        mRadioState[freq].vhfFilter = audio::VHFFilterSource(hardware);
 
         if (stationName.find("_ATIS") != std::string::npos) {
             mRadioState[freq].isAtis = true;

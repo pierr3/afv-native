@@ -239,6 +239,8 @@ namespace afv_native {
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
         void linkTransceivers(std::string callsign, unsigned int freq);
+
+        void setHardware(HardwareType hardware);
         
         void setTick(std::shared_ptr<audio::ITick> tick);
 
@@ -300,6 +302,8 @@ namespace afv_native {
 
         int linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
+
+        HardwareType activeHardware;
         
     public:
     };

@@ -36,6 +36,7 @@
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/util/ChainedCallback.h"
 #include "afv-native/afv/dto/CrossCoupleGroup.h"
+#include "afv-native/hardwareType.h"
 
 
 namespace afv_native {
@@ -128,7 +129,7 @@ namespace afv_native {
             void setUDPChannel(cryptodto::UDPChannel *newChannel);
             void setCallsign(const std::string &newCallsign);
             void setClientPosition(double lat, double lon, double amslm, double aglm);
-            void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "");
+            void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B);
             void removeFrequency(unsigned int freq);
             bool isFrequencyActive(unsigned int freq);
             

@@ -616,7 +616,7 @@ void ATCClient::requestStationVccs(std::string inStation) {
 
 void ATCClient::addFrequency(unsigned int freq, bool onHeadset, std::string stationName)
 {
-    mATCRadioStack->addFrequency(freq, onHeadset, stationName);
+    mATCRadioStack->addFrequency(freq, onHeadset, stationName, this->activeHardware);
 }
 
 bool ATCClient::isFrequencyActive(unsigned int freq) {
@@ -626,6 +626,10 @@ bool ATCClient::isFrequencyActive(unsigned int freq) {
 void ATCClient::removeFrequency(unsigned int freq)
 {
     mATCRadioStack->removeFrequency(freq);
+}
+
+void  ATCClient::setHardware(HardwareType hardware) {
+    this->activeHardware = hardware;
 }
 
 void ATCClient::linkTransceivers(std::string callsign, unsigned int freq)

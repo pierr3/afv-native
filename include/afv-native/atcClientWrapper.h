@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <functional>
+#include "hardwareType.h"
 
 namespace afv_native::api {
     class atcClient {
@@ -87,6 +88,8 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT void AddFrequency(unsigned int freq, std::string stationName = "");
             AFV_NATIVE_EXPORT void RemoveFrequency(unsigned int freq);
             AFV_NATIVE_EXPORT bool IsFrequencyActive(unsigned int freq);
+
+            AFV_NATIVE_EXPORT void SetHardware(afv_native::HardwareType hardware);
 
             AFV_NATIVE_EXPORT void RaiseClientEvent(std::function<void(afv_native::ClientEventType, void*, void*)> callback);
     };
