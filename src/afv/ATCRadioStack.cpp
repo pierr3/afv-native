@@ -250,7 +250,7 @@ bool ATCRadioStack::_process_radio(
         if (!mRadioState[rxIter].mBypassEffects) {
             // if FX are enabled, and we muxed any streams, eq the buffer now to apply the bandwidth simulation,
             // but don't interfere with the effects.
-            mRadioState[rxIter].vhfFilter.transformFrame(state->mChannelBuffer, state->mChannelBuffer);
+            mRadioState[rxIter].vhfFilter->transformFrame(state->mChannelBuffer, state->mChannelBuffer);
 
             float whiteNoiseGain = 0.0f;
             set_radio_effects(rxIter, crackleGain, whiteNoiseGain);
@@ -694,7 +694,7 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string 
         mRadioState[freq].xc=false;
         mRadioState[freq].stationName = stationName;
         mRadioState[freq].mBypassEffects=false;
-        mRadioState[freq].vhfFilter = audio::VHFFilterSource(hardware);
+        mRadioState[freq].vhfFilter = new audio::VHFFilterSource(hardware);
 
         if (stationName.find("_ATIS") != std::string::npos) {
             mRadioState[freq].isAtis = true;

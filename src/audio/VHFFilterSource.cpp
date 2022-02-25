@@ -71,11 +71,11 @@ void VHFFilterSource::setupPresets()
     if (hardware == HardwareType::Garex_220) 
     {
         mFilters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 300, 0.25));
-        mFilters.push_back(BiQuadFilter::highShelfFilter(sampleRateHz, 400, 1.0, 8.0));
-        mFilters.push_back(BiQuadFilter::highShelfFilter(sampleRateHz, 600, 1.0, 4.0));
-        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 2000, 1.0, 1.0));
-        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 2400, 1.0, 3.0));
-        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 3000, 1.0, 10.0));
+        mFilters.push_back(BiQuadFilter::highShelfFilter(sampleRateHz, 400, 1.0, 18.0));
+        mFilters.push_back(BiQuadFilter::highShelfFilter(sampleRateHz, 600, 1.0, 14.0));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 2000, 1.0, 11.0));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 2400, 1.0, 13.0));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 3000, 1.0, 20.0));
         mFilters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 3400, 0.25));
     }
 

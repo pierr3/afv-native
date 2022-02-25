@@ -96,7 +96,7 @@ namespace afv_native {
             std::shared_ptr<audio::PinkNoiseGenerator> WhiteNoise;
             std::shared_ptr<audio::RecordedSampleSource> Crackle;
             std::shared_ptr<audio::SineToneSource> BlockTone;
-            audio::VHFFilterSource vhfFilter;
+            audio::VHFFilterSource* vhfFilter;
             std::string lastTransmitCallsign;
             int mLastRxCount;
             bool mBypassEffects;
