@@ -36,7 +36,7 @@
 
 using namespace afv_native::audio;
 
-VHFFilterSource::VHFFilterSource():
+VHFFilterSource::VHFFilterSource(HardwareType hd):
     compressor(new chunkware_simple::SimpleComp())
 {
     compressor->setSampleRate(sampleRateHz);
@@ -46,6 +46,8 @@ VHFFilterSource::VHFFilterSource():
     compressor->setRatio(6);
     compressor->initRuntime();
     compressorPostGain = pow(10.0f, (-5.5/20.0));
+
+    this->hardware = hd;
     
     setupPresets();
 }
@@ -57,11 +59,37 @@ VHFFilterSource::~VHFFilterSource()
 
 void VHFFilterSource::setupPresets()
 {
-    mFilters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 310, 0.25));
-    mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 450, 0.75, 17.0));
-    mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 1450, 1.0, 25.0));
-    mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 2000, 1.0, 25.0));
-    mFilters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 2500, 0.25));
+    if (hardware == HardwareType::Schmid_ED_137B) 
+    {
+        mFilters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 310, 0.25));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 450, 0.75, 17.0));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 1450, 1.0, 25.0));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 2000, 1.0, 25.0));
+        mFilters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 2500, 0.25));
+    }
+
+    if (hardware == HardwareType::Garex_220) 
+    {
+        mFilters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 300, 0.25));
+        mFilters.push_back(BiQuadFilter::highShelfFilter(sampleRateHz, 400, 1.0, 8));
+        mFilters.push_back(BiQuadFilter::highShelfFilter(sampleRateHz, 600, 1.0, 4));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 2000, 1.0, 1));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 2400, 1.0, 3));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 3000, 1.0, 10));
+        mFilters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 3400, 0.25));
+    }
+
+    if (hardware == HardwareType::Rockwell_Collins_2100)
+    {
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, 0.0, 0.0, -0.01, 0.0, 0.0));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.7152995098277, 0.761385315196423, 0.0, 1.0, 0.753162969638192));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.71626681678914, 0.762433947105989, 1.0, -2.29278115712509, 1.000336632935775));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.79384214686345, 0.909678364879526, 1.0, -2.05042803669041, 1.05048374237779));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.79409285259567, 0.909822671281377, 1.0, -1.95188929743297, 0.951942325888074));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.9390093095185, 0.9411847259142, 1.0, -1.82547932903698, 1.09157529229851));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.94022767750807, 0.942630574503006, 1.0, -1.67241244173042, 0.916184578658119));
+    }
+
 }
 
 /** transformFrame lets use apply this filter to a normal buffer, without following the sink/source flow.

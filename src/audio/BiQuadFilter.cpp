@@ -65,6 +65,42 @@ namespace afv_native
             setCoefficients(aa0, aa1, aa2, b0, b1, b2);
         }
 
+        void BiQuadFilter::setLowShelfFilter(float sampleRate, float centreFrequency, float q, float dbGain)
+        {
+            // H(s) = A * (s^2 + (sqrt(A)/Q)*s + A)/(A*s^2 + (sqrt(A)/Q)*s + 1)
+            auto w0 = 2 * M_PI * centreFrequency / sampleRate;
+            auto cosw0 = cos(w0);
+            auto sinw0 = sin(w0);
+            auto alpha = sinw0 / (2 * q);
+            auto A = pow(10, dbGain / 40);     // TODO: should we square root this value?
+
+            auto b0 = A*( (A+1) - (A-1)*cos(w0) + 2*sqrt(A)*alpha );
+            auto b1 = 2*A*( (A-1) - (A+1)*cos(w0));
+            auto b2 = A*( (A+1) - (A-1)*cos(w0) - 2*sqrt(A)*alpha );
+            auto aa0 = (A+1) + (A-1)*cos(w0) + 2*sqrt(A)*alpha;
+            auto aa1 = -2*( (A-1) + (A+1)*cos(w0));
+            auto aa2 = (A+1) + (A-1)*cos(w0) - 2*sqrt(A)*alpha;
+            setCoefficients(aa0, aa1, aa2, b0, b1, b2);
+        }
+
+        void BiQuadFilter::setHighShelfFilter(float sampleRate, float centreFrequency, float q, float dbGain)
+        {
+            // H(s) = A * (A*s^2 + (sqrt(A)/Q)*s + 1)/(s^2 + (sqrt(A)/Q)*s + A)
+            auto w0 = 2 * M_PI * centreFrequency / sampleRate;
+            auto cosw0 = cos(w0);
+            auto sinw0 = sin(w0);
+            auto alpha = sinw0 / (2 * q);
+            auto A = pow(10, dbGain / 40);     // TODO: should we square root this value?
+
+            auto b0 = A*( (A+1) + (A-1)*cos(w0) + 2*sqrt(A)*alpha );
+            auto b1 = -2*A*( (A-1) + (A+1)*cos(w0)                   );
+            auto b2 = A*( (A+1) + (A-1)*cos(w0) - 2*sqrt(A)*alpha );
+            auto aa0 = (A+1) - (A-1)*cos(w0) + 2*sqrt(A)*alpha;
+            auto aa1 = 2*( (A-1) - (A+1)*cos(w0));
+            auto aa2 = (A+1) - (A-1)*cos(w0) - 2*sqrt(A)*alpha;
+            setCoefficients(aa0, aa1, aa2, b0, b1, b2);
+        }
+
         void BiQuadFilter::setHighPassFilter(float sampleRate, float cutoffFrequency, float q)
         {
             // H(s) = s^2 / (s^2 + s/Q + 1)
@@ -79,6 +115,27 @@ namespace afv_native
             auto aa1 = -2 * cosw0;
             auto aa2 = 1 - alpha;
             setCoefficients(aa0, aa1, aa2, b0, b1, b2);
+        }
+
+        BiQuadFilter BiQuadFilter::customBuild(double aa0, double aa1, double aa2, double b0, double b1, double b2)
+        {
+            BiQuadFilter filter;
+            filter.setCoefficients(aa0, aa1, aa2, b0, b1, b2);
+            return filter;
+        }
+
+        BiQuadFilter BiQuadFilter::lowShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain)
+        {
+            BiQuadFilter filter;
+            filter.setLowShelfFilter(sampleRate, cutoffFrequency, q, dbGain);
+            return filter;
+        }
+
+        BiQuadFilter BiQuadFilter::highShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain)
+        {
+            BiQuadFilter filter;
+            filter.setHighShelfFilter(sampleRate, cutoffFrequency, q, dbGain);
+            return filter;
         }
 
         BiQuadFilter BiQuadFilter::lowPassFilter(float sampleRate, float cutoffFrequency, float q)

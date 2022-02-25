@@ -694,6 +694,7 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string 
         mRadioState[freq].xc=false;
         mRadioState[freq].stationName = stationName;
         mRadioState[freq].mBypassEffects=false;
+        mRadioState[freq].vhfFilter = audio::VHFFilterSource();
 
         if (stationName.find("_ATIS") != std::string::npos) {
             mRadioState[freq].isAtis = true;

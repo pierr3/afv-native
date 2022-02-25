@@ -51,9 +51,14 @@ namespace afv_native {
             void setLowPassFilter(float sampleRate, float cutoffFrequency, float q);
             void setPeakingEq(float sampleRate, float centreFrequency, float q, float dbGain);
             void setHighPassFilter(float sampleRate, float cutoffFrequency, float q);
+            void setLowShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain);
+            void setHighShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain);
 
+            static BiQuadFilter customBuild(double aa0, double aa1, double aa2, double b0, double b1, double b2);
             static BiQuadFilter lowPassFilter(float sampleRate, float cutoffFrequency, float q);
             static BiQuadFilter highPassFilter(float sampleRate, float cutoffFrequency, float q);
+            static BiQuadFilter lowShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain);
+            static BiQuadFilter highShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain);
             static BiQuadFilter peakingEQ(float sampleRate, float centreFrequency, float q, float dbGain);
         private:
             double m_a0 = 0.0;

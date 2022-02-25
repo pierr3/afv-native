@@ -39,6 +39,7 @@
 
 #include <afv-native/audio/BiQuadFilter.h>
 #include <afv-native/audio/ISampleSource.h>
+#include <afv-native/hardwareType.h>
 
 namespace chunkware_simple {
     class SimpleComp;
@@ -55,7 +56,7 @@ namespace afv_native {
          */
         class VHFFilterSource {
         public:
-            explicit VHFFilterSource();
+            explicit VHFFilterSource(HardwareType hd = HardwareType::Schmid_ED_137B);
             virtual ~VHFFilterSource();
 
             /** transformFrame lets use apply this filter to a normal buffer, without following the sink/source flow.
@@ -70,6 +71,7 @@ namespace afv_native {
             chunkware_simple::SimpleComp *compressor;
             float compressorPostGain;
             std::vector<BiQuadFilter> mFilters;
+            HardwareType hardware = HardwareType::Schmid_ED_137B;
         };
     }
 }
