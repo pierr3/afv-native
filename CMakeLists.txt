@@ -185,7 +185,11 @@ if(APPLE)
 endif()
 
 if (UNIX)
-	target_link_libraries(afv_native PRIVATE libevent::pthreads)
+	target_link_libraries(afv_native PRIVATE libevent::pthreads portaudio_static)
+endif()
+
+if (WIN32)
+	target_link_libraries(afv_native PRIVATE portaudio)
 endif()
 
 target_link_libraries(afv_native
@@ -197,7 +201,6 @@ target_link_libraries(afv_native
 		msgpackc msgpackc-cxx
 		Opus::opus
 		nlohmann_json nlohmann_json::nlohmann_json
-		portaudio_static
 		${SPEEXDSP_LIBRARY})
 
 target_include_directories(afv_native
@@ -230,3 +233,8 @@ install(TARGETS afv_native
 generate_export_header(afv_native EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/exports/afv_native_export.h)
 
 set_target_properties(afv_native PROPERTIES OUTPUT_NAME "afv")
+
+if (WIN32)
+	file(COPY ${SPEEXDSP_LIBRARY}
+	DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endif()
