@@ -68,7 +68,7 @@ APISession::APISession(event_base* evBase, http::TransferManager& tm, std::strin
 	StationTransceiversUpdateCallback(),
     StationVccsCallback(),
     StationSearchCallback(),
-    mStationSearchRequest(mBaseURL, http::Method::POST, json()),
+    mGetStationRequest(mBaseURL, http::Method::GET, nullptr),
     mVccsRequest(mBaseURL, http::Method::GET, nullptr)
 {
 }
@@ -285,24 +285,21 @@ APISessionError APISession::getLastError() const
     return mLastError;
 }
 
-void APISession::searchForStation(std::string stdName, unsigned int freq) {
+void APISession::getStation(std::string stdName) {
     if(mState!=APISessionState::Running) return;
     
     /* start the authentication request */
-    mStationSearchRequest.reset();
-    mStationSearchRequest.setUrl(mBaseURL + "/api/v1/stations/search");
-    setAuthenticationFor(mStationSearchRequest);
-    nlohmann::json j;
-    j["SearchText"] = stdName; j["Take"] = 100; j["Skip"] = 0;
-    mStationSearchRequest.setRequestBody(j);
-    mStationSearchRequest.setCompletionCallback(
-            [this, stdName, freq](http::Request *req, bool success) {
+    mGetStationRequest.reset();
+    mGetStationRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stdName);
+    setAuthenticationFor(mGetStationRequest);
+    mGetStationRequest.setCompletionCallback(
+            [this, stdName](http::Request *req, bool success) {
                 auto restreq = dynamic_cast<http::RESTRequest *>(req);
                 assert(restreq != nullptr); // shouldn't be possible
-                this->_stationSearchCallback(restreq, success, stdName, freq);
+                this->_getStationCallback(restreq, success, stdName);
             });
-    mStationSearchRequest.shareState(mTransferManager);
-    mStationSearchRequest.doAsync(mTransferManager);
+    mGetStationRequest.shareState(mTransferManager);
+    mGetStationRequest.doAsync(mTransferManager);
 }
 
 void APISession::updateStationAliases()
@@ -322,48 +319,28 @@ void APISession::updateStationAliases()
     mStationAliasRequest.doAsync(mTransferManager);
 }
 
-void APISession::_stationSearchCallback(http::RESTRequest* req, bool success, std::string stationName, unsigned int freq) {
+void APISession::_getStationCallback(http::RESTRequest* req, bool success, std::string stationName) {
     if (success && req->getStatusCode() == 200) {
         auto jsReturn = req->getResponse();
 
         bool found = false;
         std::pair<std::string, unsigned int> ret;
 
-        if (!jsReturn.contains("stations")) {
-            LOG("APISession", "station search data returned did not contains tations.  Ignoring.");
+        if (!jsReturn.contains("name") || !jsReturn.contains("frequency") ) {
+            LOG("APISession", "get station data returned did not contains name or frequency.  Ignoring.");
         } else {
-            for (const auto &sJson: jsReturn["stations"]) {
-                try {
-                    int foundFreq = sJson["frequency"].get<int>();
-                    std::string foundName = sJson["name"].get<std::string>();
-                    if (freq == 0) {
-                        // Freq is not defined, we find by callsign only
-                        if (foundName == stationName) {
-                            found = true;
-                            ret = { stationName, foundFreq };
-                            break;
-                        }
-                    } else {
-                        // Freq is defined, we look for a prefix and frequency
-                        if (freq == foundFreq && foundName.rfind(stationName, 0) == 0) {
-                            found = true;
-                            ret = { foundName, foundFreq };
-                            break;
-                        }
-
-                    }
-                } catch (nlohmann::json::exception &e) {
-                    LOG("APISession", "couldn't decode station searched transceivers: %s", e.what());
-                }
-            }
+            found = true;
+            int foundFreq = jsReturn["frequency"].get<int>();
+            std::string foundName = jsReturn["name"].get<std::string>();
+            ret = { foundName, foundFreq };
         }
     
         StationSearchCallback.invokeAll(found, ret);
     }  else {
         if (!success) {
-            LOG("APISession", "curl internal error during station search retrieval: %s", req->getCurlError().c_str());
+            LOG("APISession", "curl internal error during get station retrieval: %s", req->getCurlError().c_str());
         } else {
-            LOG("APISession", "got error from API server getting search: Response Code %d", req->getStatusCode());
+            LOG("APISession", "got error from API server get station: Response Code %d", req->getStatusCode());
         }
     }
 }

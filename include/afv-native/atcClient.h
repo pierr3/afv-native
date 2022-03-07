@@ -244,7 +244,7 @@ namespace afv_native {
         
         void setTick(std::shared_ptr<audio::ITick> tick);
 
-        void searchForStation(std::string callsign, unsigned int freq = 0);
+        void getStation(std::string callsign);
         
         std::shared_ptr<audio::AudioDevice> mAudioDevice;
     protected:

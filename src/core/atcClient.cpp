@@ -498,11 +498,11 @@ void ATCClient::stationVccsCallback(std::string stationName, std::map<std::strin
 
 void ATCClient::stationSearchCallback(bool found, std::pair<std::string, unsigned int> data)
 {
-    ClientEventCallback.invokeAll(ClientEventType::StationSearchReceived, &found, &data);
+    ClientEventCallback.invokeAll(ClientEventType::StationDataReceived, &found, &data);
 }
 
-void ATCClient::searchForStation(std::string callsign, unsigned int freq) {
-    mAPISession.searchForStation(callsign, freq);
+void ATCClient::getStation(std::string callsign) {
+    mAPISession.getStation(callsign);
 }
 
 void ATCClient::stationTransceiversUpdateCallback(std::string stationName)
