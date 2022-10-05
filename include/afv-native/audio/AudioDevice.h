@@ -93,7 +93,8 @@ namespace afv_native {
              *
              * @return true if open() was successful, false otherwise.
              */
-            virtual bool open() = 0;
+            virtual bool openOutput() = 0;
+            virtual bool openInput() = 0;
 
             /** close() should stop and shutdown the playback and capture of the nominated
              * audio streams.  If the streams are already stopped, it must do nothing.

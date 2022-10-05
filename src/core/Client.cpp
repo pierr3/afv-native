@@ -175,10 +175,7 @@ void Client::voiceStateCallback(afv::VoiceSessionState state)
     switch (state) {
     case afv::VoiceSessionState::Connected:
         LOG("afv::Client", "Voice Session Connected");
-        // if we have a valid mAudioDevice, then do not attempt to restart it.  bad things will happen.
-        if (!mAudioDevice) {
-            startAudio();
-        }
+        startAudio();
         queueTransceiverUpdate();
         ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnected, nullptr);
         break;
@@ -269,13 +266,21 @@ void Client::startAudio()
     } else {
         LOG("afv::Client", "Tried to recreate audio device...");
     }
+
     mAudioDevice->setSink(mRadioSim);
     mAudioDevice->setSource(mRadioSim);
-    if (!mAudioDevice->open()) {
-        LOG("afv::Client", "Unable to open audio device.");
+
+    if (mAudioDevice->openOutput()) {
+        if (!mAudioDevice->openInput()) {
+            LOG("afv::Client", "Couldn't initialize microphone device");
+            ClientEventCallback.invokeAll(ClientEventType::InputDeviceError, nullptr);
+        }
+    }
+    else {
+        LOG("afv::Client", "Couldn't initialize listening device");
+        ClientEventCallback.invokeAll(ClientEventType::AudioDisabled, nullptr);
         stopAudio();
-        ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr);
-    };
+    }
 }
 
 void Client::stopAudio()

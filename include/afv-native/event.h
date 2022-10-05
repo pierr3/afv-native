@@ -54,6 +54,8 @@ namespace afv_native {
         RxStopped,
         VccsReceived,
         StationDataReceived
+        InputDeviceError,
+        AudioDisabled
     };
 }
 
