@@ -1,4 +1,4 @@
-#include "MiniAudioDevice.h"
+#include "MiniAudioAudioDevice.h"
 
 #include <QDebug>
 #include <memory>
@@ -7,7 +7,7 @@
 using namespace afv_native::audio;
 using namespace std;
 
-MiniAudioDevice::MiniAudioDevice(
+MiniAudioAudioDevice::MiniAudioAudioDevice(
         const std::string& userStreamName,
         const std::string& outputDeviceName,
         const std::string& inputDeviceName,
@@ -27,22 +27,22 @@ MiniAudioDevice::MiniAudioDevice(
     contextConfig.pulse.pApplicationName = "xpilot";
 }
 
-MiniAudioDevice::~MiniAudioDevice()
+MiniAudioAudioDevice::~MiniAudioAudioDevice()
 {
 
 }
 
-bool MiniAudioDevice::openOutput()
+bool MiniAudioAudioDevice::openOutput()
 {
     return initOutput();
 }
 
-bool MiniAudioDevice::openInput()
+bool MiniAudioAudioDevice::openInput()
 {
     return initInput();
 }
 
-void MiniAudioDevice::close()
+void MiniAudioAudioDevice::close()
 {
     if(mInputInitialized)
         ma_device_uninit(&inputDev);
@@ -56,7 +56,7 @@ void MiniAudioDevice::close()
     mOutputInitialized = false;
 }
 
-std::map<int, ma_device_info> MiniAudioDevice::getCompatibleInputDevices()
+std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleInputDevices()
 {
     std::map<int, ma_device_info> deviceList;
 
@@ -78,7 +78,7 @@ std::map<int, ma_device_info> MiniAudioDevice::getCompatibleInputDevices()
     return deviceList;
 }
 
-std::map<int, ma_device_info> MiniAudioDevice::getCompatibleOutputDevices()
+std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleOutputDevices()
 {
     std::map<int, ma_device_info> deviceList;
 
@@ -100,7 +100,7 @@ std::map<int, ma_device_info> MiniAudioDevice::getCompatibleOutputDevices()
     return deviceList;
 }
 
-bool MiniAudioDevice::initOutput()
+bool MiniAudioAudioDevice::initOutput()
 {
     if(mOutputInitialized)
         ma_device_uninit(&outputDev);
@@ -138,7 +138,7 @@ bool MiniAudioDevice::initOutput()
     return true;
 }
 
-bool MiniAudioDevice::initInput()
+bool MiniAudioAudioDevice::initInput()
 {
     if(mInputInitialized)
         ma_device_uninit(&inputDev);
@@ -176,7 +176,7 @@ bool MiniAudioDevice::initInput()
     return true;
 }
 
-bool MiniAudioDevice::getDeviceForName(const std::string &deviceName, bool forInput, ma_device_id &deviceId)
+bool MiniAudioAudioDevice::getDeviceForName(const std::string &deviceName, bool forInput, ma_device_id &deviceId)
 {
     auto allDevices = forInput ? getCompatibleInputDevices() : getCompatibleOutputDevices();
 
@@ -192,7 +192,7 @@ bool MiniAudioDevice::getDeviceForName(const std::string &deviceName, bool forIn
     return false;
 }
 
-int MiniAudioDevice::outputCallback(void *outputBuffer, unsigned int nFrames)
+int MiniAudioAudioDevice::outputCallback(void *outputBuffer, unsigned int nFrames)
 {
     if (outputBuffer) {
         std::lock_guard<std::mutex> sourceGuard(mSourcePtrLock);
@@ -214,7 +214,7 @@ int MiniAudioDevice::outputCallback(void *outputBuffer, unsigned int nFrames)
     return 0;
 }
 
-int MiniAudioDevice::inputCallback(const void *inputBuffer, unsigned int nFrames)
+int MiniAudioAudioDevice::inputCallback(const void *inputBuffer, unsigned int nFrames)
 {
     std::lock_guard<std::mutex> sinkGuard(mSinkPtrLock);
     if (mSink && inputBuffer) {
@@ -226,15 +226,15 @@ int MiniAudioDevice::inputCallback(const void *inputBuffer, unsigned int nFrames
     return 0;
 }
 
-void MiniAudioDevice::maOutputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount)
+void MiniAudioAudioDevice::maOutputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount)
 {
-    auto device = reinterpret_cast<MiniAudioDevice*>(pDevice->pUserData);
+    auto device = reinterpret_cast<MiniAudioAudioDevice*>(pDevice->pUserData);
     device->outputCallback(pOutput, frameCount);
 }
 
-void MiniAudioDevice::maInputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount)
+void MiniAudioAudioDevice::maInputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount)
 {
-    auto device = reinterpret_cast<MiniAudioDevice*>(pDevice->pUserData);
+    auto device = reinterpret_cast<MiniAudioAudioDevice*>(pDevice->pUserData);
     device->inputCallback(pInput, frameCount);
 }
 
@@ -245,7 +245,7 @@ map<AudioDevice::Api, std::string> AudioDevice::getAPIs() {
 }
 
 map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(AudioDevice::Api api) {
-    auto allDevices = MiniAudioDevice::getCompatibleInputDevices();
+    auto allDevices = MiniAudioAudioDevice::getCompatibleInputDevices();
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
         returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name));
@@ -254,7 +254,7 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(A
 }
 
 map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleOutputDevicesForApi(AudioDevice::Api api) {
-    auto allDevices = MiniAudioDevice::getCompatibleOutputDevices();
+    auto allDevices = MiniAudioAudioDevice::getCompatibleOutputDevices();
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
         returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name));
@@ -268,6 +268,6 @@ AudioDevice::makeDevice(
         const std::string &outputDeviceId,
         const std::string &inputDeviceId,
         AudioDevice::Api audioApi) {
-    auto devsp = std::make_shared<MiniAudioDevice>(userStreamName, outputDeviceId, inputDeviceId, audioApi);
+    auto devsp = std::make_shared<MiniAudioAudioDevice>(userStreamName, outputDeviceId, inputDeviceId, audioApi);
     return devsp;
 }

@@ -14,15 +14,15 @@ namespace afv_native
 {
     namespace audio
     {
-        class MiniAudioDevice : public AudioDevice
+        class MiniAudioAudioDevice : public AudioDevice
         {
         public:
-            explicit MiniAudioDevice(
+            explicit MiniAudioAudioDevice(
                     const std::string& userStreamName,
                     const std::string& outputDeviceName,
                     const std::string& inputDeviceName,
                     Api audioApi);
-            virtual ~MiniAudioDevice();
+            virtual ~MiniAudioAudioDevice();
 
             bool openOutput() override;
             bool openInput() override;
