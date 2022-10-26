@@ -7,6 +7,12 @@
 using namespace afv_native::audio;
 using namespace std;
 
+void logger(void* pUserData, ma_uint32 logLevel, const char* message)
+{
+    (void)pUserData;
+    LOG("MiniAudioAudioDevice", "%s: %s", ma_log_level_to_string(logLevel), message);
+}
+
 MiniAudioAudioDevice::MiniAudioAudioDevice(
         const std::string& userStreamName,
         const std::string& outputDeviceName,
@@ -19,12 +25,12 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(
     mInputInitialized(false),
     mOutputInitialized(false)
 {
-    ma_context_init(NULL, 0, NULL, &context);
-
     ma_context_config contextConfig = ma_context_config_init();
     contextConfig.threadPriority = ma_thread_priority_normal;
     contextConfig.jack.pClientName = "xpilot";
     contextConfig.pulse.pApplicationName = "xpilot";
+    ma_context_init(NULL, 0, &contextConfig, &context);
+    ma_log_register_callback(ma_context_get_log(&context), ma_log_callback_init(logger, NULL));
 }
 
 MiniAudioAudioDevice::~MiniAudioAudioDevice()

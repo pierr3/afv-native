@@ -6,6 +6,7 @@
 #define MA_NO_NULL
 #include "miniaudio.h"
 
+#include "afv-native/Log.h"
 #include "afv-native/audio/AudioDevice.h"
 
 #include <map>
