@@ -230,7 +230,7 @@ void ATCClient::startAudio()
         }
         mSpeakerDevice->setSink(nullptr);
         mSpeakerDevice->setSource(mATCRadioStack->speakerDevice());
-        if (!mSpeakerDevice->open()) {
+        if (!mSpeakerDevice->openOutput()) {
             LOG("afv::ATCClient", "Unable to open Speaker audio device.");
             stopAudio();
             ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
@@ -250,7 +250,7 @@ void ATCClient::startAudio()
     mAudioDevice->setSink(mATCRadioStack);
     
     mAudioDevice->setSource(mATCRadioStack->headsetDevice());
-    if (!mAudioDevice->open()) {
+    if (!mAudioDevice->openOutput() || !mAudioDevice->openInput()) {
         LOG("afv::ATCClient", "Unable to open Headset audio device.");
         stopAudio();
         ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);

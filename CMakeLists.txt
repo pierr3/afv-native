@@ -61,6 +61,8 @@ set(AFV_NATIVE_HEADERS
 	include/afv-native/audio/WavFile.h
 	include/afv-native/audio/WavSampleStorage.h
 	include/afv-native/audio/WhiteNoiseGenerator.h
+	include/afv-native/audio/miniaudio.h
+	include/afv-native/audio/MiniAudioDevice.h
 	include/afv-native/cryptodto/Channel.h
 	include/afv-native/cryptodto/dto/ICryptoDTO.h
 	include/afv-native/cryptodto/params.h
@@ -105,6 +107,7 @@ add_library(afv_native SHARED
 		src/audio/SpeexPreprocessor.cpp
 		src/audio/WavFile.cpp
 		src/audio/WavSampleStorage.cpp
+		src/audio/MiniAudioDevice.cpp
 		src/core/Client.cpp
 		src/core/Log.cpp
 		src/cryptodto/Channel.cpp
@@ -120,8 +123,6 @@ add_library(afv_native SHARED
 		src/http/RESTRequest.cpp
 		src/util/base64.cpp
 		src/util/monotime.cpp
-		src/audio/PortAudioAudioDevice.cpp
-		src/audio/PortAudioAudioDevice.h
 		extern/simpleSource/SimpleComp.cpp
 		extern/simpleSource/SimpleComp.h
 		extern/simpleSource/SimpleEnvelope.cpp
@@ -156,7 +157,6 @@ find_package(CURL CONFIG REQUIRED)
 find_package(Libevent CONFIG REQUIRED)
 find_package(msgpack CONFIG REQUIRED)
 find_package(Opus CONFIG REQUIRED)
-find_package(portaudio CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 # Speexdsp does not have find_package
@@ -185,11 +185,11 @@ if(APPLE)
 endif()
 
 if (UNIX)
-	target_link_libraries(afv_native PRIVATE libevent::pthreads portaudio_static)
+	target_link_libraries(afv_native PRIVATE libevent::pthreads)
 endif()
 
 if (WIN32)
-	target_link_libraries(afv_native PRIVATE portaudio)
+	target_link_libraries(afv_native PRIVATE)
 endif()
 
 target_link_libraries(afv_native

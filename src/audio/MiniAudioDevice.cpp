@@ -1,8 +1,6 @@
-#include "MiniAudioAudioDevice.h"
-
-#include <QDebug>
 #include <memory>
 #include <cstring>
+#include "afv-native/audio/MiniAudioDevice.h"
 
 using namespace afv_native::audio;
 using namespace std;
