@@ -148,10 +148,7 @@ void ATCClient::voiceStateCallback(afv::VoiceSessionState state)
     switch (state) {
     case afv::VoiceSessionState::Connected:
         LOG("afv::ATCClient", "Voice Session Connected");
-        // if we have a valid mAudioDevice, then do not attempt to restart it.  bad things will happen.
-        if (!mAudioDevice) {
-            startAudio();
-        }
+        startAudio();
         queueTransceiverUpdate();
         ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnected, nullptr, nullptr);
         break;
@@ -248,15 +245,17 @@ void ATCClient::startAudio()
         LOG("afv::ATCClient", "Tried to recreate Headset audio device...");
     }
     mAudioDevice->setSink(mATCRadioStack);
-    
     mAudioDevice->setSource(mATCRadioStack->headsetDevice());
-    if (!mAudioDevice->openOutput() || !mAudioDevice->openInput()) {
-        LOG("afv::ATCClient", "Unable to open Headset audio device.");
+     if (mAudioDevice->openOutput()) {
+        if (!mAudioDevice->openInput()) {
+            LOG("afv::Client", "Couldn't initialize headset microphone device");
+            ClientEventCallback.invokeAll(ClientEventType::InputDeviceError, nullptr, nullptr);
+        }
+    } else {
+        LOG("afv::ATCClient", "Unable to open Headset output device.");
         stopAudio();
         ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
-    };
-    
-
+    }
 }
 
 void ATCClient::stopAudio()
