@@ -25,8 +25,8 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(
 {
     ma_context_config contextConfig = ma_context_config_init();
     contextConfig.threadPriority = ma_thread_priority_normal;
-    contextConfig.jack.pClientName = "xpilot";
-    contextConfig.pulse.pApplicationName = "xpilot";
+    contextConfig.jack.pClientName = mUserStreamName.c_str();
+    contextConfig.pulse.pApplicationName = mUserStreamName.c_str();
     ma_context_init(NULL, 0, &contextConfig, &context);
     ma_log_register_callback(ma_context_get_log(&context), ma_log_callback_init(logger, NULL));
 }

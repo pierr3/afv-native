@@ -237,7 +237,7 @@ void ATCClient::startAudio()
     if (!mAudioDevice) {
         LOG("afv::ATCClient", "Initialising Headset Audio...");
         mAudioDevice = audio::AudioDevice::makeDevice(
-                mClientName,
+                mClientName + std::string(" Headset"),
                 mAudioOutputDeviceName,
                 mAudioInputDeviceName,
                 mAudioApi);
