@@ -17,22 +17,44 @@ jobs:
         with:
           ref: atc-client
           submodules: recursive
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
       - name: Configure cmake
         run: |
           cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
       - name: Build cmake
         run: |
           cmake --build build/
-  build-osx:
+  build-osx-intel:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
         with:
           ref: atc-client
           submodules: recursive
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
       - name: Configure cmake
         run: |
           cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+      - name: Build cmake
+        run: |
+          cmake --build build/
+  build-osx-arm:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: atc-client
+          submodules: recursive
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - name: Configure cmake
+        run: |
+          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
       - name: Build cmake
         run: |
           cmake --build build/
@@ -43,6 +65,9 @@ jobs:
         with:
           ref: atc-client
           submodules: recursive
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.bat -disableMetrics
       - name: Configure cmake
         run: |
           cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
