@@ -82,7 +82,7 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleInputDevices()
     if(result == MA_SUCCESS) {
         result = ma_context_get_devices(&context, NULL, NULL, &devices, &deviceCount);
         if(result == MA_SUCCESS) {
-            LOG("MiniAudioAudioDevice", "Successfully queried input devices");
+            LOG("MiniAudioAudioDevice", "Successfully queried %d input devices", deviceCount);
             for(ma_uint32 i = 0; i < deviceCount; i++) {
                 deviceList.emplace(i, devices[i]);
 
@@ -137,14 +137,14 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleOutputDevices()
     if(result == MA_SUCCESS) {
         result = ma_context_get_devices(&context, &devices, &deviceCount, NULL, NULL);
         if(result == MA_SUCCESS) {
-            LOG("MiniAudioAudioDevice", "Successfully queried output devices");
+            LOG("MiniAudioAudioDevice", "Successfully queried %d output devices", deviceCount);
             for(ma_uint32 i = 0; i < deviceCount; i++) {
                 deviceList.emplace(i, devices[i]);
 
                 // log detailed device info
                 {
                     ma_device_info detailedDeviceInfo;
-                    result = ma_context_get_device_info(&context, ma_device_type_capture, &devices[i].id, &detailedDeviceInfo);
+                    result = ma_context_get_device_info(&context, ma_device_type_playback, &devices[i].id, &detailedDeviceInfo);
                     if(result == MA_SUCCESS)
                     {
                         LOG("MiniAudioAudioDevice", "Output: %s (Default: %s, Format Count: %d)",
