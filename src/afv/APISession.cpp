@@ -326,7 +326,8 @@ void APISession::_getStationCallback(http::RESTRequest* req, bool success, std::
         bool found = false;
         std::pair<std::string, unsigned int> ret;
 
-        if (!jsReturn.contains("name") || !jsReturn.contains("frequency") ) {
+        if (!jsReturn.contains("name") || !jsReturn.contains("frequency") 
+            || !jsReturn["frequency"].is_number_integer()) {
             LOG("APISession", "get station data returned did not contains name or frequency.  Ignoring.");
         } else {
             found = true;
