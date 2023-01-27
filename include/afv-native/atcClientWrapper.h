@@ -1,6 +1,7 @@
 #pragma once
 #include "afv_native_export.h"
 #include "event.h"
+#include "afv/APISession.h"
 #include <string>
 #include <map>
 #include <vector>
