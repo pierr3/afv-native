@@ -340,6 +340,10 @@ void APISession::_getStationCallback(http::RESTRequest* req, bool success, std::
         if (!success) {
             LOG("APISession", "curl internal error during get station retrieval: %s", req->getCurlError().c_str());
         } else {
+            // We log the error but also return that we did not find the station if 404
+            if (req->getStatusCode() == 404) {
+                StationSearchCallback.invokeAll(false, {});
+            }
             LOG("APISession", "got error from API server get station: Response Code %d", req->getStatusCode());
         }
     }
