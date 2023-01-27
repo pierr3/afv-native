@@ -323,20 +323,18 @@ void APISession::_getStationCallback(http::RESTRequest* req, bool success, std::
     if (success && req->getStatusCode() == 200) {
         auto jsReturn = req->getResponse();
 
-        bool found = false;
         std::pair<std::string, unsigned int> ret;
 
         if (!jsReturn.contains("name") || !jsReturn.contains("frequency") 
             || !jsReturn["frequency"].is_number_integer()) {
             LOG("APISession", "get station data returned did not contains name or frequency.  Ignoring.");
         } else {
-            found = true;
             int foundFreq = jsReturn["frequency"].get<int>();
             std::string foundName = jsReturn["name"].get<std::string>();
             ret = { foundName, foundFreq };
         }
     
-        StationSearchCallback.invokeAll(found, ret);
+        StationSearchCallback.invokeAll(true, ret);
     }  else {
         if (!success) {
             LOG("APISession", "curl internal error during get station retrieval: %s", req->getCurlError().c_str());
