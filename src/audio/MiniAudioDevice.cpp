@@ -126,6 +126,12 @@ bool MiniAudioAudioDevice::initOutput()
     cfg.pUserData = this;
     cfg.dataCallback = maOutputCallback;
 
+    // For future single channel output
+    //ma_channel* my_channels;
+    //my_channels[0] = MA_CHANNEL_LEFT;
+    //cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
+    //cfg.playback.pChannelMap = my_channels;
+
     ma_result result;
 
     result = ma_device_init(&context, &cfg, &outputDev);
