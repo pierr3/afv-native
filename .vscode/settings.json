@@ -84,5 +84,6 @@
         "valarray": "cpp",
         "*.ipp": "cpp",
         "__functional_03": "cpp"
-    }
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

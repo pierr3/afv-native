@@ -48,11 +48,13 @@ Station::Station() :
 void afv_native::afv::dto::from_json(const json &j, Station &s) {
     j.at("id").get_to(s.ID);
     j.at("name").get_to(s.Name);
+
     try {
-        j.at("frequency").get_to(s.Frequency);
-    } catch (const json::out_of_range&) {}
-    try {
-        j.at("frequencyAlias").get_to(s.FrequencyAlias);
+        auto freq = j.at("frequency").is_number_integer() ? j.at("frequency").get<int>() : 0;
+        auto freqAlias = j.at("frequencyAlias").is_number_integer() ? j.at("frequencyAlias").get<int>() : 0;
+
+        s.Frequency = std::move(freq);
+        s.FrequencyAlias = std::move(freqAlias);
     } catch (const json::out_of_range&) {}
 }
 
