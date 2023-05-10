@@ -44,7 +44,7 @@ VHFFilterSource::VHFFilterSource(HardwareType hd):
     compressor->setSampleRate(sampleRateHz);
     compressor->setAttack(5.0);
     compressor->setRelease(10.0);
-    compressor->setThresh(8);
+    compressor->setThresh(16);
     compressor->setRatio(6);
     compressor->initRuntime();
     compressorPostGain = pow(10.0f, (-5.5/20.0));
@@ -52,7 +52,7 @@ VHFFilterSource::VHFFilterSource(HardwareType hd):
     limiter->setAttack(5.0);
     limiter->setSampleRate(sampleRateHz);
     limiter->setRelease(10.0);
-    limiter->setThresh(8); // Limiter threshold
+    limiter->setThresh(16); // Limiter threshold
     limiter->initRuntime();
 
     this->hardware = hd;

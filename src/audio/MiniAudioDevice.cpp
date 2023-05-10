@@ -210,11 +210,11 @@ bool MiniAudioAudioDevice::initOutput()
         ma_channel* my_channels;
 
         if(mOutputChannel == 1) {
-            my_channels[0] = MA_CHANNEL_FRONT_LEFT;
+            my_channels[0] = MA_CHANNEL_LEFT;
         }
         
         if (mOutputChannel == 2) {
-            my_channels[0] = MA_CHANNEL_FRONT_RIGHT;
+            my_channels[0] = MA_CHANNEL_RIGHT;
         }
 
         cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
