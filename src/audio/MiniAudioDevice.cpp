@@ -211,11 +211,13 @@ bool MiniAudioAudioDevice::initOutput()
         ma_channel* my_channels;
 
         if(mOutputChannel == 1) {
-            my_channels[0] = MA_CHANNEL_LEFT;
+            my_channels[0] = MA_CHANNEL_MONO;
+            my_channels[1] = MA_CHANNEL_LEFT;
         }
         
         if (mOutputChannel == 2) {
-            my_channels[0] = MA_CHANNEL_RIGHT;
+            my_channels[0] = MA_CHANNEL_MONO;
+            my_channels[1] = MA_CHANNEL_RIGHT;
         }
 
         
