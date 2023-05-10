@@ -223,7 +223,7 @@ bool MiniAudioAudioDevice::initOutput()
             my_channels[3] = MA_CHANNEL_FRONT_RIGHT_CENTER;
         }
 
-        cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
+        //cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
         cfg.playback.pChannelMap = my_channels;
     }
     ma_result result;
