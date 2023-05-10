@@ -42,16 +42,17 @@ VHFFilterSource::VHFFilterSource(HardwareType hd):
     limiter(new chunkware_simple::SimpleLimit())
 {
     compressor->setSampleRate(sampleRateHz);
-    compressor->setAttack(0.8);
-    compressor->setRelease(40.0);
-    compressor->setThresh(8.0);
-    compressor->setRatio(2);
-    //compressor->initRuntime();
+    compressor->setAttack(0.1);
+    compressor->setRelease(80.0);
+    compressor->setThresh(-8.0);
+    compressor->setRatio(6);
+    compressor->initRuntime();
+    
     compressorPostGain = pow(10.0f, (-5.5/20.0));
 
-    limiter->setAttack(0.8);
+    limiter->setAttack(0.1);
     limiter->setSampleRate(sampleRateHz);
-    limiter->setRelease(40.0);
+    limiter->setRelease(80.0);
     limiter->setThresh(8.0);
     limiter->initRuntime();
 
@@ -70,9 +71,9 @@ void VHFFilterSource::setupPresets()
     if (hardware == HardwareType::Schmid_ED_137B) 
     {
         mFilters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 310, 0.25));
-        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 450, 0.75, 17.0));
-        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 1450, 1.0, 25.0));
-        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 2000, 1.0, 25.0));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 450, 0.75, 12.0));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 1450, 1.0, 20.0));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 2000, 1.0, 20.0));
         mFilters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 2500, 0.25));
     }
 
@@ -110,12 +111,14 @@ void VHFFilterSource::transformFrame(SampleType *bufferOut, SampleType const buf
     for (unsigned i = 0; i < frameSizeSamples; i++) {
         sl = bufferIn[i];
         sr = sl;
-        limiter->process(sl, sr);
+        
+        compressor->process(sl, sr); // We use the compressor in reverse to boost quiet audio
         for (int band = 0; band < mFilters.size(); band++)
         {
             sl = mFilters[band].TransformOne(sl);
         }
-
+        limiter->process(sl, sr); // This limits the total output
+        
         sl *= static_cast<float>(compressorPostGain);
 
         bufferOut[i] = sl;
