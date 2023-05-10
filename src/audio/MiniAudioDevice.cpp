@@ -199,9 +199,9 @@ bool MiniAudioAudioDevice::initOutput()
     ma_device_config cfg = ma_device_config_init(ma_device_type_playback);
     cfg.playback.pDeviceID = &outputDeviceId;
     cfg.playback.format = ma_format_f32;
-    cfg.playback.channels = 2;
+    cfg.playback.channels = 1;
     cfg.playback.shareMode = ma_share_mode_shared;
-    cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
+    
     cfg.sampleRate = sampleRateHz;
     cfg.periodSizeInFrames = frameSizeSamples;
     cfg.pUserData = this;
@@ -220,6 +220,7 @@ bool MiniAudioAudioDevice::initOutput()
 
         
         cfg.playback.pChannelMap = my_channels;
+        cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
     }
     ma_result result;
 
