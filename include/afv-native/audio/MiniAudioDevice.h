@@ -22,7 +22,8 @@ namespace afv_native
                     const std::string& userStreamName,
                     const std::string& outputDeviceName,
                     const std::string& inputDeviceName,
-                    Api audioApi);
+                    Api audioApi,
+                    int outputChannel=0);
             virtual ~MiniAudioAudioDevice();
 
             bool openOutput() override;
@@ -50,6 +51,11 @@ namespace afv_native
             ma_context context;
             ma_device outputDev;
             ma_device inputDev;
+            //
+            // The output channel parameter allows for sound playback to be played in the left ear, right ear or both
+            // 0: both ears, 1: left ear, 2: right ear
+            //
+            int mOutputChannel = 0;
         };
     }
 }

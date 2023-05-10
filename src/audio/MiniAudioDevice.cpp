@@ -15,13 +15,15 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(
         const std::string& userStreamName,
         const std::string& outputDeviceName,
         const std::string& inputDeviceName,
-        AudioDevice::Api audioApi) :
+        AudioDevice::Api audioApi,
+        int outputChannel) :
     AudioDevice(),
     mUserStreamName(userStreamName),
     mOutputDeviceName(outputDeviceName),
     mInputDeviceName(inputDeviceName),
     mInputInitialized(false),
-    mOutputInitialized(false)
+    mOutputInitialized(false),
+    mOutputChannel(outputChannel)
 {
     ma_context_config contextConfig = ma_context_config_init();
     contextConfig.threadPriority = ma_thread_priority_normal;
@@ -126,12 +128,12 @@ bool MiniAudioAudioDevice::initOutput()
     cfg.pUserData = this;
     cfg.dataCallback = maOutputCallback;
 
-    // For future single channel output
-    //ma_channel* my_channels;
-    //my_channels[0] = MA_CHANNEL_LEFT;
-    //cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
-    //cfg.playback.pChannelMap = my_channels;
-
+    if (mOutputChannel != 0) {
+        ma_channel* my_channels;
+        my_channels[0] = mOutputChannel == 1 ? MA_CHANNEL_LEFT : MA_CHANNEL_RIGHT;
+        cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
+        cfg.playback.pChannelMap = my_channels;
+    }
     ma_result result;
 
     result = ma_device_init(&context, &cfg, &outputDev);
@@ -277,7 +279,8 @@ AudioDevice::makeDevice(
         const std::string &userStreamName,
         const std::string &outputDeviceId,
         const std::string &inputDeviceId,
-        AudioDevice::Api audioApi) {
-    auto devsp = std::make_shared<MiniAudioAudioDevice>(userStreamName, outputDeviceId, inputDeviceId, audioApi);
+        AudioDevice::Api audioApi,
+        int outputChannel) {
+    auto devsp = std::make_shared<MiniAudioAudioDevice>(userStreamName, outputDeviceId, inputDeviceId, audioApi, outputChannel);
     return devsp;
 }

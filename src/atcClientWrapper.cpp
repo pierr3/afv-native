@@ -120,6 +120,11 @@ void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(std::string output
     client->setSpeakerOutputDevice(outputDevice);
 }
 
+void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setHeadsetOutputChannel(channel);
+}
+
 std::vector<std::string> afv_native::api::atcClient::GetAudioInputDevices(unsigned int mAudioApi) {
     std::vector<std::string> out;
     auto devices = afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(mAudioApi);

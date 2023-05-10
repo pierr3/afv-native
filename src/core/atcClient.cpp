@@ -240,7 +240,8 @@ void ATCClient::startAudio()
                 "afv::headset",
                 mAudioOutputDeviceName,
                 mAudioInputDeviceName,
-                mAudioApi);
+                mAudioApi,
+                mHeadsetOutputChannel);
     } else {
         LOG("afv::ATCClient", "Tried to recreate Headset audio device...");
     }
@@ -411,6 +412,11 @@ void ATCClient::setAudioInputDevice(std::string inputDevice)
 void ATCClient::setAudioOutputDevice(std::string outputDevice)
 {
     mAudioOutputDeviceName = outputDevice;
+}
+
+void ATCClient::setHeadsetOutputChannel(int channel)
+{
+    mHeadsetOutputChannel = channel;
 }
 
 void ATCClient::setSpeakerOutputDevice(std::string outputDevice)

@@ -141,7 +141,8 @@ namespace afv_native {
                     const std::string &userStreamName,
                     const std::string &outputDeviceId,
                     const std::string &inputDeviceId,
-                    Api audioApi=-1);
+                    Api audioApi=-1,
+                    int outputChannel=0);
         };
     }
 }
