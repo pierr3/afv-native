@@ -33,11 +33,13 @@
 
 #include "afv-native/audio/VHFFilterSource.h"
 #include <SimpleComp.h>
+#include <SimpleLimit.h>
 
 using namespace afv_native::audio;
 
 VHFFilterSource::VHFFilterSource(HardwareType hd):
-    compressor(new chunkware_simple::SimpleComp())
+    compressor(new chunkware_simple::SimpleComp()),
+    limiter(new chunkware_simple::SimpleLimit())
 {
     compressor->setSampleRate(sampleRateHz);
     compressor->setAttack(5.0);
@@ -46,6 +48,12 @@ VHFFilterSource::VHFFilterSource(HardwareType hd):
     compressor->setRatio(6);
     compressor->initRuntime();
     compressorPostGain = pow(10.0f, (-5.5/20.0));
+
+    limiter->setAttack(5.0);
+    limiter->setSampleRate(sampleRateHz);
+    limiter->setRelease(10.0);
+    limiter->setThresh(16); // Limiter threshold
+    limiter->initRuntime();
 
     this->hardware = hd;
     
@@ -95,6 +103,7 @@ void VHFFilterSource::setupPresets()
 /** transformFrame lets use apply this filter to a normal buffer, without following the sink/source flow.
  *
  * It always performs a copy of the data from In to Out at the very least.
+ * It also seeks to normalize audio
  */
 void VHFFilterSource::transformFrame(SampleType *bufferOut, SampleType const bufferIn[]) {
     double sl, sr;
@@ -107,6 +116,9 @@ void VHFFilterSource::transformFrame(SampleType *bufferOut, SampleType const buf
             sl = mFilters[band].TransformOne(sl);
         }
         sl *= static_cast<float>(compressorPostGain);
+
+        // We now apply the limiter
+        limiter->process(sl, sr);
         bufferOut[i] = sl;
     }
 }

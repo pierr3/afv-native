@@ -43,6 +43,7 @@
 
 namespace chunkware_simple {
     class SimpleComp;
+    class SimpleLimit;
 }
 
 namespace afv_native {
@@ -69,6 +70,7 @@ namespace afv_native {
             void setupPresets();
         
             chunkware_simple::SimpleComp *compressor;
+            chunkware_simple::SimpleLimit *limiter;
             float compressorPostGain;
             std::vector<BiQuadFilter> mFilters;
             HardwareType hardware = HardwareType::Schmid_ED_137B;
