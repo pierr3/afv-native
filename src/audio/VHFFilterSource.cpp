@@ -118,7 +118,7 @@ void VHFFilterSource::transformFrame(SampleType *bufferOut, SampleType const buf
         sl *= static_cast<float>(compressorPostGain);
 
         // We now apply the limiter
-        limiter->process(sl, sr);
+        //limiter->process(sl, sr);
         bufferOut[i] = sl;
     }
 }
