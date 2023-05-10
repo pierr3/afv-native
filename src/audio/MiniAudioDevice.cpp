@@ -199,7 +199,7 @@ bool MiniAudioAudioDevice::initOutput()
     ma_device_config cfg = ma_device_config_init(ma_device_type_playback);
     cfg.playback.pDeviceID = &outputDeviceId;
     cfg.playback.format = ma_format_f32;
-    cfg.playback.channels = 1;
+    cfg.playback.channels = 0;
     cfg.playback.shareMode = ma_share_mode_shared;
     cfg.sampleRate = sampleRateHz;
     cfg.periodSizeInFrames = frameSizeSamples;
