@@ -10,6 +10,8 @@
 #include "afv-native/audio/AudioDevice.h"
 
 #include <map>
+#include <algorithm>
+#include <string>
 
 namespace afv_native
 {
