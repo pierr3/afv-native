@@ -42,17 +42,17 @@ VHFFilterSource::VHFFilterSource(HardwareType hd):
     limiter(new chunkware_simple::SimpleLimit())
 {
     compressor->setSampleRate(sampleRateHz);
-    compressor->setAttack(5.0);
-    compressor->setRelease(10.0);
-    compressor->setThresh(8);
-    compressor->setRatio(6);
+    compressor->setAttack(0.8);
+    compressor->setRelease(40.0);
+    compressor->setThresh(8.0);
+    compressor->setRatio(2);
     //compressor->initRuntime();
     compressorPostGain = pow(10.0f, (-5.5/20.0));
 
     limiter->setAttack(0.8);
     limiter->setSampleRate(sampleRateHz);
     limiter->setRelease(40.0);
-    limiter->setThresh(-8.0);
+    limiter->setThresh(8.0);
     limiter->initRuntime();
 
     this->hardware = hd;
@@ -110,13 +110,12 @@ void VHFFilterSource::transformFrame(SampleType *bufferOut, SampleType const buf
     for (unsigned i = 0; i < frameSizeSamples; i++) {
         sl = bufferIn[i];
         sr = sl;
-        //compressor->process(sl, sr);
+        limiter->process(sl, sr);
         for (int band = 0; band < mFilters.size(); band++)
         {
             sl = mFilters[band].TransformOne(sl);
         }
 
-        limiter->process(sl, sr);
         sl *= static_cast<float>(compressorPostGain);
 
         bufferOut[i] = sl;
