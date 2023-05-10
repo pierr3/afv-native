@@ -7,11 +7,14 @@
 #include <vector>
 #include <functional>
 #include "hardwareType.h"
+#include "afv-native/Log.h"
 
 namespace afv_native::api {
     class atcClient {
 
         public:
+            AFV_NATIVE_EXPORT static void setLogger(afv_native::log_fn gLogger);
+
             AFV_NATIVE_EXPORT atcClient(std::string clientName, std::string resourcePath = "");
             AFV_NATIVE_EXPORT ~atcClient();
 

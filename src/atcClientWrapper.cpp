@@ -6,8 +6,10 @@
 #include <algorithm>
 #include <iterator> 
 
+#include "afv-native/Log.h"
 #include "afv-native/atcClientWrapper.h"
 #include "afv-native/atcClient.h"
+
 #include <event2/event.h>
 
 namespace atcapi
@@ -22,6 +24,10 @@ namespace atcapi
 }
 
 using namespace atcapi;
+
+void afv_native::api::atcClient::setLogger(afv_native::log_fn gLogger) {
+    afv_native::setLogger(gLogger);
+}
 
 afv_native::api::atcClient::atcClient(std::string clientName, std::string resourcePath) {
         #ifdef WIN32
