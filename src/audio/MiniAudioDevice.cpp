@@ -130,7 +130,21 @@ bool MiniAudioAudioDevice::initOutput()
 
     if (mOutputChannel != 0) {
         ma_channel* my_channels;
-        my_channels[0] = mOutputChannel == 1 ? MA_CHANNEL_LEFT : MA_CHANNEL_RIGHT;
+
+        if(mOutputChannel == 1) {
+            my_channels[0] = MA_CHANNEL_LEFT;
+            my_channels[1] = MA_CHANNEL_FRONT_LEFT;
+            my_channels[2] = MA_CHANNEL_BACK_LEFT;
+            my_channels[3] = MA_CHANNEL_FRONT_LEFT_CENTER;
+        }
+        
+        if (mOutputChannel == 2) {
+            my_channels[0] = MA_CHANNEL_RIGHT;
+            my_channels[1] = MA_CHANNEL_FRONT_RIGHT;
+            my_channels[2] = MA_CHANNEL_BACK_RIGHT;
+            my_channels[3] = MA_CHANNEL_FRONT_RIGHT_CENTER;
+        }
+
         cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
         cfg.playback.pChannelMap = my_channels;
     }
