@@ -303,7 +303,7 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
     std::map<void *, audio::SampleType[audio::frameSizeSamples]> sampleCache;
     std::map<void *, audio::SampleType[audio::frameSizeSamples]> eqSampleCache;
     
-    
+    std::map<int, std::vector<std::string>> _currentlyTransmittingPilots;
     
 
     uint32_t allStreams = 0;
@@ -333,6 +333,13 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
                 }
             }
         }
+
+        for (auto &dx : src.second.transceivers) {
+            if (std::find(_currentlyTransmittingPilots[dx.Frequency].begin(), _currentlyTransmittingPilots[dx.Frequency].end(), src.first) != _currentlyTransmittingPilots[dx.Frequency].end()) {
+                break;
+            }
+            _currentlyTransmittingPilots[dx.Frequency].push_back(src.first);
+        }
     }
     IncomingAudioStreams.store(allStreams);
 
@@ -351,6 +358,8 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
         {
             _process_radio(sampleCache, eqSampleCache, radio.second.Frequency, state);
         }
+
+        mRadioState[radio.first].currentlyTransmittingCallsigns = _currentlyTransmittingPilots[radio.first];
     }
 
     ::memcpy(bufferOut, state->mMixingBuffer, sizeof(audio::SampleType) * audio::frameSizeSamples);
@@ -796,20 +805,11 @@ void ATCRadioStack::maintainIncomingStreams()
     std::lock_guard<std::mutex> ml(mStreamMapLock);
     std::vector<std::string> callsignsToPurge;
     util::monotime_t now = util::monotime_get();
-    std::map<int, std::vector<std::string>> _currentlyTransmittingPilots;
-
 
     for (const auto &streamPair: mIncomingStreams) {
         auto idleTime = now - streamPair.second.source->getLastActivityTime();
         if ((now - streamPair.second.source->getLastActivityTime()) > audio::compressedSourceCacheTimeoutMs) {
             callsignsToPurge.emplace_back(streamPair.first);
-        } else {
-            for (auto &dx : streamPair.second.transceivers) {
-                if (std::find(_currentlyTransmittingPilots.begin(), _currentlyTransmittingPilots.end(), streamPair.first) != _currentlyTransmittingPilots.end()) {
-                    break;
-                }
-                _currentlyTransmittingPilots[dx.Frequency].push_back(streamPair.first);
-            }
         }
     }
 
@@ -817,10 +817,6 @@ void ATCRadioStack::maintainIncomingStreams()
         mIncomingStreams.erase(callsign);
     }
 
-    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    for (auto &rt : mRadioState) {
-        mRadioState[rt.first].currentlyTransmittingCallsigns = _currentlyTransmittingPilots[rt.first];
-    }
     mMaintenanceTimer.enable(maintenanceTimerIntervalMs);
     
 }
