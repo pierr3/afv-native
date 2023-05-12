@@ -4,7 +4,8 @@
 #include <functional>
 #include <mutex>
 #include <algorithm>
-#include <iterator> 
+#include <iterator>
+#include <vector>
 
 #include "afv-native/Log.h"
 #include "afv-native/atcClientWrapper.h"
@@ -264,8 +265,8 @@ void afv_native::api::atcClient::SetPtt(bool pttState) {
     client->setPtt(pttState);
 }
 
-std::string afv_native::api::atcClient::LastTransmitOnFreq(unsigned int freq) {
-    return client->lastTransmitOnFreq(freq);
+std::vector<std::string> afv_native::api::atcClient::CurrentlyTransmittingOnFreq(unsigned int freq) {
+    return client->currentTransmittingOnFreq(freq);
 }
 
 void afv_native::api::atcClient::AddFrequency(unsigned int freq, std::string stationName) {

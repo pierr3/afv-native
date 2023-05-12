@@ -359,14 +359,11 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
 
 bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt)
 {
-    //std::lock_guard<std::mutex> radioStateLock(mRadioStateLock);
     for (auto trans: pkt.Transceivers)
     {
         if(mRadioState[trans.Frequency].rx) {
-            mRadioState[trans.Frequency].lastTransmitCallsign=pkt.Callsign;
             return true;
         }
-        
     }
     
     return false;    
@@ -376,9 +373,6 @@ bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt)
 void ATCRadioStack::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt)
 {
     std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
-    
-    
-    //FIXME:  Deal with the case of a single-callsign transmitting multiple different voicestreams simultaneously.
     
     if(_packetListening(pkt))
     {
@@ -662,10 +656,10 @@ double ATCRadioStack::getPeak() const
 {
     return std::max(-40.0, mVuMeter.getMax());
 }
-std::string ATCRadioStack::lastTransmitOnFreq(unsigned int freq)
+std::vector<std::string> ATCRadioStack::currentTransmittingOnFreq(unsigned int freq)
 {
-    //std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    return mRadioState[freq].lastTransmitCallsign;
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    return mRadioState[freq].currentlyTransmittingCallsigns;
 }
 bool ATCRadioStack::getTxActive(unsigned int freq)
 {
@@ -797,17 +791,32 @@ void ATCRadioStack::reset()
 
 void ATCRadioStack::maintainIncomingStreams()
 {
+    // Here we also list all callsigns transmitting on one frequency
+
     std::lock_guard<std::mutex> ml(mStreamMapLock);
     std::vector<std::string> callsignsToPurge;
     util::monotime_t now = util::monotime_get();
+    std::map<int, std::vector<std::string>> _currentlyTransmittingPilots;
+
+
     for (const auto &streamPair: mIncomingStreams) {
         auto idleTime = now - streamPair.second.source->getLastActivityTime();
         if ((now - streamPair.second.source->getLastActivityTime()) > audio::compressedSourceCacheTimeoutMs) {
             callsignsToPurge.emplace_back(streamPair.first);
+        } else {
+            for (auto &dx : streamPair.second.transceivers) {
+                _currentlyTransmittingPilots[dx.Frequency].push_back(streamPair.first);
+            }
         }
     }
+
     for (const auto &callsign: callsignsToPurge) {
         mIncomingStreams.erase(callsign);
+    }
+
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    for (auto &rt : mRadioState) {
+        mRadioState[rt.first].currentlyTransmittingCallsigns = _currentlyTransmittingPilots[rt.first];
     }
     mMaintenanceTimer.enable(maintenanceTimerIntervalMs);
     
