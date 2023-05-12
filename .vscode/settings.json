@@ -83,7 +83,13 @@
         "stack": "cpp",
         "valarray": "cpp",
         "*.ipp": "cpp",
-        "__functional_03": "cpp"
+        "__functional_03": "cpp",
+        "__verbose_abort": "cpp",
+        "any": "cpp",
+        "charconv": "cpp",
+        "span": "cpp",
+        "variant": "cpp",
+        "ranges": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

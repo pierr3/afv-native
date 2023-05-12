@@ -303,7 +303,7 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
     std::map<void *, audio::SampleType[audio::frameSizeSamples]> sampleCache;
     std::map<void *, audio::SampleType[audio::frameSizeSamples]> eqSampleCache;
     
-    
+    std::map<int, std::vector<std::string>> _currentlyTransmittingPilots;
     
 
     uint32_t allStreams = 0;
@@ -327,12 +327,21 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
                 if (rv != audio::SourceStatus::OK) {
                     sampleCache.erase(src.second.source.get());
                 } else {
-                    allStreams++;
-                                     
-                    
+                    allStreams++;       
                 }
+                if (src.second.source && src.second.source->isActive()) {
+                    for (auto &dx : src.second.transceivers) {
+                        if (std::find(_currentlyTransmittingPilots[dx.Frequency].begin(), _currentlyTransmittingPilots[dx.Frequency].end(), src.first) != _currentlyTransmittingPilots[dx.Frequency].end()) {
+                            break;
+                        }
+                        _currentlyTransmittingPilots[dx.Frequency].push_back(src.first);
+                    }
+                }  
+                
             }
         }
+
+
     }
     IncomingAudioStreams.store(allStreams);
 
@@ -351,6 +360,8 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
         {
             _process_radio(sampleCache, eqSampleCache, radio.second.Frequency, state);
         }
+
+        mRadioState[radio.first].currentlyTransmittingCallsigns = _currentlyTransmittingPilots[radio.first];
     }
 
     ::memcpy(bufferOut, state->mMixingBuffer, sizeof(audio::SampleType) * audio::frameSizeSamples);
@@ -359,14 +370,11 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
 
 bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt)
 {
-    //std::lock_guard<std::mutex> radioStateLock(mRadioStateLock);
     for (auto trans: pkt.Transceivers)
     {
         if(mRadioState[trans.Frequency].rx) {
-            mRadioState[trans.Frequency].lastTransmitCallsign=pkt.Callsign;
             return true;
         }
-        
     }
     
     return false;    
@@ -376,9 +384,6 @@ bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt)
 void ATCRadioStack::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt)
 {
     std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
-    
-    
-    //FIXME:  Deal with the case of a single-callsign transmitting multiple different voicestreams simultaneously.
     
     if(_packetListening(pkt))
     {
@@ -662,10 +667,10 @@ double ATCRadioStack::getPeak() const
 {
     return std::max(-40.0, mVuMeter.getMax());
 }
-std::string ATCRadioStack::lastTransmitOnFreq(unsigned int freq)
+std::vector<std::string> ATCRadioStack::currentTransmittingOnFreq(unsigned int freq)
 {
-    //std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    return mRadioState[freq].lastTransmitCallsign;
+    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    return mRadioState[freq].currentlyTransmittingCallsigns;
 }
 bool ATCRadioStack::getTxActive(unsigned int freq)
 {
@@ -797,18 +802,23 @@ void ATCRadioStack::reset()
 
 void ATCRadioStack::maintainIncomingStreams()
 {
+    // Here we also list all callsigns transmitting on one frequency
+
     std::lock_guard<std::mutex> ml(mStreamMapLock);
     std::vector<std::string> callsignsToPurge;
     util::monotime_t now = util::monotime_get();
+
     for (const auto &streamPair: mIncomingStreams) {
         auto idleTime = now - streamPair.second.source->getLastActivityTime();
         if ((now - streamPair.second.source->getLastActivityTime()) > audio::compressedSourceCacheTimeoutMs) {
             callsignsToPurge.emplace_back(streamPair.first);
         }
     }
+
     for (const auto &callsign: callsignsToPurge) {
         mIncomingStreams.erase(callsign);
     }
+
     mMaintenanceTimer.enable(maintenanceTimerIntervalMs);
     
 }

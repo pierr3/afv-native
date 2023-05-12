@@ -74,11 +74,10 @@ void ATCClient::setClientPosition(double lat, double lon, double amslm, double a
     mATCRadioStack->setClientPosition(lat, lon, amslm, aglm);
 }
 
-std::string ATCClient::lastTransmitOnFreq(unsigned int freq)
+std::vector<std::string> ATCClient::currentTransmittingOnFreq(unsigned int freq)
 {
-    return mATCRadioStack->lastTransmitOnFreq(freq);
+    return mATCRadioStack->currentTransmittingOnFreq(freq);
 }
-
 
 void ATCClient::setTx(unsigned int freq, bool active)
 {
