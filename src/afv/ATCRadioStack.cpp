@@ -331,15 +331,17 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
                                      
                     
                 }
+
+                for (auto &dx : src.second.transceivers) {
+                    if (std::find(_currentlyTransmittingPilots[dx.Frequency].begin(), _currentlyTransmittingPilots[dx.Frequency].end(), src.first) != _currentlyTransmittingPilots[dx.Frequency].end()) {
+                        break;
+                    }
+                    _currentlyTransmittingPilots[dx.Frequency].push_back(src.first);
+                }
             }
         }
 
-        for (auto &dx : src.second.transceivers) {
-            if (std::find(_currentlyTransmittingPilots[dx.Frequency].begin(), _currentlyTransmittingPilots[dx.Frequency].end(), src.first) != _currentlyTransmittingPilots[dx.Frequency].end()) {
-                break;
-            }
-            _currentlyTransmittingPilots[dx.Frequency].push_back(src.first);
-        }
+
     }
     IncomingAudioStreams.store(allStreams);
 
