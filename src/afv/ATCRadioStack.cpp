@@ -805,6 +805,9 @@ void ATCRadioStack::maintainIncomingStreams()
             callsignsToPurge.emplace_back(streamPair.first);
         } else {
             for (auto &dx : streamPair.second.transceivers) {
+                if (std::find(_currentlyTransmittingPilots.begin(), _currentlyTransmittingPilots.end(), streamPair.first) != _currentlyTransmittingPilots.end()) {
+                    break;
+                }
                 _currentlyTransmittingPilots[dx.Frequency].push_back(streamPair.first);
             }
         }
