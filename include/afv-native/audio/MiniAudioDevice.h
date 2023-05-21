@@ -4,6 +4,7 @@
 #define MINIAUDIO_IMPLEMENTATION
 #define MA_NO_WEBAUDIO
 #define MA_NO_NULL
+#define MA_NO_CUSTOM
 #include "miniaudio.h"
 
 #include "afv-native/Log.h"

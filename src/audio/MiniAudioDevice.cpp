@@ -374,9 +374,9 @@ std::map<unsigned int, std::string> MiniAudioAudioDevice::getAvailableBackends()
         return output;
     }
 
-    LOG("MiniAudioAudioDevice", "Successfully queried %i backends. %s", size(enabledBackends));
+    LOG("MiniAudioAudioDevice", "Successfully queried %i backends.", enabledBackendCount);
 
-    for (int i = 0; i < size(enabledBackends); i++) {
+    for (int i = 0; i < enabledBackendCount; i++) {
         output.insert(std::make_pair(static_cast<unsigned int>(enabledBackends[i]), ma_get_backend_name(enabledBackends[i])));
     }
 
