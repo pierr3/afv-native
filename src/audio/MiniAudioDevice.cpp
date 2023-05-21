@@ -31,7 +31,24 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(
     contextConfig.threadPriority = ma_thread_priority_normal;
     contextConfig.jack.pClientName = mUserStreamName.c_str();
     contextConfig.pulse.pApplicationName = mUserStreamName.c_str();
-    ma_result result = ma_context_init(NULL, 0, &contextConfig, &context);
+    ma_result result;
+
+    if (audioApi == -1) {
+        result = ma_context_init(NULL, 0, &contextConfig, &context);
+    } else {
+        try {
+            ma_backend backends[1] = {
+                static_cast<ma_backend>(audioApi)
+            };
+
+            result = ma_context_init(backends, 1, &contextConfig, &context);
+        } catch(std::exception &e) {
+            LOG("MiniAudioAudioDevice", "Error initializing audio api, api unknown: %s", e.what());
+
+            return;
+        }    
+    }
+
     if(result == MA_SUCCESS) {
         ma_log_register_callback(ma_context_get_log(&context), ma_log_callback_init(logger, NULL));
         LOG("MiniAudioAudioDevice", "Context initialized. Audio Backend: %s", ma_get_backend_name(context.backend));
@@ -345,10 +362,31 @@ void MiniAudioAudioDevice::maInputCallback(ma_device *pDevice, void *pOutput, co
     device->inputCallback(pInput, frameCount);
 }
 
+std::map<unsigned int, std::string> MiniAudioAudioDevice::getAvailableBackends() {
+    ma_backend enabledBackends[MA_BACKEND_COUNT];
+    size_t enabledBackendCount;
+
+    std::map<unsigned int, std::string> output;
+
+    ma_result result = ma_get_enabled_backends(enabledBackends, MA_BACKEND_COUNT, &enabledBackendCount);
+    if (result != MA_SUCCESS) {
+        LOG("MiniAudioAudioDevice", "Error getting available backends: %s", ma_result_description(result));
+        return output;
+    }
+
+    LOG("MiniAudioAudioDevice", "Successfully queried %i backends. %s", size(enabledBackends));
+
+    for (int i = 0; i < size(enabledBackends); i++) {
+        output.insert(std::make_pair(static_cast<unsigned int>(enabledBackends[i]), ma_get_backend_name(enabledBackends[i])));
+    }
+
+    return output;
+}
+
 /* ========== Factory hooks ============= */
 
 map<AudioDevice::Api, std::string> AudioDevice::getAPIs() {
-    return {};
+    return MiniAudioAudioDevice::getAvailableBackends();
 }
 
 map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(AudioDevice::Api api) {

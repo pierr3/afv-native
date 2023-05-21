@@ -34,6 +34,7 @@ namespace afv_native
 
             static std::map<int, ma_device_info> getCompatibleInputDevices();
             static std::map<int, ma_device_info> getCompatibleOutputDevices();
+            static std::map<unsigned int, std::string> getAvailableBackends();
 
         private:
             bool initOutput();
