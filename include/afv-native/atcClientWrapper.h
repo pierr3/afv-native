@@ -86,7 +86,7 @@ namespace afv_native::api {
             AFV_NATIVE_EXPORT void StopAtisPlayback();
             AFV_NATIVE_EXPORT bool IsAtisPlayingBack();
 
-            AFV_NATIVE_EXPORT std::vector<std::string> CurrentlyTransmittingOnFreq(unsigned int freq);
+            AFV_NATIVE_EXPORT std::string LastTransmitOnFreq(unsigned int freq);
 
             AFV_NATIVE_EXPORT void SetRadiosGain(float gain);
 
