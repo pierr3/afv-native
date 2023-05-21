@@ -33,8 +33,8 @@ namespace afv_native
             bool openInput() override;
             void close() override;
 
-            static std::map<int, ma_device_info> getCompatibleInputDevices();
-            static std::map<int, ma_device_info> getCompatibleOutputDevices();
+            static std::map<int, ma_device_info> getCompatibleInputDevices(unsigned int api);
+            static std::map<int, ma_device_info> getCompatibleOutputDevices(unsigned int api);
             static std::map<unsigned int, std::string> getAvailableBackends();
 
         private:
@@ -55,6 +55,7 @@ namespace afv_native
             ma_context context;
             ma_device outputDev;
             ma_device inputDev;
+            unsigned int mAudioApi;
             //
             // The output channel parameter allows for sound playback to be played in the left ear, right ear or both
             // 0: both ears, 1: left ear, 2: right ear

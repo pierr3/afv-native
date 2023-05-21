@@ -25,7 +25,8 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(
     mInputDeviceName(inputDeviceName),
     mInputInitialized(false),
     mOutputInitialized(false),
-    mOutputChannel(outputChannel)
+    mOutputChannel(outputChannel),
+    mAudioApi(audioApi)
 {
     ma_context_config contextConfig = ma_context_config_init();
     contextConfig.threadPriority = ma_thread_priority_normal;
@@ -45,7 +46,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(
         } catch(std::exception &e) {
             LOG("MiniAudioAudioDevice", "Error initializing audio api, api unknown: %s", e.what());
 
-            return;
+            throw new std::exception();
         }    
     }
 
@@ -55,6 +56,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(
     }
     else {
         LOG("MiniAudioAudioDevice", "Error initializing context: %s", ma_result_description(result));
+        throw new std::exception();
     }
 }
 
@@ -87,7 +89,7 @@ void MiniAudioAudioDevice::close()
     mOutputInitialized = false;
 }
 
-std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleInputDevices()
+std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleInputDevices(unsigned int api)
 {
     std::map<int, ma_device_info> deviceList;
 
@@ -95,7 +97,23 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleInputDevices()
     ma_uint32 deviceCount;
     ma_context context;
 
-    ma_result result = ma_context_init(NULL, 0, NULL, &context);
+    ma_result result;
+    if (api == -1) {
+        result = ma_context_init(NULL, 0, NULL, &context);
+    } else {
+        try {
+            ma_backend backends[1] = {
+                static_cast<ma_backend>(api)
+            };
+
+            result = ma_context_init(backends, 1, NULL, &context);
+        } catch(std::exception &e) {
+            LOG("MiniAudioAudioDevice", "Error querying input devices due to wrong audio api: %s", e.what());
+
+            return deviceList;
+        } 
+    }
+
     if(result == MA_SUCCESS) {
         result = ma_context_get_devices(&context, NULL, NULL, &devices, &deviceCount);
         if(result == MA_SUCCESS) {
@@ -142,7 +160,7 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleInputDevices()
     return deviceList;
 }
 
-std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleOutputDevices()
+std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleOutputDevices(unsigned int api)
 {
     std::map<int, ma_device_info> deviceList;
 
@@ -150,7 +168,23 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleOutputDevices()
     ma_uint32 deviceCount;
     ma_context context;
 
-    ma_result result = ma_context_init(NULL, 0, NULL, &context);
+    ma_result result;
+    if (api == -1) {
+        result = ma_context_init(NULL, 0, NULL, &context);
+    } else {
+        try {
+            ma_backend backends[1] = {
+                static_cast<ma_backend>(api)
+            };
+
+            result = ma_context_init(backends, 1, NULL, &context);
+        } catch(std::exception &e) {
+            LOG("MiniAudioAudioDevice", "Error querying input devices due to wrong audio api: %s", e.what());
+
+            return deviceList;
+        } 
+    }
+
     if(result == MA_SUCCESS) {
         result = ma_context_get_devices(&context, &devices, &deviceCount, NULL, NULL);
         if(result == MA_SUCCESS) {
@@ -302,7 +336,7 @@ bool MiniAudioAudioDevice::initInput()
 
 bool MiniAudioAudioDevice::getDeviceForName(const std::string &deviceName, bool forInput, ma_device_id &deviceId)
 {
-    auto allDevices = forInput ? getCompatibleInputDevices() : getCompatibleOutputDevices();
+    auto allDevices = forInput ? getCompatibleInputDevices(mAudioApi) : getCompatibleOutputDevices(mAudioApi);
 
     if(!allDevices.empty()) {
         for(const auto& devicePair : allDevices) {
@@ -390,7 +424,7 @@ map<AudioDevice::Api, std::string> AudioDevice::getAPIs() {
 }
 
 map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(AudioDevice::Api api) {
-    auto allDevices = MiniAudioAudioDevice::getCompatibleInputDevices();
+    auto allDevices = MiniAudioAudioDevice::getCompatibleInputDevices(api);
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
         returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name));
@@ -399,7 +433,7 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(A
 }
 
 map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleOutputDevicesForApi(AudioDevice::Api api) {
-    auto allDevices = MiniAudioAudioDevice::getCompatibleOutputDevices();
+    auto allDevices = MiniAudioAudioDevice::getCompatibleOutputDevices(api);
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
         returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name));
@@ -414,6 +448,10 @@ AudioDevice::makeDevice(
         const std::string &inputDeviceId,
         AudioDevice::Api audioApi,
         int outputChannel) {
-    auto devsp = std::make_shared<MiniAudioAudioDevice>(userStreamName, outputDeviceId, inputDeviceId, audioApi, outputChannel);
-    return devsp;
+
+        try {
+            return std::make_shared<MiniAudioAudioDevice>(userStreamName, outputDeviceId, inputDeviceId, audioApi, outputChannel);
+        } catch (std::exception &e) {
+            return nullptr;
+        }
 }

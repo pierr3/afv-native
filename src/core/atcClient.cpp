@@ -215,23 +215,23 @@ void ATCClient::sessionStateCallback(afv::APISessionState state)
 void ATCClient::startAudio()
 {
     
-        if (!mSpeakerDevice) {
-            LOG("afv::ATCClient", "Initialising Speaker Audio...");
-            mSpeakerDevice = audio::AudioDevice::makeDevice(
-                    "afv::speaker",
-                    mAudioSpeakerDeviceName,
-                    mAudioInputDeviceName,
-                    mAudioApi);
-        } else {
-            LOG("afv::ATCClient", "Tried to recreate Speaker audio device...");
-        }
-        mSpeakerDevice->setSink(nullptr);
-        mSpeakerDevice->setSource(mATCRadioStack->speakerDevice());
-        if (!mSpeakerDevice->openOutput()) {
-            LOG("afv::ATCClient", "Unable to open Speaker audio device.");
-            stopAudio();
-            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
-        };
+    if (!mSpeakerDevice) {
+        LOG("afv::ATCClient", "Initialising Speaker Audio...");
+        mSpeakerDevice = audio::AudioDevice::makeDevice(
+                "afv::speaker",
+                mAudioSpeakerDeviceName,
+                mAudioInputDeviceName,
+                mAudioApi);
+    } else {
+        LOG("afv::ATCClient", "Speaker device already exists, skipping creation");
+    }
+    mSpeakerDevice->setSink(nullptr);
+    mSpeakerDevice->setSource(mATCRadioStack->speakerDevice());
+    if (!mSpeakerDevice->openOutput()) {
+        LOG("afv::ATCClient", "Unable to open Speaker audio device.");
+        stopAudio();
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
+    };
     
     
     if (!mAudioDevice) {
@@ -243,7 +243,7 @@ void ATCClient::startAudio()
                 mAudioApi,
                 mHeadsetOutputChannel);
     } else {
-        LOG("afv::ATCClient", "Tried to recreate Headset audio device...");
+        LOG("afv::ATCClient", "Headset device already exists, skipping creation");
     }
     mAudioDevice->setSink(mATCRadioStack);
     mAudioDevice->setSource(mATCRadioStack->headsetDevice());
