@@ -222,6 +222,11 @@ void ATCClient::startAudio()
                 mAudioSpeakerDeviceName,
                 mAudioInputDeviceName,
                 mAudioApi);
+
+        if (!mSpeakerDevice) {
+            LOG("afv::ATCClient", "Could not initiate speaker audio context.");
+            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
+        }
     } else {
         LOG("afv::ATCClient", "Speaker device already exists, skipping creation");
     }
@@ -242,6 +247,11 @@ void ATCClient::startAudio()
                 mAudioInputDeviceName,
                 mAudioApi,
                 mHeadsetOutputChannel);
+
+        if (!mAudioDevice) {
+            LOG("afv::ATCClient", "Could not initiate headset audio context.");
+            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
+        }
     } else {
         LOG("afv::ATCClient", "Headset device already exists, skipping creation");
     }
