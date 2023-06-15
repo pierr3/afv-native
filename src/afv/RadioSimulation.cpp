@@ -148,6 +148,7 @@ void RadioSimulation::processCompressedFrame(std::vector<unsigned char> compress
                 audioOutDto.LastPacket = true;
                 mLastFramePtt = false;
             } else {
+                audioOutDto.LastPacket = false;
                 mLastFramePtt = true;
             }
 
