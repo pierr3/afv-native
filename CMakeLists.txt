@@ -158,6 +158,7 @@ find_package(Libevent CONFIG REQUIRED)
 find_package(msgpack-cxx CONFIG REQUIRED)
 find_package(Opus CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(Threads REQUIRED)
 
 # Speexdsp does not have find_package
 if (UNIX)
@@ -188,10 +189,6 @@ if (UNIX)
 	target_link_libraries(afv_native PRIVATE libevent::pthreads)
 endif()
 
-if (WIN32)
-	target_link_libraries(afv_native PRIVATE)
-endif()
-
 target_link_libraries(afv_native
 		PRIVATE
 		OpenSSL::SSL OpenSSL::Crypto
@@ -201,6 +198,7 @@ target_link_libraries(afv_native
 		msgpack-cxx
 		Opus::opus
 		nlohmann_json nlohmann_json::nlohmann_json
+		Threads::Threads
 		${SPEEXDSP_LIBRARY})
 
 target_include_directories(afv_native
