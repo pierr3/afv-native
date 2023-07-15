@@ -32,8 +32,8 @@
 */
 
 #include "afv-native/audio/VHFFilterSource.h"
-#include <simpleSource/SimpleComp.h>
-#include <simpleSource/SimpleLimit.h>
+#include <SimpleComp.h>
+#include <SimpleLimit.h>
 
 using namespace afv_native::audio;
 

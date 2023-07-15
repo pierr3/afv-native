@@ -77,7 +77,7 @@ namespace afv_native {
             int32_t mX1;
             int32_t mX2;
             float mLevel;
-            static constexpr float sScale = 2.0f / static_cast<float>(0xffffffff);
+            static constexpr float sScale = 2.0f / 0xffffffff;
         };
     }
 }
