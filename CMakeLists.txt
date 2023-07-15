@@ -246,7 +246,7 @@ install(EXPORT afv_native-targets
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
-	${CMAKE_SOURCE_DIR}/cmake/afv_native-config.cmake.in
+	${CMAKE_CURRENT_SOURCE_DIR}/cmake/afv_native-config.cmake.in
 	${CMAKE_BINARY_DIR}/cmake/afv_native-config.cmake
 	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/afv_native
 )
