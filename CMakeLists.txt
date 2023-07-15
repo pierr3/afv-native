@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
+include_directories(include/)
+
 set(AFV_NATIVE_HEADERS
 	include/afv-native/atcClient.h
 	include/afv-native/atisClient.h
@@ -133,7 +135,8 @@ add_library(afv_native
 	${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleComp.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleEnvelope.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleGate.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleLimit.cpp)
+	${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleLimit.cpp
+	${AFV_NATIVE_HEADERS})
 
 add_library(afv_native::afv_native ALIAS afv_native)
 	
@@ -227,6 +230,14 @@ if(APPLE)
 		${CORE_FOUNDATION}
 		${CORE_SERVICES})
 endif()
+
+target_include_directories(afv_native PRIVATE
+    # The location of the headers before installation 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+	# The location of the headers after installation
+	$<INSTALL_INTERFACE:include>
+)
+
 
 include(GNUInstallDirs)
 install(TARGETS afv_native

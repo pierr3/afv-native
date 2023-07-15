@@ -1,5 +1,5 @@
 #pragma once
-#include "build/include/afv_native_export.h"
+#include "afv_native_export.h"
 #include "event.h"
 #include "afv/APISession.h"
 #include <string>
