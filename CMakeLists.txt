@@ -237,7 +237,7 @@ install(TARGETS afv_native
 )
 
 install(EXPORT afv_native-targets
-    FILE afv_native.cmake
+    FILE afv_native-targets.cmake
     NAMESPACE afv_native::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/afv_native
 )
