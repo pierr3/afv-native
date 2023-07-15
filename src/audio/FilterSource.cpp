@@ -47,10 +47,6 @@ FilterSource::FilterSource(std::shared_ptr<ISampleSource> srcSource):
 {
 }
 
-FilterSource::~FilterSource()
-{
-}
-
 void FilterSource::addFilter(std::unique_ptr<IFilter> filter) {
     mFilters.emplace_back(std::move(filter));
 }
