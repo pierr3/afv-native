@@ -145,7 +145,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "d")
 include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME} 
 						EXPORT_MACRO_NAME AFV_NATIVE_API
-						EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/${PROJECT_NAME}_export.h)
+						EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}_export.h)
 
 # specify the target to install (calculator library defined above)
 # set the export name <name>-config (does not need to match target name)
