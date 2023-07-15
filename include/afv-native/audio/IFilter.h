@@ -41,6 +41,7 @@ namespace afv_native {
         class IFilter {
         public:
             virtual SampleType TransformOne(SampleType sampleIn) = 0;
+            virtual ~IFilter() = default;
         };
     }
 }
