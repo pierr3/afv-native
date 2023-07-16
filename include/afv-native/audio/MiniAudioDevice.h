@@ -14,6 +14,10 @@
 #include <algorithm>
 #include <string>
 
+#ifdef _WIN32
+#include "windows.h"
+#endif
+
 namespace afv_native
 {
     namespace audio
