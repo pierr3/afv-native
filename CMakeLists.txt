@@ -10,6 +10,10 @@ project(
 
 set(CMAKE_CXX_STANDARD 17)
 
+if (APPLE)
+	add_definitions(-DMA_NO_RUNTIME_LINKING)
+endif()
+
 add_library(${PROJECT_NAME} SHARED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
