@@ -53,7 +53,7 @@ namespace afv_native {
         public:
             FilterSource(std::shared_ptr<ISampleSource> srcSource);
 
-            virtual ~FilterSource();
+            virtual ~FilterSource() = default;
 
             SourceStatus getAudioFrame(SampleType *bufferOut) override;
 
