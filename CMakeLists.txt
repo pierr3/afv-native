@@ -15,8 +15,6 @@ if (APPLE)
 	add_definitions(-DMA_NO_RUNTIME_LINKING)
 endif()
 if (WIN32)
-	#disable runtime linking to prevent issues with backends that are not actually implemented
-	add_definitions(-DMA_NO_RUNTIME_LINKING)
 	add_definitions(-DMA_NO_JACK)
 	add_definitions(-DMA_NO_WINMM)
 endif()
@@ -106,7 +104,6 @@ endif()
 
 if (WIN32)
 	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
-	target_link_libraries(afv_native PRIVATE ole32 uuid dsound winmm)
 endif()
 
 target_link_libraries(afv_native
