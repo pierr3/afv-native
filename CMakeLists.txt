@@ -10,7 +10,11 @@ project(
 
 set(CMAKE_CXX_STANDARD 17)
 
-if (APPLE OR MSVC)
+if (APPLE)
+	#disable runtime linking to prevent issues with backends that are not actually implemented
+	add_definitions(-DMA_NO_RUNTIME_LINKING)
+endif()
+if (WIN32)
 	#disable runtime linking to prevent issues with backends that are not actually implemented
 	add_definitions(-DMA_NO_RUNTIME_LINKING)
 endif()
