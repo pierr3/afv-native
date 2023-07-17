@@ -111,7 +111,7 @@ target_link_libraries(afv_native
 		OpenSSL::SSL OpenSSL::Crypto
 		cpp-jwt::cpp-jwt
 		CURL::libcurl
-		libevent::core libevent::extra libevent::pthreads
+		libevent::core libevent::extra
 		msgpack-cxx
 		Opus::opus
 		nlohmann_json::nlohmann_json
@@ -132,6 +132,10 @@ if(APPLE)
 		${AUDIO_UNIT}
 		${CORE_FOUNDATION}
 		${CORE_SERVICES})
+endif()
+
+if (UNIX)
+	target_link_libraries(afv_native PRIVATE libevent::pthreads)
 endif()
 
 include(GNUInstallDirs)
