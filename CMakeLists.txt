@@ -17,6 +17,7 @@ endif()
 if (WIN32)
 	#disable runtime linking to prevent issues with backends that are not actually implemented
 	add_definitions(-DMA_NO_RUNTIME_LINKING)
+	add_definitions(-DMA_NO_JACK)
 endif()
 
 add_library(${PROJECT_NAME} SHARED)
