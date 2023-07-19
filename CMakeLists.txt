@@ -15,8 +15,6 @@ if (APPLE)
 	add_definitions(-DMA_NO_RUNTIME_LINKING)
 endif()
 if (WIN32)
-	#disable runtime linking to prevent issues with backends that are not actually implemented
-	add_definitions(-DMA_NO_RUNTIME_LINKING)
 	add_definitions(-DMA_NO_JACK)
 	add_definitions(-DMA_NO_WINMM)
 endif()
