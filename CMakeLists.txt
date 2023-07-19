@@ -104,7 +104,7 @@ endif()
 
 if (WIN32)
 	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
-	target_link_libraries(afv_native PRIVATE ole32 uuid dsound winmm)
+	target_link_libraries(afv_native PRIVATE ole32 uuid dsound)
 endif()
 
 target_link_libraries(afv_native
