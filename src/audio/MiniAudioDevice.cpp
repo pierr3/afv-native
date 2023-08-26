@@ -32,6 +32,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(
     contextConfig.threadPriority = ma_thread_priority_normal;
     contextConfig.jack.pClientName = mUserStreamName.c_str();
     contextConfig.pulse.pApplicationName = mUserStreamName.c_str();
+    
     ma_result result;
 
     if (audioApi == -1) {
