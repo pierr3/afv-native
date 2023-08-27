@@ -15,7 +15,6 @@ if (APPLE)
 	add_definitions(-DMA_NO_RUNTIME_LINKING)
 endif()
 if (WIN32)
-	add_definitions(-DMA_NO_RUNTIME_LINKING)
 	add_definitions(-DMA_NO_JACK)
 	add_definitions(-DMA_NO_WINMM)
 endif()
@@ -105,7 +104,6 @@ endif()
 
 if (WIN32)
 	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
-	target_link_libraries(afv_native PRIVATE winmm ole32 uuid dsound ksuser mfplat mfuuid wmcodecdspuuid)
 endif()
 
 target_link_libraries(afv_native
