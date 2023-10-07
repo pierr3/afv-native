@@ -1,8 +1,12 @@
 name: Build afv-native
 
-on: [push]
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch:
 
-concurrency: 
+concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
@@ -26,6 +30,10 @@ jobs:
       - name: Build cmake
         run: |
           cmake --build build/
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*.so
   build-osx-intel:
     runs-on: macos-latest
     steps:
@@ -36,28 +44,25 @@ jobs:
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
-      - name: Configure cmake
+      - name: Configure cmake (intel)
         run: |
-          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-      - name: Build cmake
+          cmake -S . -B build_intel/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+      - name: Build cmake (intel)
         run: |
-          cmake --build build/
-  build-osx-arm:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
+          cmake --build build_intel/
+      - name: Configure cmake (arm64)
+        run: |
+          cmake -S . -B build_arm/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
+      - name: Build cmake (arm64)
+        run: |
+          cmake --build build_arm/
+      - name: Create Universal Binary
+        run: |
+          lipo -create build_arm/libafv_native.dylib build_intel/libafv_native.dylib -output ./libafv_native.dylib
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          ref: atc-client
-          submodules: recursive
-      - name: Bootstrap vcpkg
-        run: |
-          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
-      - name: Configure cmake
-        run: |
-          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
-      - name: Build cmake
-        run: |
-          cmake --build build/
+          files: libafv_native.dylib
   build-windows:
     runs-on: windows-latest
     steps:
@@ -74,3 +79,7 @@ jobs:
       - name: Build cmake
         run: |
           cmake --build build/
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*.dll
