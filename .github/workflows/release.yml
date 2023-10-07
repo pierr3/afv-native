@@ -1,4 +1,4 @@
-name: Build afv-native
+name: Release afv-native
 
 on:
   push:
@@ -82,4 +82,4 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/*.dll
+          files: build/Release/*.dll
