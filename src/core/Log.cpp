@@ -54,7 +54,7 @@ cleanUpDefaultLogger()
 }
 
 static void
-defaultLogger(const char *subsystem, const char *file, int line, const char *outputLine, void* ref)
+defaultLogger(const char *subsystem, const char *file, int line, const char *outputLine)
 {
     char dateTimeBuf[100];
     time_t t = time(nullptr);
@@ -75,7 +75,6 @@ defaultLogger(const char *subsystem, const char *file, int line, const char *out
 
 static afv_native::log_fn  gLogger = defaultLogger;
 static std::mutex gLoggerLock;
-static void* reference = nullptr;
 
 void afv_native::__Log(const char *file, int line, const char *subsystem, const char *format, ...)
 {
@@ -93,17 +92,14 @@ void afv_native::__Log(const char *file, int line, const char *subsystem, const 
     {
         std::lock_guard<std::mutex> logLock(gLoggerLock);
 
-        if(reference) {
-            gLogger(subsystem, file, line, outBuffer.data(), reference);
-        }
+        gLogger(subsystem, file, line, outBuffer.data());
     }
     va_end(ap2);
     va_end(ap);
 }
 
-void afv_native::setLogger(afv_native::log_fn newLogger, void* inRef) {
+void afv_native::setLogger(afv_native::log_fn newLogger) {
     gLogger = newLogger;
-    reference = inRef;
 }
 
 void afv_native::__Dumphex(const char *file, int line, const char *subsystem, const void *buf, size_t len)
@@ -124,9 +120,7 @@ void afv_native::__Dumphex(const char *file, int line, const char *subsystem, co
         {
             std::lock_guard<std::mutex> logLock(gLoggerLock);
 
-            if(reference) {
-                gLogger(subsystem, file, line, lineout.str().c_str(), reference);
-            }
+            gLogger(subsystem, file, line, lineout.str().c_str());
         }
     }
 }
