@@ -300,8 +300,6 @@ bool RadioSimulation::_process_radio(
     if (concurrentStreams > 0) {
         if (!mRadioState[rxIter].mBypassEffects) {
 
-            mRadioState[rxIter].simpleCompressorEffect.transformFrame(mChannelBuffer, mChannelBuffer);
-
             // limiter effect
             for(unsigned int i = 0; i < audio::frameSizeSamples; i++)
             {
