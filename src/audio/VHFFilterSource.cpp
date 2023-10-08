@@ -127,8 +127,15 @@ void VHFFilterSource::transformFrame(SampleType *bufferOut,
     for (int band = 0; band < mFilters.size(); band++) {
       sl = mFilters[band].TransformOne(sl);
     }
-    limiter->process(sl, sr); // This limits the total output
-    
+    // limiter->process(sl, sr); // This limits the total output
+
+    for (unsigned int i = 0; i < audio::frameSizeSamples; i++) {
+      if (bufferOut[i] > 1.0f)
+        bufferOut[i] = 1.0f;
+      if (bufferOut[i] < -1.0f)
+        bufferOut[i] = -1.0f;
+    }
+
     sl *= static_cast<float>(compressorPostGain);
 
     bufferOut[i] = sl;
