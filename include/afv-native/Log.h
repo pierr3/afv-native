@@ -41,7 +41,6 @@
 #include <sstream>
 #include <ios>
 #include <iomanip>
-#include "afv-native/Log.h"
 
 #define LOG(subsystem,...) ::afv_native::__Log(__FILE__, __LINE__, subsystem, __VA_ARGS__)
 #define LOGDUMPHEX(subsystem,buf,len) ::afv_native::__Dumphex(__FILE__,__LINE__, subsystem, buf, len)

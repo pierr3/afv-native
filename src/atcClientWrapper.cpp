@@ -25,7 +25,7 @@ std::atomic<bool> isInitialized{false};
 using namespace atcapi;
 
 void afv_native::api::atcClient::setLogger(afv_native::log_fn gLogger) {
-  afv_native::setLogger(gLogger, nullptr);
+  afv_native::setLogger(gLogger);
 }
 
 afv_native::api::atcClient::atcClient(std::string clientName,
