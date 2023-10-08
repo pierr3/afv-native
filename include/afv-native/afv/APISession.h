@@ -46,34 +46,13 @@
 #include "afv-native/http/RESTRequest.h"
 #include "afv-native/util/ChainedCallback.h"
 #include "afv-native/event/EventCallbackTimer.h"
+#include "afv-native/event.h"
 
 namespace afv_native
 {
     namespace afv
     {
         class VoiceSession;
-
-        enum class APISessionState
-        {
-            Disconnected, /// Disconnected state is not authenticated, nor trying to authenticate.
-            Connecting, /// Connecting means we've started our attempt to authenticate and may be waiting for a response from the API Server
-            Running, /// Running means we have a valid authentication token and can send updates to the API server
-            Reconnecting, /// Reconnecting means our token has expired and we're still trying to renew it.
-            Error /// Error is only used in the state callback, and is used to inform the callback user that an error that resulted in a disconnect occured.
-        };
-
-        enum class APISessionError
-        {
-            NoError = 0,
-            ConnectionError, // local socket or curl error - see data returned.
-            BadRequestOrClientIncompatible, // APIServer 400
-            RejectedCredentials, // APIServer 403
-            BadPassword, // APIServer 401
-            OtherRequestError,
-            InvalidAuthToken,  // local parse error
-            AuthTokenExpiryTimeInPast, // local parse error
-
-        };
 
         class APISession
         {
