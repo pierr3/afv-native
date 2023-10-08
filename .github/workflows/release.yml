@@ -78,4 +78,6 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/Release/*.dll
+          files: |
+            build/Release/*.dll
+            build/Release/*.lib
