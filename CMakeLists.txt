@@ -17,8 +17,6 @@ endif()
 if (WIN32)
 	add_definitions(-DMA_NO_JACK)
 	add_definitions(-DMA_NO_WINMM)
-	add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-	add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 endif()
 
 add_library(${PROJECT_NAME} SHARED)
