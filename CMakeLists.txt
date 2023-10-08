@@ -5,7 +5,7 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/
 
 project(
     afv_native
-    VERSION 1.17.0
+    VERSION 1.18.0
     LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
