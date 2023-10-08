@@ -90,7 +90,8 @@ void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio)
     }
 
     newPacket.data = static_cast<char *>(::malloc(audio.Audio.size()));
-    memcpy(newPacket.data, audio.Audio.data(), audio.Audio.size());
+    //newPacket.data = reinterpret_cast<char>(audio.Audio.data());
+    //memcpy(newPacket.data, audio.Audio.data(), audio.Audio.size());
     newPacket.len = audio.Audio.size();
     newPacket.timestamp = audio.SequenceCounter;
     newPacket.span = 1;

@@ -8,8 +8,8 @@
         "cpp-jwt",
         "msgpack",
         "curl",
-        "libevent",
         "nlohmann-json",
-        "openssl"
+        "openssl",
+        "libevent"
     ]
   }

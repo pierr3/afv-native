@@ -360,6 +360,7 @@ bool ATCRadioStack::_packetListening(
   // std::lock_guard<std::mutex> radioStateLock(mRadioStateLock);
   for (auto trans : pkt.Transceivers) {
     if (mRadioState[trans.Frequency].rx) {
+      // todo: fix multiple callsigns transmitting
       mRadioState[trans.Frequency].lastTransmitCallsign = pkt.Callsign;
       return true;
     }
@@ -380,7 +381,7 @@ void ATCRadioStack::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt) {
   }
 }
 
-void ATCRadioStack::setUDPChannel(cryptodto::UDPChannel *newChannel) {
+void ATCRadioStack::setUDPChannel(cryptodto::UDPChannel *newChannel) {  
   if (mChannel != nullptr) {
     mChannel->unregisterDtoHandler("AR");
   }

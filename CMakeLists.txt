@@ -92,7 +92,7 @@ find_package(OpenSSL REQUIRED)
 find_package(cpp-jwt CONFIG REQUIRED)
 find_package(CURL CONFIG REQUIRED)
 find_package(Libevent CONFIG REQUIRED)
-find_package(msgpack-cxx CONFIG REQUIRED)
+find_package(msgpack CONFIG REQUIRED)
 find_package(Opus CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Threads REQUIRED)
@@ -111,8 +111,8 @@ target_link_libraries(afv_native
 		OpenSSL::SSL OpenSSL::Crypto
 		cpp-jwt::cpp-jwt
 		CURL::libcurl
-		libevent::core libevent::extra
-		msgpack-cxx
+		libevent::core libevent::extra libevent::pthreads
+		msgpackc-cxx
 		Opus::opus
 		nlohmann_json::nlohmann_json
 		Threads::Threads
