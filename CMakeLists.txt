@@ -5,7 +5,7 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/
 
 project(
     afv_native
-    VERSION 1.16.0
+    VERSION 1.17.0
     LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -111,7 +111,7 @@ target_link_libraries(afv_native
 		OpenSSL::SSL OpenSSL::Crypto
 		cpp-jwt::cpp-jwt
 		CURL::libcurl
-		libevent::core libevent::extra libevent::pthreads
+		libevent::core libevent::extra
 		msgpackc-cxx
 		Opus::opus
 		nlohmann_json::nlohmann_json
