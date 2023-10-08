@@ -6,10 +6,6 @@ on:
       - v*
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   BUILD_TYPE: Release
 
@@ -29,7 +25,7 @@ jobs:
           cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
       - name: Build cmake
         run: |
-          cmake --build build/ —-config Release
+          cmake --build build/ --config Release
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -49,13 +45,13 @@ jobs:
           cmake -S . -B build_intel/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
       - name: Build cmake (intel)
         run: |
-          cmake --build build_intel/ —-config Release
+          cmake --build build_intel/ --config Release
       - name: Configure cmake (arm64)
         run: |
           cmake -S . -B build_arm/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
       - name: Build cmake (arm64)
         run: |
-          cmake --build build_arm/ —-config Release
+          cmake --build build_arm/ --config Release
       - name: Create Universal Binary
         run: |
           lipo -create build_arm/libafv_native.dylib build_intel/libafv_native.dylib -output ./libafv_native.dylib
@@ -78,7 +74,7 @@ jobs:
           cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
       - name: Build cmake
         run: |
-          cmake --build build/ —-config Release
+          cmake --build build/ --config Release
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
