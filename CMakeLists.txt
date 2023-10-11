@@ -100,6 +100,7 @@ find_package(Threads REQUIRED)
 # Speexdsp does not have find_package
 if (UNIX)
 	find_library(SPEEXDSP_LIBRARY libspeexdsp.a)
+	target_link_libraries(afv_native PRIVATE libevent::pthreads)
 endif()
 
 if (WIN32)
@@ -132,10 +133,6 @@ if(APPLE)
 		${AUDIO_UNIT}
 		${CORE_FOUNDATION}
 		${CORE_SERVICES})
-endif()
-
-if (UNIX)
-	target_link_libraries(afv_native PRIVATE libevent::pthreads)
 endif()
 
 include(GNUInstallDirs)
