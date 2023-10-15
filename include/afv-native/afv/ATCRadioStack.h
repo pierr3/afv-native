@@ -11,14 +11,11 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include <filesystem>
-#include <thread>
 #include <event2/event.h>
 
 #include "afv-native/event.h"
 #include "afv-native/utility.h"
 #include "afv-native/afv/EffectResources.h"
-#include "afv-native/afv/RemoteVoiceSource.h"
 #include "afv-native/afv/RollingAverage.h"
 #include "afv-native/afv/VoiceCompressionSink.h"
 #include "afv-native/afv/dto/voice_server/AudioRxOnTransceivers.h"

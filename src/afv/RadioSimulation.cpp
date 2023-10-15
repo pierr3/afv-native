@@ -39,7 +39,6 @@
 #include "afv-native/afv/RadioSimulation.h"
 #include "afv-native/afv/dto/voice_server/AudioTxOnTransceivers.h"
 #include "afv-native/audio/VHFFilterSource.h"
-#include "afv-native/audio/PinkNoiseGenerator.h"
 
 using namespace afv_native;
 using namespace afv_native::afv;
