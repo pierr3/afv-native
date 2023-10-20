@@ -101,6 +101,10 @@ namespace afv_native {
              */
             virtual void close() = 0;
 
+            /** playWav should play the full length of a wave file
+             */
+            virtual int playWav(const std::string path) = 0;
+
             /** setSource sets the ISampleSource for this AudioDevice.
              *
              * Any existing source will have it's pointer released.

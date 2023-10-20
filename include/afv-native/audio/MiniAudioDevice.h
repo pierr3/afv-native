@@ -36,6 +36,7 @@ namespace afv_native
             bool openOutput() override;
             bool openInput() override;
             void close() override;
+            int playWav(const std::string path) override;
 
             static std::map<int, ma_device_info> getCompatibleInputDevices(unsigned int api);
             static std::map<int, ma_device_info> getCompatibleOutputDevices(unsigned int api);
@@ -47,10 +48,13 @@ namespace afv_native
             bool getDeviceForName(const std::string& deviceName, bool forInput, ma_device_id& deviceId);
             static void maOutputCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
             static void maInputCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
+            static void maNotificationCallback(const ma_device_notification *pNotification);
             int outputCallback(void* outputBuffer, unsigned int nFrames);
             int inputCallback(const void* inputBuffer, unsigned int nFrames);
+            void notificationCallback();
+            
 
-        private:
+          private:
             std::string mUserStreamName;
             std::string mOutputDeviceName;
             std::string mInputDeviceName;
