@@ -83,10 +83,11 @@ namespace afv_native {
          */
         void setTx(unsigned int freq, bool active);
         
-        
         void setRx(unsigned int freq, bool active);
 
         void setXc(unsigned int freq, bool active);
+
+        int playWav(std::string filePath, bool onSpeaker = false);
 
         /** sets the (linear) gain to be applied to radioNum */
         void setRadioGain(unsigned int radioNum, float gain);

@@ -68,11 +68,11 @@ afv_native::api::atcClient::atcClient(std::string clientName,
   // Prevent this from being called more than once we we have multiple clients
   std::call_once(flag_event_threads_initialized, []() -> void {
     XPL_EVTHREAD_INITIALIZE();
-  
-    #ifndef NDEBUG
+
+#ifndef NDEBUG
     evthread_enable_lock_debugging();
     event_enable_debug_mode();
-    #endif
+#endif
   });
 
   ev_base = event_base_new();
@@ -373,4 +373,10 @@ void afv_native::api::atcClient::RaiseClientEvent(
   client->ClientEventCallback.addCallback(
       nullptr, [callback](afv_native::ClientEventType evt, void *data,
                           void *data2) { callback(evt, data, data2); });
+}
+
+AFV_NATIVE_API int afv_native::api::atcClient::PlayWave(std::string filePath,
+                                                        bool onSpeaker) {
+  std::lock_guard<std::mutex> lock(afvMutex);
+  return client->playWav(filePath, onSpeaker);
 }

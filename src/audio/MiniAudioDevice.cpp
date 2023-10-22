@@ -48,6 +48,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName,
                              ma_log_callback_init(logger, NULL));
     LOG("MiniAudioAudioDevice", "Context initialized. Audio Backend: %s",
         ma_get_backend_name(context.backend));
+
   } else {
     LOG("MiniAudioAudioDevice", "Error initializing context: %s",
         ma_result_description(result));
@@ -80,7 +81,28 @@ int MiniAudioAudioDevice::playWav(const std::string path) {
   }
 
   ma_result result;
-  ma_sound sound;
+  ma_engine engine;
+  ma_engine_config engineConfig;
+
+  engineConfig = ma_engine_config_init();
+  engineConfig.pDevice = &outputDev;
+  engineConfig.pContext = &context;
+
+  result = ma_engine_init(&engineConfig, &engine);
+  if (result != MA_SUCCESS) {
+    LOG("MiniAudioAudioDevice",
+        "Failed to initalise sound engine for wav playback for device: %s",
+        mOutputDeviceName.c_str());
+    return result;
+  }
+
+  result = ma_engine_play_sound(&engine, path.c_str(), NULL);
+  if (result != MA_SUCCESS) {
+    LOG("MiniAudioAudioDevice", "Failed to play sound file: %s", path.c_str());
+    return result;
+  }
+
+  ma_engine_uninit(&engine);
 
   return 1;
 };

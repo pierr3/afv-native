@@ -690,3 +690,21 @@ void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName) {
   ClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError,
                                 &deviceName, nullptr);
 }
+int afv_native::ATCClient::playWav(std::string filePath, bool onSpeaker) {
+  if (!isVoiceConnected()) {
+    startAudio();
+  }
+
+  int res;
+  if (onSpeaker) {
+    res = mSpeakerDevice->playWav(filePath);
+  } else {
+    res = mAudioDevice->playWav(filePath);
+  }
+
+  if (!isVoiceConnected()) {
+    stopAudio();
+  }
+
+  return res;
+};
