@@ -64,6 +64,7 @@ namespace afv_native
             ma_device outputDev;
             ma_device inputDev;
             unsigned int mAudioApi;
+            bool mHasClosedManually = false;
             //
             // The output channel parameter allows for sound playback to be played in the left ear, right ear or both
             // 0: both ears, 1: left ear, 2: right ear

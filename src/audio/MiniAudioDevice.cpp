@@ -63,6 +63,8 @@ bool MiniAudioAudioDevice::openOutput() { return initOutput(); }
 bool MiniAudioAudioDevice::openInput() { return initInput(); }
 
 void MiniAudioAudioDevice::close() {
+  mHasClosedManually = true;
+
   if (mInputInitialized)
     ma_device_uninit(&inputDev);
 
@@ -521,6 +523,13 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(
       pNotification->pDevice->pUserData);
 
   if (pNotification->type == ma_device_notification_type_stopped) {
+
+    if (mHasClosedManually) {
+      mHasClosedManually =
+          false; // This is a clean exit, we don't emit anything
+      return;
+    }
+
     mNotificationFunc(mOutputDeviceName, 0);
   }
 }

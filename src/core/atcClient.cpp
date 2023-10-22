@@ -697,8 +697,16 @@ int afv_native::ATCClient::playWav(std::string filePath, bool onSpeaker) {
 
   int res;
   if (onSpeaker) {
+    if (!mSpeakerDevice) {
+        LOG("ATCClient", "Failed to play wav file, speaker device does not exist.");
+        return 1;
+    }
     res = mSpeakerDevice->playWav(filePath);
   } else {
+    if (!mAudioDevice) {
+        LOG("ATCClient", "Failed to play wav file, main device does not exist.");
+        return 1;
+    }
     res = mAudioDevice->playWav(filePath);
   }
 
