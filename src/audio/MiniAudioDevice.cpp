@@ -1,6 +1,4 @@
 #include "afv-native/audio/MiniAudioDevice.h"
-#include <cstring>
-#include <memory>
 
 using namespace afv_native::audio;
 using namespace std;
@@ -22,6 +20,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName,
       mOutputDeviceName(outputDeviceName), mInputDeviceName(inputDeviceName),
       mInputInitialized(false), mOutputInitialized(false),
       mOutputChannel(outputChannel), mAudioApi(audioApi) {
+
   ma_context_config contextConfig = ma_context_config_init();
   contextConfig.threadPriority = ma_thread_priority_normal;
   contextConfig.jack.pClientName = mUserStreamName.c_str();
@@ -418,11 +417,10 @@ void MiniAudioAudioDevice::maInputCallback(ma_device *pDevice, void *pOutput,
 
 void MiniAudioAudioDevice::maNotificationCallback(
     const ma_device_notification *pNotification) {
+
   auto device = reinterpret_cast<MiniAudioAudioDevice *>(
       pNotification->pDevice->pUserData);
-
-  if (pNotification->type == ma_device_notification_type_stopped) {
-  }
+  device->notificationCallback(pNotification);
 };
 
 std::map<unsigned int, std::string>
@@ -488,5 +486,19 @@ AudioDevice::makeDevice(const std::string &userStreamName,
         userStreamName, outputDeviceId, inputDeviceId, audioApi, outputChannel);
   } catch (std::exception &e) {
     return nullptr;
+  }
+}
+void afv_native::audio::MiniAudioAudioDevice::notificationCallback(
+    const ma_device_notification *pNotification) {
+  std::lock_guard<std::mutex> funcGuard(mNotificationFuncLock);
+  if (!mNotificationFunc) {
+    return;
+  }
+
+  auto device = reinterpret_cast<MiniAudioAudioDevice *>(
+      pNotification->pDevice->pUserData);
+
+  if (pNotification->type == ma_device_notification_type_stopped) {
+    mNotificationFunc(mOutputDeviceName, 0);
   }
 }

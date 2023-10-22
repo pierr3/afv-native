@@ -34,10 +34,10 @@
 #ifndef AFV_NATIVE_AUDIODEVICE_H
 #define AFV_NATIVE_AUDIODEVICE_H
 
+#include <functional>
 #include <string>
 #include <memory>
 #include <map>
-#include <vector>
 #include <atomic>
 #include <mutex>
 
@@ -59,6 +59,8 @@ namespace afv_native {
             std::mutex mSinkPtrLock;
             std::shared_ptr<ISampleSource> mSource;
             std::mutex mSourcePtrLock;
+            std::function<void(std::string, int)> mNotificationFunc;
+            std::mutex mNotificationFuncLock;
 
 
             /** Ensures data within the abstract is zeroed.   Should always be called via
@@ -126,6 +128,17 @@ namespace afv_native {
              * @param newSink a shared_ptr to the new Sink
              */
             virtual void setSink(std::shared_ptr<ISampleSink> newSink);
+
+            /** setNotificationFunc sets the function that will be called 
+             * when a notification is received by the audio device
+             *
+             *
+             * This can be set to the invalid/empty pointer to disable the function.
+             *
+             * @param newFunc a shared_ptr to the new function
+             */
+            virtual void
+            setNotificationFunc(std::function<void(std::string, int)> newFunc);
 
             /** OutputUnderflows is a monotonic counter of the number of playback buffer
              * underflows that have occurred since the AudioDevice was constructed.

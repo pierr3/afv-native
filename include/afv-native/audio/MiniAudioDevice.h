@@ -9,9 +9,9 @@
 
 #include "afv-native/Log.h"
 #include "afv-native/audio/AudioDevice.h"
-
+#include <cstring>
+#include <memory>
 #include <map>
-#include <algorithm>
 #include <string>
 
 #ifdef _WIN32
@@ -51,8 +51,8 @@ namespace afv_native
             static void maNotificationCallback(const ma_device_notification *pNotification);
             int outputCallback(void* outputBuffer, unsigned int nFrames);
             int inputCallback(const void* inputBuffer, unsigned int nFrames);
-            void notificationCallback();
-            
+            void
+            notificationCallback(const ma_device_notification *pNotification);
 
           private:
             std::string mUserStreamName;

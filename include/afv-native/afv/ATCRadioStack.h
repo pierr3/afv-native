@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <map>
+#include <mutex>
 #include <vector>
 #include <event2/event.h>
 

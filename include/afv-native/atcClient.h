@@ -21,7 +21,6 @@
 #include "afv-native/audio/AudioDevice.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/http/EventTransferManager.h"
-#include "afv-native/http/RESTRequest.h"
 
 namespace afv_native {
     /** ATCClient provides a fully functional ATC Client that can be integrated into
@@ -286,10 +285,10 @@ namespace afv_native {
         void stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs);
 
         void stationSearchCallback(bool found, std::pair<std::string, unsigned int> data);
-        
-        
 
-    private:
+        void deviceStoppedCallback(std::string deviceName);
+
+      private:
         void unguardPtt();
     protected:
         event::EventCallbackTimer mTransceiverUpdateTimer;

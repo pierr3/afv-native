@@ -234,6 +234,11 @@ void ATCClient::startAudio()
     }
     mSpeakerDevice->setSink(nullptr);
     mSpeakerDevice->setSource(mATCRadioStack->speakerDevice());
+    mSpeakerDevice->setNotificationFunc([this](std::string deviceName, int errorCode) -> void {
+        if (errorCode == 0) {
+            this->deviceStoppedCallback(deviceName);
+        }
+    });
     if (!mSpeakerDevice->openOutput()) {
         LOG("afv::ATCClient", "Unable to open Speaker audio device.");
         stopAudio();
@@ -259,6 +264,11 @@ void ATCClient::startAudio()
     }
     mAudioDevice->setSink(mATCRadioStack);
     mAudioDevice->setSource(mATCRadioStack->headsetDevice());
+    mAudioDevice->setNotificationFunc([this](std::string deviceName, int errorCode) -> void {
+        if (errorCode == 0) {
+            this->deviceStoppedCallback(deviceName);
+        }
+    });
      if (mAudioDevice->openOutput()) {
         if (!mAudioDevice->openInput()) {
             LOG("afv::ATCClient", "Couldn't initialize headset microphone device");
@@ -668,4 +678,15 @@ void ATCClient::linkTransceivers(std::string callsign, unsigned int freq)
 void ATCClient::setTick(std::shared_ptr<audio::ITick> tick)
 {
     mATCRadioStack->setTick(tick);    
+}
+void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName) {
+  LOG("afv::ATCClient", "Audio device %s errored and was stopped",
+      deviceName.c_str());
+  stopAudio();
+  stopTransceiverUpdate();
+  // bring down the API session too.
+  mAPISession.Disconnect();
+  mATCRadioStack->reset();
+  ClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError,
+                                &deviceName, nullptr);
 }
