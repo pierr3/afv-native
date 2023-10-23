@@ -51,9 +51,6 @@ namespace afv_native::api {
             AFV_NATIVE_API void StopAudio();
             AFV_NATIVE_API bool IsAudioRunning();
 
-            AFV_NATIVE_API int PlayWave(std::string filePath,
-                                        bool onSpeaker = false);
-
             AFV_NATIVE_API void SetTx(unsigned int freq, bool active);
             AFV_NATIVE_API void SetRx(unsigned int freq, bool active);
             AFV_NATIVE_API void SetXc(unsigned int freq, bool active);

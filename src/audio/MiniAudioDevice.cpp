@@ -77,38 +77,6 @@ void MiniAudioAudioDevice::close() {
   mOutputInitialized = false;
 }
 
-int MiniAudioAudioDevice::playWav(const std::string path) {
-  if (!mOutputInitialized) {
-    return 0;
-  }
-
-  ma_result result;
-  ma_engine engine;
-  ma_engine_config engineConfig;
-
-  engineConfig = ma_engine_config_init();
-  engineConfig.pDevice = &outputDev;
-  engineConfig.pContext = &context;
-
-  result = ma_engine_init(&engineConfig, &engine);
-  if (result != MA_SUCCESS) {
-    LOG("MiniAudioAudioDevice",
-        "Failed to initalise sound engine for wav playback for device: %s",
-        mOutputDeviceName.c_str());
-    return result;
-  }
-
-  result = ma_engine_play_sound(&engine, path.c_str(), NULL);
-  if (result != MA_SUCCESS) {
-    LOG("MiniAudioAudioDevice", "Failed to play sound file: %s", path.c_str());
-    return result;
-  }
-
-  ma_engine_uninit(&engine);
-
-  return 1;
-};
-
 std::map<int, ma_device_info>
 MiniAudioAudioDevice::getCompatibleInputDevices(unsigned int api) {
   std::map<int, ma_device_info> deviceList;
@@ -515,7 +483,12 @@ AudioDevice::makeDevice(const std::string &userStreamName,
 void afv_native::audio::MiniAudioAudioDevice::notificationCallback(
     const ma_device_notification *pNotification) {
   std::lock_guard<std::mutex> funcGuard(mNotificationFuncLock);
-  if (!mNotificationFunc) {
+  if (!mNotificationFunc || !mInputInitialized || !mOutputInitialized) {
+    return;
+  }
+
+  if (!pNotification->pDevice || !pNotification->pDevice->pContext ||
+      pNotification->pDevice->pContext == NULL) {
     return;
   }
 
@@ -530,6 +503,6 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(
       return;
     }
 
-    mNotificationFunc(mOutputDeviceName, 0);
+    mNotificationFunc(mUserStreamName, 0);
   }
 }

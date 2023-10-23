@@ -2,3 +2,4 @@ cmake-build-**
 build/
 .DS_Store
 .cache
+debug_copy.sh

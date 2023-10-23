@@ -36,7 +36,6 @@ namespace afv_native
             bool openOutput() override;
             bool openInput() override;
             void close() override;
-            int playWav(const std::string path) override;
 
             static std::map<int, ma_device_info> getCompatibleInputDevices(unsigned int api);
             static std::map<int, ma_device_info> getCompatibleOutputDevices(unsigned int api);

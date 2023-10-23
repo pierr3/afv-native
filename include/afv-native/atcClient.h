@@ -87,8 +87,6 @@ namespace afv_native {
 
         void setXc(unsigned int freq, bool active);
 
-        int playWav(std::string filePath, bool onSpeaker = false);
-
         /** sets the (linear) gain to be applied to radioNum */
         void setRadioGain(unsigned int radioNum, float gain);
 
@@ -270,6 +268,8 @@ namespace afv_native {
         bool mPtt;
         bool mAtisRecording;
 
+        bool mAudioStoppedThroughCallback = false;
+
         
         std::vector<afv::dto::Transceiver> makeTransceiverDto();
         /* sendTransceiverUpdate sends the update now, in process.
@@ -287,7 +287,7 @@ namespace afv_native {
 
         void stationSearchCallback(bool found, std::pair<std::string, unsigned int> data);
 
-        void deviceStoppedCallback(std::string deviceName);
+        void deviceStoppedCallback(std::string deviceName, int errorCode);
 
       private:
         void unguardPtt();
