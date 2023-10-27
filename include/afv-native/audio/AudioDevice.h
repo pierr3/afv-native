@@ -84,7 +84,8 @@ namespace afv_native {
             struct DeviceInfo {
                 std::string name;
                 std::string id;
-                explicit DeviceInfo(std::string name, std::string id = "");
+                bool isDefault;
+                explicit DeviceInfo(std::string name, bool isDefault = false, std::string id = "");
             };
 
             virtual ~AudioDevice();

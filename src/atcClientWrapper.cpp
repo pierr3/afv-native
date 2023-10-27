@@ -155,6 +155,42 @@ void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
   client->setHeadsetOutputChannel(channel);
 }
 
+std::string afv_native::api::atcClient::GetDefaultAudioInputDevices(
+    unsigned int mAudioApi) {
+  auto devices =
+      afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(
+          mAudioApi);
+  auto it = std::find_if(
+      devices.begin(), devices.end(),
+      [](auto &kv) { return kv.second.isDefault; });
+
+  if (it != devices.end()) {
+    return it->second.name;
+  } else if (devices.size() > 0) {
+    return devices.begin()->second.name;
+  }
+
+  return std::string();
+}
+
+std::string afv_native::api::atcClient::GetDefaultAudioOutputDevices(
+    unsigned int mAudioApi) {
+  auto devices =
+      afv_native::audio::AudioDevice::getCompatibleOutputDevicesForApi(
+          mAudioApi);
+  auto it = std::find_if(
+      devices.begin(), devices.end(),
+      [](auto &kv) { return kv.second.isDefault; });
+
+  if (it != devices.end()) {
+    return it->second.name;
+  } else if (devices.size() > 0) {
+    return devices.begin()->second.name;
+  }
+
+  return std::string();
+}
+
 std::vector<std::string>
 afv_native::api::atcClient::GetAudioInputDevices(unsigned int mAudioApi) {
   std::vector<std::string> out;

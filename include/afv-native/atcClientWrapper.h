@@ -35,10 +35,12 @@ namespace afv_native::api {
 
             AFV_NATIVE_API void SetAudioInputDevice(std::string inputDevice);
             AFV_NATIVE_API std::vector<std::string> GetAudioInputDevices(unsigned int mAudioApi);
+            AFV_NATIVE_API std::string GetDefaultAudioInputDevices(unsigned int mAudioApi);
             AFV_NATIVE_API void SetAudioOutputDevice(std::string outputDevice);
             AFV_NATIVE_API void SetAudioSpeakersOutputDevice(std::string outputDevice);
             AFV_NATIVE_API void SetHeadsetOutputChannel(int channel);
             AFV_NATIVE_API std::vector<std::string> GetAudioOutputDevices(unsigned int mAudioApi);
+            AFV_NATIVE_API std::string GetDefaultAudioOutputDevices(unsigned int mAudioApi);
 
             AFV_NATIVE_API double GetInputPeak() const;
             AFV_NATIVE_API double GetInputVu() const;
