@@ -155,7 +155,7 @@ void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
   client->setHeadsetOutputChannel(channel);
 }
 
-std::string afv_native::api::atcClient::GetDefaultAudioInputDevices(
+std::string afv_native::api::atcClient::GetDefaultAudioInputDevice(
     unsigned int mAudioApi) {
   auto devices =
       afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(
@@ -173,7 +173,7 @@ std::string afv_native::api::atcClient::GetDefaultAudioInputDevices(
   return std::string();
 }
 
-std::string afv_native::api::atcClient::GetDefaultAudioOutputDevices(
+std::string afv_native::api::atcClient::GetDefaultAudioOutputDevice(
     unsigned int mAudioApi) {
   auto devices =
       afv_native::audio::AudioDevice::getCompatibleOutputDevicesForApi(
