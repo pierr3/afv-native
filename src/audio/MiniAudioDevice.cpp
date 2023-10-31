@@ -452,7 +452,7 @@ AudioDevice::getCompatibleInputDevicesForApi(AudioDevice::Api api) {
   auto allDevices = MiniAudioAudioDevice::getCompatibleInputDevices(api);
   map<int, AudioDevice::DeviceInfo> returnDevices;
   for (const auto &p : allDevices) {
-    returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? TRUE : FALSE));
+    returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false));
   }
   return returnDevices;
 }
@@ -462,7 +462,7 @@ AudioDevice::getCompatibleOutputDevicesForApi(AudioDevice::Api api) {
   auto allDevices = MiniAudioAudioDevice::getCompatibleOutputDevices(api);
   map<int, AudioDevice::DeviceInfo> returnDevices;
   for (const auto &p : allDevices) {
-    returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? TRUE : FALSE));
+    returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false));
   }
   return returnDevices;
 }
