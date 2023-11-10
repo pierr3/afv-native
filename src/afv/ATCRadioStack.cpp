@@ -381,7 +381,7 @@ void ATCRadioStack::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt) {
   }
 }
 
-void ATCRadioStack::setUDPChannel(cryptodto::UDPChannel *newChannel) {  
+void ATCRadioStack::setUDPChannel(cryptodto::UDPChannel *newChannel) {
   if (mChannel != nullptr) {
     mChannel->unregisterDtoHandler("AR");
   }
@@ -431,14 +431,17 @@ void ATCRadioStack::setTransceivers(
 }
 
 std::vector<afv::dto::Transceiver> ATCRadioStack::makeTransceiverDto() {
+  std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
   std::vector<afv::dto::Transceiver> retSet;
   unsigned int i = 0;
   for (auto &state : mRadioState) {
-    if (state.second.transceivers.size() == 0) {
+    if (state.second.transceivers.empty()) {
       // If there are no transceivers received from the network, we're using the
       // client position
       retSet.emplace_back(i, state.first, mClientLatitude, mClientLongitude,
                           mClientAltitudeMSLM, mClientAltitudeGLM);
+      // Update the radioStack with the added transponder
+      state.second.transceivers = { retSet.back() };
       i++;
     } else {
       for (auto &trans : state.second.transceivers) {
@@ -536,9 +539,11 @@ void ATCRadioStack::processCompressedFrame(
       }
 
       for (auto &radio : mRadioState) {
+        if (!radio.second.tx) {
+          continue;
+        }
         for (auto &trans : radio.second.transceivers) {
-          if (radio.second.tx)
-            audioOutDto.Transceivers.emplace_back(trans.ID);
+          audioOutDto.Transceivers.emplace_back(trans.ID);
         }
       }
     }
@@ -613,8 +618,11 @@ void ATCRadioStack::sendCachedAtisFrame() {
       std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
 
       for (auto &radio : mRadioState) {
+        if (!radio.second.isAtis) {
+          continue;
+        }
         for (auto &trans : radio.second.transceivers) {
-          if (radio.second.isAtis)
+          
             audioOutDto.Transceivers.emplace_back(trans.ID);
         }
       }
