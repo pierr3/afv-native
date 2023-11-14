@@ -46,6 +46,10 @@ void afv_native::api::atcClient::setLogger(afv_native::log_fn gLogger) {
   afv_native::setLogger(gLogger);
 }
 
+void afv_native::api::setLogger(afv_native::log_fn gLogger) {
+  afv_native::setLogger(gLogger);
+}
+
 afv_native::api::atcClient::atcClient(std::string clientName,
                                       std::string resourcePath) {
 #ifdef WIN32
