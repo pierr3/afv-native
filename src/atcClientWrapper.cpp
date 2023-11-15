@@ -1,6 +1,7 @@
 #include "afv-native/atcClientWrapper.h"
 #include "afv-native/Log.h"
 #include "afv-native/atcClient.h"
+#include "afv-native/hardwareType.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -45,7 +46,7 @@ void afv_native::api::atcClient::setLogger(afv_native::log_fn gLogger) {
     afv_native::setLegacyLogger(gLogger);
 }
 
-void afv_native::api::setLogger(std::function<void(std::string subsystem, std::string file, int line, std::string lineOut)> gLogger) {
+void afv_native::api::setLogger(afv_native::modern_log_fn gLogger) {
     afv_native::setLogger(gLogger);
 }
 
@@ -151,7 +152,13 @@ void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(std::string output
 
 void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->setHeadsetOutputChannel(channel);
+    auto chan = PlaybackChannel::Both;
+    if (channel == 1) {
+        chan = PlaybackChannel::Left;
+    } else if (channel == 2) {
+        chan = PlaybackChannel::Right;
+    }
+    client->setPlaybackChannelAll(chan);
 }
 
 std::string afv_native::api::atcClient::GetDefaultAudioInputDevice(unsigned int mAudioApi) {
@@ -229,10 +236,12 @@ bool afv_native::api::atcClient::GetEnableInputFilters() const {
 }
 
 void afv_native::api::atcClient::StartAudio() {
+    std::lock_guard<std::mutex> lock(afvMutex);
     client->startAudio();
 }
 
 void afv_native::api::atcClient::StopAudio() {
+    std::lock_guard<std::mutex> lock(afvMutex);
     client->stopAudio();
 }
 
@@ -303,7 +312,7 @@ int afv_native::api::atcClient::GetTransceiverCountForStation(std::string statio
 
 void afv_native::api::atcClient::SetRadiosGain(float gain) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->setRadioGainAll(gain);
+    this->SetRadioGainAll(gain);
 }
 
 void afv_native::api::atcClient::FetchTransceiverInfo(std::string station) {
@@ -382,4 +391,24 @@ void afv_native::api::atcClient::RaiseClientEvent(std::function<void(afv_native:
     client->ClientEventCallback.addCallback(nullptr, [callback](afv_native::ClientEventType evt, void *data, void *data2) {
         callback(evt, data, data2);
     });
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::SetRadioGainAll(float gain) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setRadioGainAll(gain);
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::SetRadioGain(unsigned int freq, float gain) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setRadioGain(freq, gain);
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::SetPlaybackChannelAll(PlaybackChannel channel) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setPlaybackChannelAll(channel);
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::SetPlaybackChannel(unsigned int freq, PlaybackChannel channel) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setPlaybackChannel(freq, channel);
 }

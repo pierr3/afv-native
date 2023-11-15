@@ -332,7 +332,7 @@ bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt)
                 afv_native::util::pushbackIfUnique(pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
             if (isNew) {
                 // Need to emit that we have a new pilot that started transmitting
-                //FIXME: Does not emit if the pilot is transmitting on more than one frequency
+                // FIXME: Does not emit if the pilot is transmitting on more than one frequency
                 ClientEventCallback->invokeAll(ClientEventType::PilotRxOpen, &trans.Frequency, static_cast<void *>(new std::string {pkt.Callsign}));
             }
             return true;
@@ -653,14 +653,14 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string 
 
     mRadioState[freq].Frequency = freq;
 
-    mRadioState[freq].onHeadset       = onHeadset;
-    mRadioState[freq].tx              = false;
-    mRadioState[freq].rx              = true;
-    mRadioState[freq].xc              = false;
-    mRadioState[freq].stationName     = stationName;
-    mRadioState[freq].mBypassEffects  = false;
-    mRadioState[freq].playbackChannel = channel;
-    mRadioState[freq].vhfFilter       = new audio::VHFFilterSource(hardware);
+    mRadioState[freq].onHeadset      = onHeadset;
+    mRadioState[freq].tx             = false;
+    mRadioState[freq].rx             = true;
+    mRadioState[freq].xc             = false;
+    mRadioState[freq].stationName    = stationName;
+    mRadioState[freq].mBypassEffects = false;
+    mRadioState[freq].playbackChannel = channel == PlaybackChannel::Default ? mDefaultPlaybackChannel : channel;
+    mRadioState[freq].vhfFilter = new audio::VHFFilterSource(hardware);
 
     if (stationName.find("_ATIS") != std::string::npos) {
         mRadioState[freq].isAtis = true;
@@ -796,19 +796,25 @@ void ATCRadioStack::setEnableOutputEffects(bool enableEffects) {
 void ATCRadioStack::setTick(std::shared_ptr<audio::ITick> tick) {
     mTick = tick;
 }
+
 void afv_native::afv::ATCRadioStack::_interleave(audio::SampleType *leftChannel, audio::SampleType *rightChannel, audio::SampleType *outputBuffer, size_t numSamples) {
     for (size_t i = 0; i < numSamples; i++) {
         outputBuffer[2 * i]     = leftChannel[i];  // Interleave left channel data
         outputBuffer[2 * i + 1] = rightChannel[i]; // Interleave right channel data
     }
 }
-void afv_native::afv::ATCRadioStack::setPlaybackChannelAll(unsigned int freq, PlaybackChannel channel) {
+void afv_native::afv::ATCRadioStack::setPlaybackChannelAll(PlaybackChannel channel) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     for (auto radio: mRadioState) {
         mRadioState[radio.first].playbackChannel = channel;
     }
-};
+}
+
 void afv_native::afv::ATCRadioStack::setPlaybackChannel(unsigned int freq, PlaybackChannel channel) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     mRadioState[freq].playbackChannel = channel;
-};
+}
+
+void afv_native::afv::ATCRadioStack::setDefaultPlaybackChannel(PlaybackChannel channel) {
+    this->mDefaultPlaybackChannel = channel == PlaybackChannel::Default ? PlaybackChannel::Both : channel;
+}

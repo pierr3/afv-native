@@ -16,6 +16,7 @@
 #include "afv-native/audio/AudioDevice.h"
 #include "afv-native/event.h"
 #include "afv-native/event/EventCallbackTimer.h"
+#include "afv-native/hardwareType.h"
 #include "afv-native/http/EventTransferManager.h"
 #include <event2/event.h>
 #include <memory>
@@ -81,9 +82,6 @@ namespace afv_native {
 
         void setXc(unsigned int freq, bool active);
 
-        /** sets the (linear) gain to be applied to radioNum */
-        void setRadioGain(unsigned int radioNum, float gain);
-
         /** sets the PTT (push-to-talk) state for the radio.
          *
          * @note If the radio frequencies are out of sync with the server, this will
@@ -109,6 +107,12 @@ namespace afv_native {
         void setOnHeadset(unsigned int freq, bool onHeadset);
         bool getOnHeadset(unsigned int freq);
 
+        void            setPlaybackChannel(unsigned int freq, PlaybackChannel channel);
+        void            setPlaybackChannelAll(PlaybackChannel channel);
+        PlaybackChannel getPlaybackChannel(unsigned int freq);
+
+        /** sets the (linear) gain to be applied to radioNum */
+        void setRadioGain(unsigned int radioNum, float gain);
         void setRadioGainAll(float gain);
 
         /** setCredentials sets the user Credentials for this client.
@@ -191,8 +195,8 @@ namespace afv_native {
         std::vector<afv::dto::Station> getStationAliases() const;
         std::map<std::string, std::vector<afv::dto::StationTransceiver>> getStationTransceivers() const;
         std::string lastTransmitOnFreq(unsigned int freq);
-        void startAudio();
-        void stopAudio();
+        void        startAudio();
+        void        stopAudio();
 
         /** logAudioStatistics dumps the internal data about over/underflow totals to the AFV log.
          *
@@ -201,8 +205,8 @@ namespace afv_native {
 
         std::shared_ptr<const audio::AudioDevice> getAudioDevice() const;
 
-        /** getRxActive returns if the nominated radio is currently Receiving voice, irrespective as to if it's audiable
-         * or not.
+        /** getRxActive returns if the nominated radio is currently Receiving voice, irrespective as
+         * to if it's audiable or not.
          *
          * @param radioNumber the number (starting from 0) of the radio to probe
          * @return true if the radio would have voice to play, false otherwise.
@@ -242,12 +246,12 @@ namespace afv_native {
         std::shared_ptr<audio::AudioDevice> mAudioDevice;
 
       protected:
-        struct event_base *mEvBase;
+        struct event_base                    *mEvBase;
         std::shared_ptr<afv::EffectResources> mFxRes;
 
-        http::EventTransferManager mTransferManager;
-        afv::APISession   mAPISession;
-        afv::VoiceSession mVoiceSession;
+        http::EventTransferManager          mTransferManager;
+        afv::APISession                     mAPISession;
+        afv::VoiceSession                   mVoiceSession;
         std::shared_ptr<afv::ATCRadioStack> mATCRadioStack;
         std::shared_ptr<audio::AudioDevice> mSpeakerDevice;
 
@@ -289,12 +293,12 @@ namespace afv_native {
 
         std::string             mClientName;
         audio::AudioDevice::Api mAudioApi;
-        std::string mAudioInputDeviceName;
-        std::string mAudioOutputDeviceName;
-        std::string mAudioSpeakerDeviceName;
-        int         mHeadsetOutputChannel = 0;
+        std::string             mAudioInputDeviceName;
+        std::string             mAudioOutputDeviceName;
+        std::string             mAudioSpeakerDeviceName;
+        int                     mHeadsetOutputChannel = 0;
 
-        int linkNewTransceiversFrequencyFlag = -1;
+        int                                 linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
 
         HardwareType activeHardware;

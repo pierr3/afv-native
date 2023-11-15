@@ -41,7 +41,6 @@ namespace afv_native::api {
         AFV_NATIVE_API std::string GetDefaultAudioInputDevice(unsigned int mAudioApi);
         AFV_NATIVE_API void        SetAudioOutputDevice(std::string outputDevice);
         AFV_NATIVE_API void        SetAudioSpeakersOutputDevice(std::string outputDevice);
-        AFV_NATIVE_API void        SetHeadsetOutputChannel(int channel);
         AFV_NATIVE_API std::vector<std::string> GetAudioOutputDevices(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioOutputDevice(unsigned int mAudioApi);
 
@@ -92,7 +91,14 @@ namespace afv_native::api {
 
         AFV_NATIVE_API std::string LastTransmitOnFreq(unsigned int freq);
 
-        AFV_NATIVE_API void SetRadiosGain(float gain);
+        AFV_NATIVE_API void SetRadioGainAll(float gain);
+        AFV_NATIVE_API void SetRadioGain(unsigned int freq, float gain);
+
+        
+        // Sets the playback channel for all channels and saves it to be used in the future for new channels
+        AFV_NATIVE_API void SetPlaybackChannelAll(PlaybackChannel channel);
+        // Sets the playback channel for a single channel
+        AFV_NATIVE_API void SetPlaybackChannel(unsigned int freq, PlaybackChannel channel);
 
         AFV_NATIVE_API void AddFrequency(unsigned int freq, std::string stationName = "");
         AFV_NATIVE_API void RemoveFrequency(unsigned int freq);
@@ -105,6 +111,8 @@ namespace afv_native::api {
         //
         // Deprecated functions
         //
+        [[deprecated("Use SetPlaybackChannelAll instead")]] AFV_NATIVE_DEPRECATED void SetHeadsetOutputChannel(int channel);
+        [[deprecated("Use SetRadioGainAll instead")]] AFV_NATIVE_DEPRECATED void SetRadiosGain(float gain);
         [[deprecated("Use modern afv_native::api::setLogger() instead")]] AFV_NATIVE_DEPRECATED static void setLogger(afv_native::log_fn gLogger);
     };
 } // namespace afv_native::api

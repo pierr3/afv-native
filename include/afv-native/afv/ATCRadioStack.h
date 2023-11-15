@@ -109,7 +109,7 @@ namespace afv_native { namespace afv {
         void setUDPChannel(cryptodto::UDPChannel *newChannel);
         void setCallsign(const std::string &newCallsign);
         void setClientPosition(double lat, double lon, double amslm, double aglm);
-        void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B, PlaybackChannel channel = PlaybackChannel::Both);
+        void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B, PlaybackChannel channel = PlaybackChannel::Default);
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
 
@@ -140,7 +140,8 @@ namespace afv_native { namespace afv {
         void                                    setGain(unsigned int freq, float gain);
         void                                    setGainAll(float gain);
         void setPlaybackChannel(unsigned int freq, PlaybackChannel channel);
-        void setPlaybackChannelAll(unsigned int freq, PlaybackChannel channel);
+        void setPlaybackChannelAll(PlaybackChannel channel);
+        void setDefaultPlaybackChannel(PlaybackChannel channel);
 
         bool getEnableInputFilters() const;
         void setEnableInputFilters(bool enableInputFilters);
@@ -192,6 +193,8 @@ namespace afv_native { namespace afv {
         std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
         std::shared_ptr<OutputAudioDevice>        mHeadsetDevice;
         std::shared_ptr<OutputAudioDevice>        mSpeakerDevice;
+
+        PlaybackChannel mDefaultPlaybackChannel = PlaybackChannel::Both;
 
         std::shared_ptr<audio::ITick> mTick;
         unsigned int                  mLastReceivedRadio;

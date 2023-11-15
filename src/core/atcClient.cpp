@@ -580,6 +580,7 @@ void ATCClient::linkTransceivers(std::string callsign, unsigned int freq) {
 void ATCClient::setTick(std::shared_ptr<audio::ITick> tick) {
     mATCRadioStack->setTick(tick);
 }
+
 void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName, int errorCode) {
     if (errorCode != 0) {
         return;
@@ -591,4 +592,17 @@ void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName, int er
         deviceName.c_str());
 
     ClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError, &deviceName, nullptr);
+}
+
+void afv_native::ATCClient::setPlaybackChannel(unsigned int freq, PlaybackChannel channel) {
+    mATCRadioStack->setPlaybackChannel(freq, channel);
+}
+
+void afv_native::ATCClient::setPlaybackChannelAll(PlaybackChannel channel) {
+    mATCRadioStack->setPlaybackChannelAll(channel);
+    mATCRadioStack->setDefaultPlaybackChannel(channel);
+}
+
+afv_native::PlaybackChannel afv_native::ATCClient::getPlaybackChannel(unsigned int freq) {
+    return mATCRadioStack->mRadioState.count(freq) != 0 ? mATCRadioStack->mRadioState[freq].playbackChannel : PlaybackChannel::Both;
 }
