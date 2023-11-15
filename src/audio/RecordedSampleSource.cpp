@@ -40,27 +40,27 @@ using namespace std;
 
 SourceStatus RecordedSampleSource::getAudioFrame(SampleType *bufferOut) {
     size_t bufOffset = 0;
-        if (!mPlay || !mSampleSource) {
-            return SourceStatus::Closed;
+    if (!mPlay || !mSampleSource) {
+        return SourceStatus::Closed;
     }
     const size_t sourceLength = mSampleSource->lengthInSamples();
-        do {
-            mFirstFrame = false;
-                if (mLoop && mCurPosition >= sourceLength) {
-                    mCurPosition = 0;
-                    mFirstFrame  = true;
-            }
-            auto maxCopy = min<size_t>(frameSizeSamples - bufOffset, sourceLength - mCurPosition);
-            ::memcpy(bufferOut + bufOffset, mSampleSource->data() + mCurPosition, maxCopy * sizeof(SampleType));
-            mCurPosition += maxCopy;
-            bufOffset += maxCopy;
+    do {
+        mFirstFrame = false;
+        if (mLoop && mCurPosition >= sourceLength) {
+            mCurPosition = 0;
+            mFirstFrame  = true;
+        }
+        auto maxCopy = min<size_t>(frameSizeSamples - bufOffset, sourceLength - mCurPosition);
+        ::memcpy(bufferOut + bufOffset, mSampleSource->data() + mCurPosition, maxCopy * sizeof(SampleType));
+        mCurPosition += maxCopy;
+        bufOffset += maxCopy;
     } while (mLoop && bufOffset < frameSizeSamples);
-        if (bufOffset < frameSizeSamples) {
-            const size_t fillSize = frameSizeSamples - bufOffset;
-            ::memset(bufferOut + bufOffset, 0, sizeof(SampleType) * fillSize);
+    if (bufOffset < frameSizeSamples) {
+        const size_t fillSize = frameSizeSamples - bufOffset;
+        ::memset(bufferOut + bufOffset, 0, sizeof(SampleType) * fillSize);
     }
-        if (!mLoop && mCurPosition >= mSampleSource->lengthInSamples()) {
-            mPlay = false;
+    if (!mLoop && mCurPosition >= mSampleSource->lengthInSamples()) {
+        mPlay = false;
     }
     return SourceStatus::OK;
 }

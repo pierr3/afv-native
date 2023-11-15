@@ -40,48 +40,48 @@ using namespace afv_native::audio;
 using namespace std;
 
 SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut) {
-        if (!mOriginSource) {
-            return SourceStatus::Closed;
+    if (!mOriginSource) {
+        return SourceStatus::Closed;
     }
     size_t destOffset = 0;
-        // use residual frame first.
-        if (mSourceBufferOffset > 0) {
-            size_t framesToCopy = std::min<size_t>(frameSizeSamples - mSourceBufferOffset, mDestinationFrameSize);
-            ::memcpy(bufferOut + destOffset, mSourceBuffer + mSourceBufferOffset, framesToCopy * sizeof(SampleType));
-            mSourceBufferOffset = (mSourceBufferOffset + framesToCopy) % frameSizeSamples;
-            destOffset += framesToCopy;
+    // use residual frame first.
+    if (mSourceBufferOffset > 0) {
+        size_t framesToCopy = std::min<size_t>(frameSizeSamples - mSourceBufferOffset, mDestinationFrameSize);
+        ::memcpy(bufferOut + destOffset, mSourceBuffer + mSourceBufferOffset, framesToCopy * sizeof(SampleType));
+        mSourceBufferOffset = (mSourceBufferOffset + framesToCopy) % frameSizeSamples;
+        destOffset += framesToCopy;
     }
     SourceStatus sourceRes;
-        while (destOffset < mDestinationFrameSize) {
-            const size_t samplesRemaining = mDestinationFrameSize - destOffset;
+    while (destOffset < mDestinationFrameSize) {
+        const size_t samplesRemaining = mDestinationFrameSize - destOffset;
 
-                if (samplesRemaining > frameSizeSamples) {
-                    // shortcut by writing straight into the buffer.
-                    sourceRes = mOriginSource->getAudioFrame(bufferOut + destOffset);
-                        if (sourceRes != SourceStatus::OK) {
-                            // something broke. silencefill the buffer, and return OK, but kill our source handle.
-                            ::memset(bufferOut + destOffset, 0, sizeof(SampleType) * samplesRemaining);
-                            mOriginSource.reset();
-                            return SourceStatus::OK;
-                    }
-                    destOffset += frameSizeSamples;
-                } else {
-                    // the remaining samples to copy must be less than a frame.
-                    // fill our holding buffer.
-                    sourceRes           = mOriginSource->getAudioFrame(mSourceBuffer);
-                    mSourceBufferOffset = 0;
-                        if (sourceRes != SourceStatus::OK) {
-                            // something broke. silencefill the buffer, and return OK, but kill our source handle.
-                            ::memset(bufferOut + destOffset, 0, sizeof(SampleType) * samplesRemaining);
-                            mOriginSource.reset();
-                            return SourceStatus::OK;
-                    }
-                    // now, copy out the difference.
-                    ::memcpy(bufferOut + destOffset, mSourceBuffer, samplesRemaining * sizeof(SampleType));
-                    mSourceBufferOffset = samplesRemaining;
-                    destOffset += samplesRemaining;
-                }
+        if (samplesRemaining > frameSizeSamples) {
+            // shortcut by writing straight into the buffer.
+            sourceRes = mOriginSource->getAudioFrame(bufferOut + destOffset);
+            if (sourceRes != SourceStatus::OK) {
+                // something broke. silencefill the buffer, and return OK, but kill our source handle.
+                ::memset(bufferOut + destOffset, 0, sizeof(SampleType) * samplesRemaining);
+                mOriginSource.reset();
+                return SourceStatus::OK;
+            }
+            destOffset += frameSizeSamples;
+        } else {
+            // the remaining samples to copy must be less than a frame.
+            // fill our holding buffer.
+            sourceRes           = mOriginSource->getAudioFrame(mSourceBuffer);
+            mSourceBufferOffset = 0;
+            if (sourceRes != SourceStatus::OK) {
+                // something broke. silencefill the buffer, and return OK, but kill our source handle.
+                ::memset(bufferOut + destOffset, 0, sizeof(SampleType) * samplesRemaining);
+                mOriginSource.reset();
+                return SourceStatus::OK;
+            }
+            // now, copy out the difference.
+            ::memcpy(bufferOut + destOffset, mSourceBuffer, samplesRemaining * sizeof(SampleType));
+            mSourceBufferOffset = samplesRemaining;
+            destOffset += samplesRemaining;
         }
+    }
     return SourceStatus::OK;
 }
 

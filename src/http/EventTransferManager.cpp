@@ -48,12 +48,12 @@ EventTransferManager::EventTransferManager(struct event_base *evBase):
 }
 
 EventTransferManager::~EventTransferManager() {
-        for (auto &si: mWatchedSockets) {
-            event_del(si->ev);
-            event_free(si->ev);
-            si->ev = nullptr;
-            delete si;
-        }
+    for (auto &si: mWatchedSockets) {
+        event_del(si->ev);
+        event_free(si->ev);
+        si->ev = nullptr;
+        delete si;
+    }
 }
 
 void EventTransferManager::process() {
@@ -67,36 +67,36 @@ int EventTransferManager::curlSocketCallback(CURL *easy, curl_socket_t s, int wh
 
 int EventTransferManager::socketCallback(CURL *easy, curl_socket_t s, int what, void *socketp) {
     SocketInfo *si = reinterpret_cast<SocketInfo *>(socketp);
-        if (what == CURL_POLL_REMOVE) {
-                if (si && si->ev != nullptr) {
-                    event_del(si->ev);
-                    event_free(si->ev);
-                    mWatchedSockets.erase(si);
-                    delete si;
-                    curl_multi_assign(mCurlMultiHandle, s, nullptr);
-            }
-            return 0;
-        } else if (what == CURL_POLL_IN || what == CURL_POLL_INOUT || what == CURL_POLL_OUT) {
-                if (si == nullptr) {
-                    si = new SocketInfo;
-                    curl_multi_assign(mCurlMultiHandle, s, si);
-            }
-            short ev_what = EV_PERSIST;
-                if (what == CURL_POLL_IN || what == CURL_POLL_INOUT) {
-                    ev_what |= EV_READ;
-            }
-                if (what == CURL_POLL_OUT || what == CURL_POLL_INOUT) {
-                    ev_what |= EV_WRITE;
-            }
-                if (si->ev == nullptr) {
-                    si->ev = event_new(mEvBase, s, ev_what, EventTransferManager::evSocketCallback, this);
-                } else {
-                    event_del(si->ev);
-                    event_assign(si->ev, mEvBase, s, ev_what, EventTransferManager::evSocketCallback, this);
-                }
-            event_add(si->ev, nullptr);
-            mWatchedSockets.insert(si);
-            return 0;
+    if (what == CURL_POLL_REMOVE) {
+        if (si && si->ev != nullptr) {
+            event_del(si->ev);
+            event_free(si->ev);
+            mWatchedSockets.erase(si);
+            delete si;
+            curl_multi_assign(mCurlMultiHandle, s, nullptr);
+        }
+        return 0;
+    } else if (what == CURL_POLL_IN || what == CURL_POLL_INOUT || what == CURL_POLL_OUT) {
+        if (si == nullptr) {
+            si = new SocketInfo;
+            curl_multi_assign(mCurlMultiHandle, s, si);
+        }
+        short ev_what = EV_PERSIST;
+        if (what == CURL_POLL_IN || what == CURL_POLL_INOUT) {
+            ev_what |= EV_READ;
+        }
+        if (what == CURL_POLL_OUT || what == CURL_POLL_INOUT) {
+            ev_what |= EV_WRITE;
+        }
+        if (si->ev == nullptr) {
+            si->ev = event_new(mEvBase, s, ev_what, EventTransferManager::evSocketCallback, this);
+        } else {
+            event_del(si->ev);
+            event_assign(si->ev, mEvBase, s, ev_what, EventTransferManager::evSocketCallback, this);
+        }
+        event_add(si->ev, nullptr);
+        mWatchedSockets.insert(si);
+        return 0;
     }
     return 0;
 }
@@ -105,11 +105,11 @@ void EventTransferManager::evSocketCallback(evutil_socket_t fd, short events, vo
     auto *etm             = reinterpret_cast<EventTransferManager *>(arg);
     int   running_handles = 0;
     int   curl_evmask     = 0;
-        if (events & EV_READ) {
-            curl_evmask |= CURL_CSELECT_IN;
+    if (events & EV_READ) {
+        curl_evmask |= CURL_CSELECT_IN;
     }
-        if (events & EV_WRITE) {
-            curl_evmask |= CURL_CSELECT_OUT;
+    if (events & EV_WRITE) {
+        curl_evmask |= CURL_CSELECT_OUT;
     }
     curl_multi_socket_action(etm->getCurlMultiHandle(), fd, curl_evmask, &running_handles);
     etm->processPendingMultiEvents();
@@ -124,21 +124,21 @@ void EventTransferManager::evTimerCallback(evutil_socket_t fd, short events, voi
 }
 
 int EventTransferManager::timerCallback(CURLM *multi, long timeout_ms) {
-        if (mTimerEvent != nullptr) {
-            event_del(mTimerEvent);
+    if (mTimerEvent != nullptr) {
+        event_del(mTimerEvent);
     }
-        if (timeout_ms < 0) {
-            return 0;
-        } else {
-                if (mTimerEvent == nullptr) {
-                    mTimerEvent = evtimer_new(mEvBase, EventTransferManager::evTimerCallback, this);
-            }
-
-            struct timeval tv = {0, 0};
-            tv.tv_sec         = timeout_ms / 1000;
-            tv.tv_usec        = (timeout_ms % 1000) * 1000;
-            event_add(mTimerEvent, &tv);
+    if (timeout_ms < 0) {
+        return 0;
+    } else {
+        if (mTimerEvent == nullptr) {
+            mTimerEvent = evtimer_new(mEvBase, EventTransferManager::evTimerCallback, this);
         }
+
+        struct timeval tv = {0, 0};
+        tv.tv_sec         = timeout_ms / 1000;
+        tv.tv_usec        = (timeout_ms % 1000) * 1000;
+        event_add(mTimerEvent, &tv);
+    }
     return 0;
 }
 

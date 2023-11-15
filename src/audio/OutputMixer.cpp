@@ -54,44 +54,44 @@ SourceStatus OutputMixer::getAudioFrame(SampleType *RESTRICT bufferOut) {
 
     ::memset(bufferOut, 0, sizeof(SampleType) * frameSizeSamples);
 
-        for (auto &src_iter: mSources) {
-            src_rv = src_iter.src->getAudioFrame(intermediate_buffer);
-                if (src_rv == SourceStatus::OK) {
-                    didMix = true;
-                        for (i = 0; i < frameSizeSamples; i++) {
-                            bufferOut[i] += (src_iter.gain * intermediate_buffer[i]);
-                        }
-                } else {
-                        if (src_rv == SourceStatus::Error) {
-                            LOG("outputmixer", "Error reading from stream.  Removing from mixer.");
-                    }
-                    // otherwise the stream closed, and we can close it silently!
-                    src_iter.src.reset();
-                }
+    for (auto &src_iter: mSources) {
+        src_rv = src_iter.src->getAudioFrame(intermediate_buffer);
+        if (src_rv == SourceStatus::OK) {
+            didMix = true;
+            for (i = 0; i < frameSizeSamples; i++) {
+                bufferOut[i] += (src_iter.gain * intermediate_buffer[i]);
+            }
+        } else {
+            if (src_rv == SourceStatus::Error) {
+                LOG("outputmixer", "Error reading from stream.  Removing from mixer.");
+            }
+            // otherwise the stream closed, and we can close it silently!
+            src_iter.src.reset();
         }
+    }
     mSources.remove_if([](MixerSource ms) -> bool {
         return !ms.src;
     });
-        // apply final volume adjustment.
-        if (didMix) {
-                for (i = 0; i < frameSizeSamples; i++) {
-                    bufferOut[i] *= mGain;
-                }
+    // apply final volume adjustment.
+    if (didMix) {
+        for (i = 0; i < frameSizeSamples; i++) {
+            bufferOut[i] *= mGain;
+        }
     }
     return SourceStatus::OK;
 }
 
 void OutputMixer::setSource(const std::shared_ptr<ISampleSource> &src, float gain) {
     bool duplicate = false;
-        for (auto &src_iter: mSources) {
-                if (src_iter.src == src) {
-                    duplicate     = true;
-                    src_iter.gain = gain;
-                    break;
-            }
+    for (auto &src_iter: mSources) {
+        if (src_iter.src == src) {
+            duplicate     = true;
+            src_iter.gain = gain;
+            break;
         }
-        if (duplicate) {
-            return;
+    }
+    if (duplicate) {
+        return;
     }
     mSources.emplace_front(MixerSource {src, gain});
 }

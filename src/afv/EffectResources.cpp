@@ -45,8 +45,8 @@ static audio::AudioSampleData *_load(const std::string &file_path) {
 
 static shared_ptr<audio::WavSampleStorage> try_load(const std::string &file) {
     auto *audData = _load(file);
-        if (nullptr == audData) {
-            return shared_ptr<audio::WavSampleStorage>(nullptr);
+    if (nullptr == audData) {
+        return shared_ptr<audio::WavSampleStorage>(nullptr);
     }
     auto result = make_shared<audio::WavSampleStorage>(*audData);
 

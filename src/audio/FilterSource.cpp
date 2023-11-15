@@ -48,23 +48,23 @@ void FilterSource::addFilter(std::unique_ptr<IFilter> filter) {
 }
 
 SourceStatus FilterSource::getAudioFrame(SampleType *bufferOut) {
-        if (mBypass) {
-            return mUpstream->getAudioFrame(bufferOut);
+    if (mBypass) {
+        return mUpstream->getAudioFrame(bufferOut);
     }
     SampleType   thisFrame[frameSizeSamples];
     SourceStatus upstreamStatus = mUpstream->getAudioFrame(thisFrame);
-        if (upstreamStatus != SourceStatus::OK) {
-            memset(bufferOut, 0, frameSizeBytes);
-            return upstreamStatus;
+    if (upstreamStatus != SourceStatus::OK) {
+        memset(bufferOut, 0, frameSizeBytes);
+        return upstreamStatus;
     }
     SampleType s = 0;
-        for (unsigned i = 0; i < frameSizeSamples; i++) {
-            s = thisFrame[i];
-                for (auto &f: mFilters) {
-                    s = f->TransformOne(s);
-                }
-            bufferOut[i] = s;
+    for (unsigned i = 0; i < frameSizeSamples; i++) {
+        s = thisFrame[i];
+        for (auto &f: mFilters) {
+            s = f->TransformOne(s);
         }
+        bufferOut[i] = s;
+    }
     return SourceStatus::OK;
 }
 

@@ -63,11 +63,11 @@ ChannelConfig::ChannelConfig(ChannelConfig &&movesrc) noexcept:
 static void setKey(unsigned char *key, const string &base64_key, size_t outputSize) {
     size_t      input_limit = 4 * ((outputSize + 2) / 3);
     std::string key_copy;
-        if (base64_key.length() > input_limit) {
-            key_copy = base64_key.substr(0, input_limit);
-        } else {
-            key_copy = base64_key;
-        }
+    if (base64_key.length() > input_limit) {
+        key_copy = base64_key.substr(0, input_limit);
+    } else {
+        key_copy = base64_key;
+    }
 
     const size_t               key_buffer_len = Base64DecodeLen(key_copy.length());
     std::vector<unsigned char> key_buffer(key_buffer_len);

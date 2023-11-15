@@ -8,19 +8,18 @@ Standard: Latest
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: true
-#Clang11: AlignConsecutiveBitFields: true
+AlignConsecutiveBitFields: true
 AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: true
 AlignEscapedNewlines: Left
-AlignOperands: true
-#Clang11: AlignAfterOperator
+AlignOperands: AlignAfterOperator
 AlignTrailingComments: true
 AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
-#Clang11: AllowShortEnumsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: None
@@ -43,9 +42,9 @@ BraceWrapping:
   AfterUnion:            false
   BeforeCatch:           false
   BeforeElse:            false
-#Clang11: BeforeWhile:           false
-#Clang11: BeforeLambdaBody:      false
-  IndentBraces:          true
+  BeforeWhile:           false
+  BeforeLambdaBody:      false
+  IndentBraces:          false
   SplitEmptyFunction:    true
   SplitEmptyNamespace:   true
   SplitEmptyRecord:      true
@@ -61,10 +60,12 @@ DeriveLineEnding: false
 DerivePointerAlignment: false
 FixNamespaceComments: true
 IncludeBlocks: Merge
-#Clang11?: IndentCaseBlocks: true
+IndentCaseBlocks: true
 IndentCaseLabels: true
-#Clang11: IndentExternBlock: true
-IndentPPDirectives: None
+IndentExternBlock: true
+IndentAccessModifiers: false
+InsertBraces: true
+IndentPPDirectives: BeforeHash
 IndentWidth: 4
 IndentWrappedFunctionNames: true
 KeepEmptyLinesAtTheStartOfBlocks: false

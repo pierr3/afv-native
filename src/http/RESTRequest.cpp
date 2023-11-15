@@ -46,11 +46,11 @@ RESTRequest::RESTRequest(string path, Method method, const nlohmann::json &reque
 }
 
 nlohmann::json RESTRequest::getResponse() const {
-        if (mProgress == Progress::Finished && mResp.size() > 0) {
-            return json::parse(getResponseBody());
-        } else {
-            return nlohmann::json();
-        }
+    if (mProgress == Progress::Finished && mResp.size() > 0) {
+        return json::parse(getResponseBody());
+    } else {
+        return nlohmann::json();
+    }
 }
 
 bool RESTRequest::setupHandle() {

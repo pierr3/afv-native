@@ -69,17 +69,17 @@ namespace afv_native { namespace afv {
 
         T getMax() const {
             T lMax = mData[0];
-                for (size_t i = 1; i < mAverageWindow; i++) {
-                    lMax = std::max<T>(lMax, mData[i]);
-                }
+            for (size_t i = 1; i < mAverageWindow; i++) {
+                lMax = std::max<T>(lMax, mData[i]);
+            }
             return lMax;
         }
 
         T getMin() const {
             T lMin = mData[0];
-                for (size_t i = 1; i < mAverageWindow; i++) {
-                    lMin = std::min<T>(lMin, mData[i]);
-                }
+            for (size_t i = 1; i < mAverageWindow; i++) {
+                lMin = std::min<T>(lMin, mData[i]);
+            }
             return lMin;
         }
     };

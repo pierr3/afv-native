@@ -51,7 +51,11 @@
 namespace afv_native { namespace afv {
     class APISession;
 
-    enum class VoiceSessionState { Connected, Disconnected, Error };
+    enum class VoiceSessionState {
+        Connected,
+        Disconnected,
+        Error
+    };
 
     enum class VoiceSessionError {
         NoError = 0,
@@ -60,7 +64,10 @@ namespace afv_native { namespace afv {
         Timeout,
     };
 
-    enum class VoiceSessionType { Pilot = 0, ATC };
+    enum class VoiceSessionType {
+        Pilot = 0,
+        ATC
+    };
 
     class VoiceSession {
       public:

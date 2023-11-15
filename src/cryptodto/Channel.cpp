@@ -65,32 +65,32 @@ size_t Channel::encryptChaCha20Poly1305(unsigned char *cipherOut, const unsigned
     makeChaCha20Poly1305Nonce(header.Sequence, nonce);
 
     auto *cipher_context = EVP_CIPHER_CTX_new();
-        // per EVP_EncryptInit, use null keys, then set the keys later with type null.
-        if (!EVP_EncryptInit_ex(cipher_context, EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
-            goto abort;
+    // per EVP_EncryptInit, use null keys, then set the keys later with type null.
+    if (!EVP_EncryptInit_ex(cipher_context, EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
+        goto abort;
     }
-        if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_IVLEN, aeadModeIVSize, nullptr)) {
-            goto abort;
+    if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_IVLEN, aeadModeIVSize, nullptr)) {
+        goto abort;
     }
-        if (!EVP_EncryptInit_ex(cipher_context, nullptr, nullptr, aeadTransmitKey, nonce)) {
-            goto abort;
+    if (!EVP_EncryptInit_ex(cipher_context, nullptr, nullptr, aeadTransmitKey, nonce)) {
+        goto abort;
     }
-        if (aadLen > 0) {
-                if (!EVP_EncryptUpdate(cipher_context, nullptr, &enc_len, aadIn, aadLen)) {
-                    goto abort;
-            }
-    }
-        if (!EVP_EncryptUpdate(cipher_context, cipherOut + cipherLen, &enc_len, plainIn, plainLen)) {
+    if (aadLen > 0) {
+        if (!EVP_EncryptUpdate(cipher_context, nullptr, &enc_len, aadIn, aadLen)) {
             goto abort;
+        }
     }
-    cipherLen += enc_len;
-        if (!EVP_EncryptFinal_ex(cipher_context, cipherOut + cipherLen, &enc_len)) {
-            goto abort;
+    if (!EVP_EncryptUpdate(cipher_context, cipherOut + cipherLen, &enc_len, plainIn, plainLen)) {
+        goto abort;
     }
     cipherLen += enc_len;
-        // append the tag.
-        if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_GET_TAG, aeadModeTagSize, cipherOut + cipherLen)) {
-            goto abort;
+    if (!EVP_EncryptFinal_ex(cipher_context, cipherOut + cipherLen, &enc_len)) {
+        goto abort;
+    }
+    cipherLen += enc_len;
+    // append the tag.
+    if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_GET_TAG, aeadModeTagSize, cipherOut + cipherLen)) {
+        goto abort;
     }
 
     cipherLen += aeadModeTagSize;
@@ -104,9 +104,9 @@ abort:
 }
 
 size_t Channel::decryptChaCha20Poly1305(unsigned char *bodyOut, const unsigned char *cipherIn, size_t cipherLen, const dto::Header &header, const unsigned char *aadIn, size_t aadLen) {
-        // make sure the message is long enough
-        if (cipherLen < aeadModeTagSize) {
-            return 0;
+    // make sure the message is long enough
+    if (cipherLen < aeadModeTagSize) {
+        return 0;
     }
 
     size_t        bodyLen = 0;
@@ -115,31 +115,31 @@ size_t Channel::decryptChaCha20Poly1305(unsigned char *bodyOut, const unsigned c
     auto         *cipher_context = EVP_CIPHER_CTX_new();
 
     makeChaCha20Poly1305Nonce(header.Sequence, nonce);
-        if (!EVP_DecryptInit_ex(cipher_context, EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
-            goto abort;
+    if (!EVP_DecryptInit_ex(cipher_context, EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
+        goto abort;
     }
-        if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_IVLEN, aeadModeIVSize, nullptr)) {
-            goto abort;
+    if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_IVLEN, aeadModeIVSize, nullptr)) {
+        goto abort;
     }
-        if (!EVP_DecryptInit_ex(cipher_context, nullptr, nullptr, aeadReceiveKey, nonce)) {
-            goto abort;
+    if (!EVP_DecryptInit_ex(cipher_context, nullptr, nullptr, aeadReceiveKey, nonce)) {
+        goto abort;
     }
-        if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_TAG, aeadModeTagSize, (void *) (cipherIn + (cipherLen - aeadModeTagSize)))) {
-            goto abort;
+    if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_TAG, aeadModeTagSize, (void *) (cipherIn + (cipherLen - aeadModeTagSize)))) {
+        goto abort;
     };
-        if (aadLen > 0) {
-                if (!EVP_DecryptUpdate(cipher_context, nullptr, &dec_len, aadIn, aadLen)) {
-                    goto abort;
-            }
-            dec_len = 0;
-    }
-        if (!EVP_DecryptUpdate(cipher_context, bodyOut, &dec_len, cipherIn, cipherLen - aeadModeTagSize)) {
+    if (aadLen > 0) {
+        if (!EVP_DecryptUpdate(cipher_context, nullptr, &dec_len, aadIn, aadLen)) {
             goto abort;
+        }
+        dec_len = 0;
+    }
+    if (!EVP_DecryptUpdate(cipher_context, bodyOut, &dec_len, cipherIn, cipherLen - aeadModeTagSize)) {
+        goto abort;
     }
     bodyLen += dec_len;
     dec_len = 0;
-        if (!EVP_DecryptFinal_ex(cipher_context, bodyOut + bodyLen, &dec_len)) {
-            goto abort;
+    if (!EVP_DecryptFinal_ex(cipher_context, bodyOut + bodyLen, &dec_len)) {
+        goto abort;
     }
     bodyLen += dec_len;
     EVP_CIPHER_CTX_free(cipher_context);
@@ -152,23 +152,23 @@ abort:
 
 bool Channel::Decapsulate(const unsigned char *cipherTextIn, size_t cipherTextLen, std::string &channelTag, sequence_t &sequence, CryptoDtoMode &modeOut, std::string &dtoNameOut, msgpack::sbuffer &dtoOut) {
     size_t offset = 2;
-        if (cipherTextLen < 2) {
-            return false;
+    if (cipherTextLen < 2) {
+        return false;
     }
     uint16_t headerSize = 0;
     ::memcpy(&headerSize, cipherTextIn, sizeof(headerSize));
 
-        // minimum bounds for the full message is the header size + header + dtonamesize + one byte for the dtoname.
-        if (cipherTextLen <= (2 + headerSize + 3)) {
-            return false;
+    // minimum bounds for the full message is the header size + header + dtonamesize + one byte for the dtoname.
+    if (cipherTextLen <= (2 + headerSize + 3)) {
+        return false;
     }
 
     auto headerObjHdl = msgpack::unpack(reinterpret_cast<const char *>(cipherTextIn) + offset, headerSize);
     dto::Header header;
-        try {
-            headerObjHdl.get().convert(header);
-        } catch (const msgpack::type_error &) {
-            return false;
+    try {
+        headerObjHdl.get().convert(header);
+    } catch (const msgpack::type_error &) {
+        return false;
     }
     offset += headerSize;
 
@@ -177,30 +177,30 @@ bool Channel::Decapsulate(const unsigned char *cipherTextIn, size_t cipherTextLe
     const size_t               bodySize = cipherTextLen - offset;
     std::vector<unsigned char> bodyOut(bodySize);
     size_t                     bodyLen = 0;
-        switch (header.Mode) {
-            case CryptoModeNone:
-                ::memcpy(bodyOut.data(), cipherTextIn + offset, bodySize);
-                bodyLen = bodySize;
-                break;
-            case CryptoModeChaCha20Poly1305:
-                    // make sure the message is long enough
-                    if (bodySize <= 16) {
-                        return false;
-                }
-                bodyLen = decryptChaCha20Poly1305(bodyOut.data(), cipherTextIn + offset, bodySize, header, cipherTextIn, offset);
-                    if (bodyLen == 0) {
-                        return false;
-                }
-                break;
-            default:
+    switch (header.Mode) {
+        case CryptoModeNone:
+            ::memcpy(bodyOut.data(), cipherTextIn + offset, bodySize);
+            bodyLen = bodySize;
+            break;
+        case CryptoModeChaCha20Poly1305:
+            // make sure the message is long enough
+            if (bodySize <= 16) {
                 return false;
-        }
+            }
+            bodyLen = decryptChaCha20Poly1305(bodyOut.data(), cipherTextIn + offset, bodySize, header, cipherTextIn, offset);
+            if (bodyLen == 0) {
+                return false;
+            }
+            break;
+        default:
+            return false;
+    }
 
     // now, extract the DTO name.
     uint16_t nameSize;
     ::memcpy(&nameSize, bodyOut.data(), 2);
-        if (nameSize > bodyLen) {
-            return false;
+    if (nameSize > bodyLen) {
+        return false;
     }
     dtoNameOut = std::move(string(reinterpret_cast<char *>(bodyOut.data()) + 2, nameSize));
     dtoOut.write(reinterpret_cast<char *>(bodyOut.data()) + 2 + nameSize, bodyLen - 2 - nameSize);
@@ -221,13 +221,13 @@ size_t Channel::Encapsulate(const unsigned char *plainTextBuf, size_t plainTextL
     dto::Header myHeader(ChannelTag, sequence, mode);
     msgpack::pack(headerBuf, myHeader);
 
-        if (headerBuf.size() > UINT16_MAX) {
-            return 0;
+    if (headerBuf.size() > UINT16_MAX) {
+        return 0;
     }
 
-        // now, copy out the header.
-        if (cipherTextLen < headerBuf.size() + 2) {
-            return 0;
+    // now, copy out the header.
+    if (cipherTextLen < headerBuf.size() + 2) {
+        return 0;
     }
     nLen = headerBuf.size();
     ::memcpy(cipherTextBufOut, &nLen, 2);
@@ -237,28 +237,28 @@ size_t Channel::Encapsulate(const unsigned char *plainTextBuf, size_t plainTextL
 
     assert(offset == (headerBuf.size() + 2));
 
-        switch (mode) {
-            case CryptoModeChaCha20Poly1305:
-                    if (cipherTextLen < (offset + plainTextLen + 16)) {
-                        return 0;
-                }
-                enc_len = encryptChaCha20Poly1305(cipherTextBufOut + offset, plainTextBuf, plainTextLen, myHeader, cipherTextBufOut, offset);
-                    if (0 == enc_len) {
-                        return 0;
-                }
-                offset += enc_len;
-                assert(offset == (headerBuf.size() + 2 + plainTextLen + 16));
-                break;
-            case CryptoModeNone:
-                    if (cipherTextLen < (offset + plainTextLen)) {
-                        return 0;
-                }
-                ::memcpy(cipherTextBufOut + offset, plainTextBuf, plainTextLen);
-                offset += plainTextLen;
-                break;
-            default:
+    switch (mode) {
+        case CryptoModeChaCha20Poly1305:
+            if (cipherTextLen < (offset + plainTextLen + 16)) {
                 return 0;
-        }
+            }
+            enc_len = encryptChaCha20Poly1305(cipherTextBufOut + offset, plainTextBuf, plainTextLen, myHeader, cipherTextBufOut, offset);
+            if (0 == enc_len) {
+                return 0;
+            }
+            offset += enc_len;
+            assert(offset == (headerBuf.size() + 2 + plainTextLen + 16));
+            break;
+        case CryptoModeNone:
+            if (cipherTextLen < (offset + plainTextLen)) {
+                return 0;
+            }
+            ::memcpy(cipherTextBufOut + offset, plainTextBuf, plainTextLen);
+            offset += plainTextLen;
+            break;
+        default:
+            return 0;
+    }
     return offset;
 }
 

@@ -36,9 +36,9 @@
 
 #if defined(_MSC_VER)
 
-#include <intrin.h>
+    #include <intrin.h>
 
-#pragma intrinsic(_BitScanForward64)
+    #pragma intrinsic(_BitScanForward64)
 #endif
 
 using namespace std;
@@ -46,11 +46,11 @@ using namespace afv_native::cryptodto;
 
 SequenceTest::SequenceTest(sequence_t start_sequence, unsigned window):
     _bitfield(0), _min(start_sequence), _window(window) {
-        if (_window < 1) {
-            _window = 1;
+    if (_window < 1) {
+        _window = 1;
     }
-        if (_window > (sizeof(sequence_bitfield_t) * 8)) {
-            _window = sizeof(sequence_bitfield_t) * 8;
+    if (_window > (sizeof(sequence_bitfield_t) * 8)) {
+        _window = sizeof(sequence_bitfield_t) * 8;
     }
 }
 
@@ -61,18 +61,18 @@ void SequenceTest::advanceWindow() {
 
 #ifdef _MSC_VER
     auto found = _BitScanForward64(&idx, ~_bitfield);
-        // if idx == 0, then the window was fully received and we advance the full amount!
-        if (!found) {
-            idx = sizeof(_bitfield) * 8;
-        } else {
-            idx++;
-        }
+    // if idx == 0, then the window was fully received and we advance the full amount!
+    if (!found) {
+        idx = sizeof(_bitfield) * 8;
+    } else {
+        idx++;
+    }
 #else
-#ifdef __GNUC__
+    #ifdef __GNUC__
     idx = __builtin_ctz(~_bitfield) + 1;
-#else
-#error No BSF for this compiler defined.
-#endif
+    #else
+        #error No BSF for this compiler defined.
+    #endif
 #endif
     idx = std::min(idx, static_cast<unsigned long>(_window));
     _min += idx;
@@ -80,38 +80,38 @@ void SequenceTest::advanceWindow() {
 }
 
 ReceiveOutcome SequenceTest::Received(sequence_t newSequence) {
-        if (newSequence < _min) {
-            return ReceiveOutcome::Before;
+    if (newSequence < _min) {
+        return ReceiveOutcome::Before;
     }
-        if (newSequence == _min) {
-            advanceWindow();
-            return ReceiveOutcome::OK;
+    if (newSequence == _min) {
+        advanceWindow();
+        return ReceiveOutcome::OK;
     }
-        if (newSequence <= (_min + _window)) {
-            // always at least 1 because if it was min, we'd have exited earlier.
-            sequence_t bitidx = newSequence - _min - 1;
+    if (newSequence <= (_min + _window)) {
+        // always at least 1 because if it was min, we'd have exited earlier.
+        sequence_t bitidx = newSequence - _min - 1;
 
-            sequence_bitfield_t mask = 1ULL << bitidx;
-                if ((_bitfield & mask) == mask) {
-                    return ReceiveOutcome::Before;
-            }
-            _bitfield |= mask;
-            return ReceiveOutcome::OK;
+        sequence_bitfield_t mask = 1ULL << bitidx;
+        if ((_bitfield & mask) == mask) {
+            return ReceiveOutcome::Before;
+        }
+        _bitfield |= mask;
+        return ReceiveOutcome::OK;
     }
     // if we're here, then we've forced a window jump.
     sequence_t oldmin = _min;
-        while (_min < oldmin + _window) {
-            advanceWindow();
-                if ((_min + _window) > newSequence) {
-                    // if we're now in window, break out.
-                    break;
-            }
+    while (_min < oldmin + _window) {
+        advanceWindow();
+        if ((_min + _window) > newSequence) {
+            // if we're now in window, break out.
+            break;
         }
-        // did we fully advance the window?  If so abandon the old position and restart the stream.
-        if (_min >= oldmin + _window) {
-            _min      = newSequence + 1;
-            _bitfield = 0;
-            return ReceiveOutcome::Overflow;
+    }
+    // did we fully advance the window?  If so abandon the old position and restart the stream.
+    if (_min >= oldmin + _window) {
+        _min      = newSequence + 1;
+        _bitfield = 0;
+        return ReceiveOutcome::Overflow;
     }
     // if we're inside the window now, mask and return.
     sequence_t          bitidx = newSequence - _min - 1;

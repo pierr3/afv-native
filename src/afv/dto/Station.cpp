@@ -44,13 +44,13 @@ void afv_native::afv::dto::from_json(const json &j, Station &s) {
     j.at("id").get_to(s.ID);
     j.at("name").get_to(s.Name);
 
-        try {
-            auto freq = j.at("frequency").is_number_integer() ? j.at("frequency").get<int>() : 0;
-            auto freqAlias = j.at("frequencyAlias").is_number_integer() ? j.at("frequencyAlias").get<int>() : 0;
+    try {
+        auto freq = j.at("frequency").is_number_integer() ? j.at("frequency").get<int>() : 0;
+        auto freqAlias = j.at("frequencyAlias").is_number_integer() ? j.at("frequencyAlias").get<int>() : 0;
 
-            s.Frequency      = std::move(freq);
-            s.FrequencyAlias = std::move(freqAlias);
-        } catch (const json::out_of_range &) {
+        s.Frequency      = std::move(freq);
+        s.FrequencyAlias = std::move(freqAlias);
+    } catch (const json::out_of_range &) {
     }
 }
 
@@ -59,10 +59,10 @@ void afv_native::afv::dto::to_json(json &j, const Station &s) {
         {"id", s.ID},
         {"name", s.Name},
     };
-        if (s.Frequency != 0) {
-            j["frequency"] = s.Frequency;
+    if (s.Frequency != 0) {
+        j["frequency"] = s.Frequency;
     }
-        if (s.FrequencyAlias != 0) {
-            j["frequencyAlias"] = s.FrequencyAlias;
+    if (s.FrequencyAlias != 0) {
+        j["frequencyAlias"] = s.FrequencyAlias;
     }
 }

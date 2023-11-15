@@ -62,9 +62,9 @@ VoiceSession::~VoiceSession() {
 }
 
 bool VoiceSession::Connect() {
-        // we cannot start the voice session if the API session is in any state OTHER than running...
-        if (mSession.getState() != APISessionState::Running) {
-            return false;
+    // we cannot start the voice session if the API session is in any state OTHER than running...
+    if (mSession.getState() != APISessionState::Running) {
+        return false;
     }
     mVoiceSessionSetupRequest.reset();
     // fix up the request URL
@@ -78,43 +78,43 @@ bool VoiceSession::Connect() {
 }
 
 void VoiceSession::voiceSessionSetupRequestCallback(http::Request *req, bool success) {
-        if (success) {
-                if (req->getStatusCode() == 200) {
-                    auto *restreq = dynamic_cast<http::RESTRequest *>(req);
-                    assert(restreq != nullptr);
-                        try {
-                            auto                      j = restreq->getResponse();
-                            dto::PostCallsignResponse cresp;
-                            j.get_to(cresp);
-                                if (!setupSession(cresp)) {
-                                    failSession();
-                            }
-                        } catch (json::exception &e) {
-                            LOG("voicesession", "exception parsing voice session setup: %s", e.what());
-                            mLastError = VoiceSessionError::BadResponseFromAPIServer;
-                            failSession();
-                    }
-                } else {
-                    LOG("voicesession", "request for voice session failed: got status %d", req->getStatusCode());
-                    mLastError = VoiceSessionError::BadResponseFromAPIServer;
+    if (success) {
+        if (req->getStatusCode() == 200) {
+            auto *restreq = dynamic_cast<http::RESTRequest *>(req);
+            assert(restreq != nullptr);
+            try {
+                auto                      j = restreq->getResponse();
+                dto::PostCallsignResponse cresp;
+                j.get_to(cresp);
+                if (!setupSession(cresp)) {
                     failSession();
                 }
+            } catch (json::exception &e) {
+                LOG("voicesession", "exception parsing voice session setup: %s", e.what());
+                mLastError = VoiceSessionError::BadResponseFromAPIServer;
+                failSession();
+            }
         } else {
-            LOG("voicesession", "request for voice session failed: got internal error %s",
-                req->getCurlError().c_str());
+            LOG("voicesession", "request for voice session failed: got status %d", req->getStatusCode());
             mLastError = VoiceSessionError::BadResponseFromAPIServer;
             failSession();
         }
+    } else {
+        LOG("voicesession", "request for voice session failed: got internal error %s",
+            req->getCurlError().c_str());
+        mLastError = VoiceSessionError::BadResponseFromAPIServer;
+        failSession();
+    }
 }
 
 bool VoiceSession::setupSession(const dto::PostCallsignResponse &cresp) {
     mChannel.close();
     mChannel.setAddress(cresp.VoiceServer.AddressIpV4);
     mChannel.setChannelConfig(cresp.VoiceServer.ChannelConfig);
-        if (!mChannel.open()) {
-            LOG("VoiceSession:setupSession", "unable to open UDP session");
-            mLastError = VoiceSessionError::UDPChannelError;
-            return false;
+    if (!mChannel.open()) {
+        LOG("VoiceSession:setupSession", "unable to open UDP session");
+        mLastError = VoiceSessionError::UDPChannelError;
+        return false;
     }
     mVoiceSessionSetupRequest.reset();
     mVoiceSessionTeardownRequest.reset();
@@ -139,18 +139,18 @@ void VoiceSession::failSession() {
     mVoiceSessionSetupRequest.reset();
     // before we invoke state callbacks, remove our session handler so we don't get recursive loops.
     mSession.StateCallback.removeCallback(this);
-        if (mLastError != VoiceSessionError::NoError) {
-            StateCallback.invokeAll(VoiceSessionState::Error);
-        } else {
-            StateCallback.invokeAll(VoiceSessionState::Disconnected);
-        }
+    if (mLastError != VoiceSessionError::NoError) {
+        StateCallback.invokeAll(VoiceSessionState::Error);
+    } else {
+        StateCallback.invokeAll(VoiceSessionState::Disconnected);
+    }
 }
 
 void VoiceSession::sendHeartbeatCallback() {
     dto::Heartbeat hbDto(mCallsign);
-        if (mChannel.isOpen()) {
-            mChannel.sendDto(hbDto);
-            mHeartbeatTimer.enable(afvHeartbeatIntervalMs);
+    if (mChannel.isOpen()) {
+        mChannel.sendDto(hbDto);
+        mHeartbeatTimer.enable(afvHeartbeatIntervalMs);
     }
 }
 
@@ -168,31 +168,31 @@ void VoiceSession::heartbeatTimedOut() {
 }
 
 void VoiceSession::Disconnect(bool do_close, bool reconnect) {
-        if (do_close) {
-            mVoiceSessionTeardownRequest.reset();
-            mVoiceSessionTeardownRequest.setUrl(mBaseUrl);
-            mSession.setAuthenticationFor(mVoiceSessionTeardownRequest);
-            // because we're likely going to get discarded by our owner when this function returns, we
-            // need to hold onto a shared_ptr reference to prevent cleanup until *AFTER* this callback completes.
-            auto &transferManager = mSession.getTransferManager();
-            mVoiceSessionTeardownRequest.setCompletionCallback([](http::Request *req, bool success) mutable {
-                if (success) {
-                        if (req->getStatusCode() != 200) {
-                            LOG("VoiceSession:Disconnect", "Callsign Dereg Failed.  Status Code: %d", req->getStatusCode());
-                    }
-                } else {
-                    LOG("VoiceSession:Disconnect", "Callsign Dereg Failed.  Internal Error: %s",
-                        req->getCurlError().c_str());
+    if (do_close) {
+        mVoiceSessionTeardownRequest.reset();
+        mVoiceSessionTeardownRequest.setUrl(mBaseUrl);
+        mSession.setAuthenticationFor(mVoiceSessionTeardownRequest);
+        // because we're likely going to get discarded by our owner when this function returns, we
+        // need to hold onto a shared_ptr reference to prevent cleanup until *AFTER* this callback completes.
+        auto &transferManager = mSession.getTransferManager();
+        mVoiceSessionTeardownRequest.setCompletionCallback([](http::Request *req, bool success) mutable {
+            if (success) {
+                if (req->getStatusCode() != 200) {
+                    LOG("VoiceSession:Disconnect", "Callsign Dereg Failed.  Status Code: %d", req->getStatusCode());
                 }
-            });
-            // and now schedule this request to be performed.
-            mVoiceSessionTeardownRequest.shareState(transferManager);
-            mVoiceSessionTeardownRequest.doAsync(transferManager);
+            } else {
+                LOG("VoiceSession:Disconnect", "Callsign Dereg Failed.  Internal Error: %s",
+                    req->getCurlError().c_str());
+            }
+        });
+        // and now schedule this request to be performed.
+        mVoiceSessionTeardownRequest.shareState(transferManager);
+        mVoiceSessionTeardownRequest.doAsync(transferManager);
     }
     failSession();
 
-        if (reconnect) {
-            mSession.Connect();
+    if (reconnect) {
+        mSession.Connect();
     }
 }
 
@@ -241,8 +241,8 @@ void VoiceSession::setType(VoiceSessionType inType) {
 }
 
 void VoiceSession::setCallsign(const std::string &newCallsign) {
-        if (!mChannel.isOpen()) {
-            mCallsign = newCallsign;
+    if (!mChannel.isOpen()) {
+        mCallsign = newCallsign;
     }
 }
 
@@ -263,14 +263,14 @@ VoiceSessionError VoiceSession::getLastError() const {
 }
 
 void VoiceSession::sessionStateCallback(APISessionState state) {
-        switch (state) {
-            case afv::APISessionState::Disconnected:
-            case afv::APISessionState::Error:
-                    if (isConnected()) {
-                        failSession();
-                }
-                break;
-            default:
-                break;
-        }
+    switch (state) {
+        case afv::APISessionState::Disconnected:
+        case afv::APISessionState::Error:
+            if (isConnected()) {
+                failSession();
+            }
+            break;
+        default:
+            break;
+    }
 }

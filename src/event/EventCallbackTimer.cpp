@@ -36,8 +36,8 @@
 using namespace afv_native::event;
 
 void EventCallbackTimer::triggered() {
-        if (mCallback) {
-            mCallback();
+    if (mCallback) {
+        mCallback();
     }
 }
 

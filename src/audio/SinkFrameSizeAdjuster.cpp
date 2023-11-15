@@ -43,8 +43,8 @@ SinkFrameSizeAdjuster::SinkFrameSizeAdjuster(std::shared_ptr<ISampleSink> destSi
     mDestinationSink(std::move(destSink)), mSourceFrameSize(sinkFrameSize), mSinkBufferOffset(0) {
     const size_t bufferSize = frameSizeSamples * sizeof(SampleType);
     mSinkBuffer             = new SampleType[bufferSize];
-        if (nullptr != mSinkBuffer) {
-            ::memset(mSinkBuffer, 0, bufferSize);
+    if (nullptr != mSinkBuffer) {
+        ::memset(mSinkBuffer, 0, bufferSize);
     }
 }
 
@@ -66,15 +66,15 @@ void SinkFrameSizeAdjuster::putAudioFrame(const SampleType *bufferIn) {
     mSinkBufferOffset += sample_copy_count;
     sourceOffset += sample_copy_count;
 
-        while (mSinkBufferOffset >= frameSizeSamples) {
-            mDestinationSink->putAudioFrame(mSinkBuffer);
-            mSinkBufferOffset = 0;
+    while (mSinkBufferOffset >= frameSizeSamples) {
+        mDestinationSink->putAudioFrame(mSinkBuffer);
+        mSinkBufferOffset = 0;
 
-                // if there's any samples left in the frame, copy them up to a whole frame maximum.
-                if ((mSourceFrameSize - sourceOffset) > 0) {
-                    sample_copy_count = std::min<size_t>(frameSizeSamples, mSourceFrameSize - sourceOffset);
-                    memcpy(mSinkBuffer + mSinkBufferOffset, bufferIn + sourceOffset, sample_copy_count * sizeof(SampleType));
-                    mSinkBufferOffset += sample_copy_count;
-            }
+        // if there's any samples left in the frame, copy them up to a whole frame maximum.
+        if ((mSourceFrameSize - sourceOffset) > 0) {
+            sample_copy_count = std::min<size_t>(frameSizeSamples, mSourceFrameSize - sourceOffset);
+            memcpy(mSinkBuffer + mSinkBufferOffset, bufferIn + sourceOffset, sample_copy_count * sizeof(SampleType));
+            mSinkBufferOffset += sample_copy_count;
         }
+    }
 }

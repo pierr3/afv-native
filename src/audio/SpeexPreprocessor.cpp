@@ -63,24 +63,24 @@ SpeexPreprocessor::~SpeexPreprocessor() {
 }
 
 void SpeexPreprocessor::putAudioFrame(const SampleType *bufferIn) {
-        for (size_t i = 0; i < frameSizeSamples; i++) {
-            mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
-        }
+    for (size_t i = 0; i < frameSizeSamples; i++) {
+        mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
+    }
     speex_preprocess_run(mPreprocessorState, mSpeexFrame);
-        for (size_t i = 0; i < frameSizeSamples; i++) {
-            mOutputFrame[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
-        }
-        if (mUpstreamSink) {
-            mUpstreamSink->putAudioFrame(mOutputFrame);
+    for (size_t i = 0; i < frameSizeSamples; i++) {
+        mOutputFrame[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
+    }
+    if (mUpstreamSink) {
+        mUpstreamSink->putAudioFrame(mOutputFrame);
     }
 }
 
 void SpeexPreprocessor::transformFrame(SampleType *bufferOut, const SampleType bufferIn[]) {
-        for (size_t i = 0; i < frameSizeSamples; i++) {
-            mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
-        }
+    for (size_t i = 0; i < frameSizeSamples; i++) {
+        mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
+    }
     speex_preprocess_run(mPreprocessorState, mSpeexFrame);
-        for (size_t i = 0; i < frameSizeSamples; i++) {
-            bufferOut[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
-        }
+    for (size_t i = 0; i < frameSizeSamples; i++) {
+        bufferOut[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
+    }
 }

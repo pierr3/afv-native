@@ -77,7 +77,6 @@ namespace afv_native {
             OtherRequestError,
             InvalidAuthToken,          // local parse error
             AuthTokenExpiryTimeInPast, // local parse error
-
         };
     } // namespace afv
 } // namespace afv_native

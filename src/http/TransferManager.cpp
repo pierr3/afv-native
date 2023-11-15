@@ -66,41 +66,41 @@ void TransferManager::processPendingMultiEvents() {
     Request        *req;
     int             msgs_queued = 0;
 
-        while (nullptr != (cMsg = curl_multi_info_read(mCurlMultiHandle, &msgs_queued))) {
-            // GAH.  STUPID STUPID CURL.  Never return pointers from stack or other transient memory.
-            auto msgCopy = *cMsg;
+    while (nullptr != (cMsg = curl_multi_info_read(mCurlMultiHandle, &msgs_queued))) {
+        // GAH.  STUPID STUPID CURL.  Never return pointers from stack or other transient memory.
+        auto msgCopy = *cMsg;
 
-            req = mPendingTransfers[msgCopy.easy_handle];
-                switch (msgCopy.msg) {
-                    case CURLMSG_DONE:
-                        // remove the easy handle from our management
-                        curl_multi_remove_handle(mCurlMultiHandle, msgCopy.easy_handle);
-                        // remove the shared_ptr hold we've got on the request itself.
-                        mPendingTransfers.erase(msgCopy.easy_handle);
-                            // and notify the request object.
-                            if (msgCopy.data.result == CURLE_OK) {
-                                req->notifyTransferCompleted();
-                            } else {
-                                req->notifyTransferError();
-                            }
-                        break;
-                    default:
-                        break;
+        req = mPendingTransfers[msgCopy.easy_handle];
+        switch (msgCopy.msg) {
+            case CURLMSG_DONE:
+                // remove the easy handle from our management
+                curl_multi_remove_handle(mCurlMultiHandle, msgCopy.easy_handle);
+                // remove the shared_ptr hold we've got on the request itself.
+                mPendingTransfers.erase(msgCopy.easy_handle);
+                // and notify the request object.
+                if (msgCopy.data.result == CURLE_OK) {
+                    req->notifyTransferCompleted();
+                } else {
+                    req->notifyTransferError();
                 }
+                break;
+            default:
+                break;
         }
+    }
 }
 
 void TransferManager::AddToSession(Request *req) const {
-        if (req) {
-            curl_easy_setopt(req->getCurlHandle(), CURLOPT_SHARE, mCurlShareHandle);
+    if (req) {
+        curl_easy_setopt(req->getCurlHandle(), CURLOPT_SHARE, mCurlShareHandle);
     }
 }
 
 void TransferManager::HandleRequest(Request *req) {
-        if (req) {
-            auto curlHandle               = req->getCurlHandle();
-            mPendingTransfers[curlHandle] = req;
-            curl_multi_add_handle(mCurlMultiHandle, curlHandle);
+    if (req) {
+        auto curlHandle               = req->getCurlHandle();
+        mPendingTransfers[curlHandle] = req;
+        curl_multi_add_handle(mCurlMultiHandle, curlHandle);
     }
 }
 
@@ -110,14 +110,14 @@ CURLM *TransferManager::getCurlMultiHandle() const {
 
 void TransferManager::registerForAsyncCallback(Request &req) {
     auto curlHandle = req.getCurlHandle();
-        if (curlHandle != nullptr) {
-            mPendingTransfers[curlHandle] = &req;
+    if (curlHandle != nullptr) {
+        mPendingTransfers[curlHandle] = &req;
     }
 }
 
 void TransferManager::removeAsyncCallback(Request &req) {
     auto curlHandle = req.getCurlHandle();
-        if (curlHandle != nullptr) {
-            mPendingTransfers.erase(curlHandle);
+    if (curlHandle != nullptr) {
+        mPendingTransfers.erase(curlHandle);
     }
 }

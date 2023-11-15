@@ -53,16 +53,16 @@ RemoteVoiceSource::RemoteVoiceSource():
 
     int opus_status;
     mDecoder = opus_decoder_create(sampleRateHz, 1, &opus_status);
-        if (opus_status != OPUS_OK) {
-            LOG("instreambuffer", "Got error initialising Opus Codec: %s", opus_strerror(opus_status));
-            mDecoder = nullptr;
+    if (opus_status != OPUS_OK) {
+        LOG("instreambuffer", "Got error initialising Opus Codec: %s", opus_strerror(opus_status));
+        mDecoder = nullptr;
     }
 }
 
 RemoteVoiceSource::~RemoteVoiceSource() {
-        if (mDecoder != nullptr) {
-            opus_decoder_destroy(mDecoder);
-            mDecoder = nullptr;
+    if (mDecoder != nullptr) {
+        opus_decoder_destroy(mDecoder);
+        mDecoder = nullptr;
     }
     jitter_buffer_destroy(mJitterBuffer);
     mJitterBuffer = nullptr;
@@ -72,12 +72,12 @@ void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio) {
     JitterBufferPacket newPacket;
     ::memset(&newPacket, 0, sizeof(newPacket));
 
-        if (audio.LastPacket) {
-            mEnding         = true;
-            mEndingSequence = audio.SequenceCounter;
-        } else {
-            mEnding = false;
-        }
+    if (audio.LastPacket) {
+        mEnding         = true;
+        mEndingSequence = audio.SequenceCounter;
+    } else {
+        mEnding = false;
+    }
 
     newPacket.data = static_cast<char *>(::malloc(audio.Audio.size()));
     memcpy(newPacket.data, audio.Audio.data(), audio.Audio.size());
@@ -106,58 +106,58 @@ SourceStatus RemoteVoiceSource::getAudioFrame(SampleType *bufferOut) {
         std::lock_guard<std::mutex> lock(mJitterBufferMutex);
         jitter_status = jitter_buffer_get(mJitterBuffer, &pktOut, 1, &tsOut);
     }
-        if (mDecoder != nullptr) {
-                switch (jitter_status) {
-                    case JITTER_BUFFER_MISSING:
-                        mCurrentFrame++;
-                            if (mEnding && (mCurrentFrame >= mEndingSequence)) {
-                                ::memset(bufferOut, 0, frameSizeSamples * sizeof(SampleType));
-                                rv = SourceStatus::Closed;
-                            } else {
-                                // prod opus to perform gap compensation.
-                                opus_res = opus_decode_float(mDecoder, nullptr, 0, bufferOut, frameSizeSamples, false);
-                            }
-                        break;
-                    case JITTER_BUFFER_INSERTION:
-                        // insert silence.
-                        ::memset(bufferOut, 0, frameSizeSamples * sizeof(SampleType));
-                        break;
-                    case JITTER_BUFFER_OK:
-                        mCurrentFrame = tsOut;
-                        opus_res      = opus_decode_float(
-                            mDecoder, reinterpret_cast<unsigned char *>(pktOut.data), pktOut.len, bufferOut, frameSizeSamples, false);
-                        ::free(pktOut.data);
-                        break;
-                    default:
-                        LOG("instreambuffer", "Got Error return from the jitter buffer: %d", jitter_status);
-                        rv = SourceStatus::Error;
-                        break;
+    if (mDecoder != nullptr) {
+        switch (jitter_status) {
+            case JITTER_BUFFER_MISSING:
+                mCurrentFrame++;
+                if (mEnding && (mCurrentFrame >= mEndingSequence)) {
+                    ::memset(bufferOut, 0, frameSizeSamples * sizeof(SampleType));
+                    rv = SourceStatus::Closed;
+                } else {
+                    // prod opus to perform gap compensation.
+                    opus_res = opus_decode_float(mDecoder, nullptr, 0, bufferOut, frameSizeSamples, false);
                 }
-                if (opus_res < 0) {
-                    LOG("instreambuffer", "Opus returned an error decoding frame: %s", opus_strerror(opus_res));
-            }
-        } else {
-            // codec is broken - insert silence.
-            memset(bufferOut, 0, frameSizeSamples * sizeof(SampleType));
-            rv = SourceStatus::Error;
+                break;
+            case JITTER_BUFFER_INSERTION:
+                // insert silence.
+                ::memset(bufferOut, 0, frameSizeSamples * sizeof(SampleType));
+                break;
+            case JITTER_BUFFER_OK:
+                mCurrentFrame = tsOut;
+                opus_res = opus_decode_float(mDecoder, reinterpret_cast<unsigned char *>(pktOut.data),
+                                             pktOut.len, bufferOut, frameSizeSamples, false);
+                ::free(pktOut.data);
+                break;
+            default:
+                LOG("instreambuffer", "Got Error return from the jitter buffer: %d", jitter_status);
+                rv = SourceStatus::Error;
+                break;
         }
+        if (opus_res < 0) {
+            LOG("instreambuffer", "Opus returned an error decoding frame: %s", opus_strerror(opus_res));
+        }
+    } else {
+        // codec is broken - insert silence.
+        memset(bufferOut, 0, frameSizeSamples * sizeof(SampleType));
+        rv = SourceStatus::Error;
+    }
     {
         std::lock_guard<std::mutex> lock(mJitterBufferMutex);
         jitter_buffer_tick(mJitterBuffer);
         // if we don't have a terminally flagged marker, check for timeouts.
         spx_int32_t bufCount = 0;
         jitter_buffer_ctl(mJitterBuffer, JITTER_BUFFER_GET_AVAILABLE_COUNT, &bufCount);
-            if (bufCount == 0) {
-                mSilentFrames += 1;
-                    if (mSilentFrames > frameTimeOut) {
-                            if (rv != SourceStatus::Error) {
-                                rv = SourceStatus::Closed;
-                        }
+        if (bufCount == 0) {
+            mSilentFrames += 1;
+            if (mSilentFrames > frameTimeOut) {
+                if (rv != SourceStatus::Error) {
+                    rv = SourceStatus::Closed;
                 }
+            }
         }
     }
-        if (rv != SourceStatus::OK) {
-            mIsActive = false;
+    if (rv != SourceStatus::OK) {
+        mIsActive = false;
     }
     return rv;
 }

@@ -43,9 +43,9 @@ SineToneSource::SineToneSource(double freqHz, float gain):
 
 SourceStatus SineToneSource::getAudioFrame(SampleType *bufferOut) {
     const double sinMultiplier = M_PI * 2.0 * static_cast<double>(mFrequency) / static_cast<double>(sampleRateHz);
-        for (int i = 0; i < frameSizeSamples; i++) {
-            bufferOut[i] = static_cast<SampleType>(mGain * sin(sinMultiplier * static_cast<double>(i + (frameSizeSamples * mFillCount))));
-        }
+    for (int i = 0; i < frameSizeSamples; i++) {
+        bufferOut[i] = static_cast<SampleType>(mGain * sin(sinMultiplier * static_cast<double>(i + (frameSizeSamples * mFillCount))));
+    }
     mFillCount++;
     return SourceStatus::OK;
 }

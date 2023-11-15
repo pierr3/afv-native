@@ -87,7 +87,10 @@ namespace afv_native { namespace afv {
         CallsignMeta();
     };
 
-    enum class RadioSimulationState { RxStarted, RxStopped };
+    enum class RadioSimulationState {
+        RxStarted,
+        RxStopped
+    };
 
     /** RadioSimulation provides the foundation for handling radio channels and mixing them
      * into an audio stream, as well as handling the samples from the micrphone input.

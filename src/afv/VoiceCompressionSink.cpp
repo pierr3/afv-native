@@ -50,26 +50,26 @@ VoiceCompressionSink::~VoiceCompressionSink() {
 
 int VoiceCompressionSink::open() {
     int opus_status = 0;
-        if (mEncoder != nullptr) {
-            return 0;
+    if (mEncoder != nullptr) {
+        return 0;
     }
     mEncoder = opus_encoder_create(audio::sampleRateHz, 1, OPUS_APPLICATION_VOIP, &opus_status);
+    if (opus_status != OPUS_OK) {
+        LOG("VoiceCompressionSink", "Got error initialising Opus Codec: %s", opus_strerror(opus_status));
+        mEncoder = nullptr;
+    } else {
+        opus_status = opus_encoder_ctl(mEncoder, OPUS_SET_BITRATE(audio::encoderBitrate));
         if (opus_status != OPUS_OK) {
-            LOG("VoiceCompressionSink", "Got error initialising Opus Codec: %s", opus_strerror(opus_status));
-            mEncoder = nullptr;
-        } else {
-            opus_status = opus_encoder_ctl(mEncoder, OPUS_SET_BITRATE(audio::encoderBitrate));
-                if (opus_status != OPUS_OK) {
-                    LOG("VoiceCompressionSink", "error setting bitrate on codec: %s", opus_strerror(opus_status));
-            }
+            LOG("VoiceCompressionSink", "error setting bitrate on codec: %s", opus_strerror(opus_status));
         }
+    }
     return opus_status;
 }
 
 void VoiceCompressionSink::close() {
-        if (nullptr != mEncoder) {
-            opus_encoder_destroy(mEncoder);
-            mEncoder = nullptr;
+    if (nullptr != mEncoder) {
+        opus_encoder_destroy(mEncoder);
+        mEncoder = nullptr;
     }
 }
 
@@ -82,9 +82,9 @@ void VoiceCompressionSink::putAudioFrame(const audio::SampleType *bufferIn) {
     vector<unsigned char> outBuffer(audio::targetOutputFrameSizeBytes);
     auto                  enc_len =
         opus_encode_float(mEncoder, bufferIn, audio::frameSizeSamples, outBuffer.data(), outBuffer.size());
-        if (enc_len < 0) {
-            LOG("VoiceCompressionSink", "error encoding frame: %s", opus_strerror(enc_len));
-            return;
+    if (enc_len < 0) {
+        LOG("VoiceCompressionSink", "error encoding frame: %s", opus_strerror(enc_len));
+        return;
     }
     outBuffer.resize(enc_len);
     mCompressedFrameSink.processCompressedFrame(outBuffer);

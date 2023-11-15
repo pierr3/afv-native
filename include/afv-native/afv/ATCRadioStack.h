@@ -85,12 +85,13 @@ namespace afv_native { namespace afv {
         std::string                                  lastTransmitCallsign;
         int                                          mLastRxCount;
         bool                                         mBypassEffects;
-        bool        onHeadset   = true; // If we're not on the headset, we're on the Speaker
-        bool        tx          = false;
-        bool        rx          = false;
-        bool        xc          = false;
-        bool        isAtis      = false;
-        std::string stationName = "";
+        bool            onHeadset       = true; // If we're not on the headset, we're on the Speaker
+        PlaybackChannel playbackChannel = PlaybackChannel::Both;
+        bool            tx              = false;
+        bool            rx              = false;
+        bool            xc              = false;
+        bool            isAtis          = false;
+        std::string     stationName     = "";
         std::vector<dto::Transceiver> transceivers;
     };
 
@@ -107,7 +108,7 @@ namespace afv_native { namespace afv {
         void setUDPChannel(cryptodto::UDPChannel *newChannel);
         void setCallsign(const std::string &newCallsign);
         void setClientPosition(double lat, double lon, double amslm, double aglm);
-        void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B);
+        void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B, PlaybackChannel channel = PlaybackChannel::Both);
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
 
@@ -137,6 +138,8 @@ namespace afv_native { namespace afv {
         void                                    setOnHeadset(unsigned int freq, bool onHeadset);
         void                                    setGain(unsigned int freq, float gain);
         void                                    setGainAll(float gain);
+        void setPlaybackChannel(unsigned int freq, PlaybackChannel channel);
+        void setPlaybackChannelAll(unsigned int freq, PlaybackChannel channel);
 
         bool getEnableInputFilters() const;
         void setEnableInputFilters(bool enableInputFilters);
@@ -162,7 +165,6 @@ namespace afv_native { namespace afv {
         std::atomic<uint32_t> IncomingAudioStreams;
 
         std::map<unsigned int, ATCRadioState> mRadioState;
-        bool                                  mSplitChannels = false;
 
       protected:
         static const int       maintenanceTimerIntervalMs = 30 * 1000;
@@ -223,7 +225,7 @@ namespace afv_native { namespace afv {
 
         bool _process_radio(const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache, std::map<void *, audio::SampleType[audio::frameSizeSamples]> &eqSampleCache, size_t rxIter, std::shared_ptr<OutputDeviceState> state);
 
-        void interleave(audio::SampleType *leftChannel, audio::SampleType *rightChannel, audio::SampleType *outputBuffer, size_t numSamples);
+        void _interleave(audio::SampleType *leftChannel, audio::SampleType *rightChannel, audio::SampleType *outputBuffer, size_t numSamples);
 
         /** mix_buffers is a utility function that mixes two buffers of audio together.  The src_dst
          * buffer is assumed to be the final output buffer and is modified by the mixing in place.

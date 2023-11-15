@@ -53,25 +53,25 @@ Request::~Request() {
     curl_easy_cleanup(mCurlHandle);
     mCurlHandle = nullptr;
 
-        if (mHeaders != nullptr) {
-            curl_slist_free_all(mHeaders);
-            mHeaders = nullptr;
+    if (mHeaders != nullptr) {
+        curl_slist_free_all(mHeaders);
+        mHeaders = nullptr;
     }
 }
 
 void Request::reset() {
-        if (mCurlHandle) {
-                if (mTM != nullptr) {
-                    curl_multi_remove_handle(mTM->getCurlMultiHandle(), mCurlHandle);
-                    mTM->removeAsyncCallback(*this);
-                    mTM = nullptr;
-            }
-            curl_easy_cleanup(mCurlHandle);
-            mCurlHandle = nullptr;
+    if (mCurlHandle) {
+        if (mTM != nullptr) {
+            curl_multi_remove_handle(mTM->getCurlMultiHandle(), mCurlHandle);
+            mTM->removeAsyncCallback(*this);
+            mTM = nullptr;
+        }
+        curl_easy_cleanup(mCurlHandle);
+        mCurlHandle = nullptr;
     }
-        if (mHeaders != nullptr) {
-            curl_slist_free_all(mHeaders);
-            mHeaders = nullptr;
+    if (mHeaders != nullptr) {
+        curl_slist_free_all(mHeaders);
+        mHeaders = nullptr;
     }
     mResp.clear();
     mReq.clear();
@@ -93,8 +93,8 @@ bool Request::setupHandle() {
     curl_easy_setopt(mCurlHandle, CURLOPT_XFERINFODATA, this);
     curl_easy_setopt(mCurlHandle, CURLOPT_READFUNCTION, curlReadCallback);
     curl_easy_setopt(mCurlHandle, CURLOPT_READDATA, this);
-        if (mHeaders != nullptr) {
-            curl_easy_setopt(mCurlHandle, CURLOPT_HTTPHEADER, mHeaders);
+    if (mHeaders != nullptr) {
+        curl_easy_setopt(mCurlHandle, CURLOPT_HTTPHEADER, mHeaders);
     }
 
     /* Disable Nagle because Mac says so.... */
@@ -110,27 +110,27 @@ bool Request::setupHandle() {
      */
     curl_easy_setopt(mCurlHandle, CURLOPT_SSL_VERIFYPEER, 0);
 
-        switch (mMethod) {
-            case Method::GET:
-                curl_easy_setopt(mCurlHandle, CURLOPT_HTTPGET, 1);
-                curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 1);
-                break;
-            case Method::POST:
-                curl_easy_setopt(mCurlHandle, CURLOPT_POST, 1);
-                curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
-                curl_easy_setopt(mCurlHandle, CURLOPT_POSTFIELDS, nullptr);
-                curl_easy_setopt(mCurlHandle, CURLOPT_POSTFIELDSIZE, mReq.size());
-                break;
-            case Method::PUT:
-                curl_easy_setopt(mCurlHandle, CURLOPT_UPLOAD, 1);
-                curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
-                curl_easy_setopt(mCurlHandle, CURLOPT_INFILESIZE, mReq.size());
-                break;
-            case Method::DEL:
-                curl_easy_setopt(mCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
-                curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
-                break;
-        }
+    switch (mMethod) {
+        case Method::GET:
+            curl_easy_setopt(mCurlHandle, CURLOPT_HTTPGET, 1);
+            curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 1);
+            break;
+        case Method::POST:
+            curl_easy_setopt(mCurlHandle, CURLOPT_POST, 1);
+            curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+            curl_easy_setopt(mCurlHandle, CURLOPT_POSTFIELDS, nullptr);
+            curl_easy_setopt(mCurlHandle, CURLOPT_POSTFIELDSIZE, mReq.size());
+            break;
+        case Method::PUT:
+            curl_easy_setopt(mCurlHandle, CURLOPT_UPLOAD, 1);
+            curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+            curl_easy_setopt(mCurlHandle, CURLOPT_INFILESIZE, mReq.size());
+            break;
+        case Method::DEL:
+            curl_easy_setopt(mCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
+            curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+            break;
+    }
     curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, mFollowRedirect);
     return true;
 }
@@ -141,15 +141,15 @@ void Request::setFollowRedirect(bool follow) {
 
 void Request::setHeader(const std::string &header, const std::string &value) {
     struct curl_slist *newHeaders;
-        if (value.empty()) {
-            auto headerOut = header + ";";
-            newHeaders     = curl_slist_append(mHeaders, headerOut.c_str());
-        } else {
-            auto headerOut = header + ": " + value;
-            newHeaders     = curl_slist_append(mHeaders, headerOut.c_str());
-        }
-        if (newHeaders != nullptr) {
-            mHeaders = newHeaders;
+    if (value.empty()) {
+        auto headerOut = header + ";";
+        newHeaders     = curl_slist_append(mHeaders, headerOut.c_str());
+    } else {
+        auto headerOut = header + ": " + value;
+        newHeaders     = curl_slist_append(mHeaders, headerOut.c_str());
+    }
+    if (newHeaders != nullptr) {
+        mHeaders = newHeaders;
     }
 }
 
@@ -181,18 +181,18 @@ size_t Request::curlReadCallback(char *buffer, size_t size, size_t nitems, void 
 size_t Request::readCallback(char *buffer, size_t size, size_t nitems) {
     size_t reqBufLen = mReq.size();
     size_t totalRead = size * nitems;
-        if ((size * nitems > 0) && (mReqBufOffset > reqBufLen)) {
-            // attempted to read past the end of the buffer.  give up.
-            return CURL_READFUNC_ABORT;
+    if ((size * nitems > 0) && (mReqBufOffset > reqBufLen)) {
+        // attempted to read past the end of the buffer.  give up.
+        return CURL_READFUNC_ABORT;
     }
     auto max_read = std::min<size_t>(reqBufLen - mReqBufOffset, totalRead);
-        if (max_read > 0) {
-            ::memcpy(buffer, mReq.data() + mReqBufOffset, max_read);
-            mReqBufOffset += max_read;
-        } else {
-            // push the offset past the end to prevent
-            mReqBufOffset = reqBufLen + 1;
-        }
+    if (max_read > 0) {
+        ::memcpy(buffer, mReq.data() + mReqBufOffset, max_read);
+        mReqBufOffset += max_read;
+    } else {
+        // push the offset past the end to prevent
+        mReqBufOffset = reqBufLen + 1;
+    }
     return max_read;
 }
 
@@ -210,27 +210,27 @@ size_t Request::writeCallback(char *buffer, size_t size, size_t nitems) {
 }
 
 bool Request::doSync() {
-        if (!setupHandle()) {
-            return false;
+    if (!setupHandle()) {
+        return false;
     }
     mProgress = Progress::Connecting;
     memset(mCurlErrorBuffer, 0, CURL_ERROR_SIZE);
     auto rv = curl_easy_perform(mCurlHandle);
-        if (rv == CURLE_OK) {
-            notifyTransferCompleted();
-            return true;
-        } else {
-            notifyTransferError();
-            return false;
-        }
+    if (rv == CURLE_OK) {
+        notifyTransferCompleted();
+        return true;
+    } else {
+        notifyTransferError();
+        return false;
+    }
 }
 
 void Request::notifyTransferError() {
     mProgress = Progress::Error;
     mTM       = nullptr;
-        // chain the callback if necessary.
-        if (mCompletionCallback) {
-            mCompletionCallback(this, false);
+    // chain the callback if necessary.
+    if (mCompletionCallback) {
+        mCompletionCallback(this, false);
     }
 }
 
@@ -267,26 +267,26 @@ void Request::transferInfoCallback(curl_off_t dltotal, curl_off_t dlnow, curl_of
 void Request::notifyTransferCompleted() {
     mProgress = Progress::Finished;
     long resp_code;
-        if (CURLE_OK == curl_easy_getinfo(mCurlHandle, CURLINFO_RESPONSE_CODE, &resp_code)) {
-            // downcast on Unixen. (sizeof(long) > sizeof(int)).
-            mRespStatusCode = resp_code;
+    if (CURLE_OK == curl_easy_getinfo(mCurlHandle, CURLINFO_RESPONSE_CODE, &resp_code)) {
+        // downcast on Unixen. (sizeof(long) > sizeof(int)).
+        mRespStatusCode = resp_code;
     }
 
     char *ct_ptr = nullptr;
-        if (CURLE_OK == curl_easy_getinfo(mCurlHandle, CURLINFO_CONTENT_TYPE, &ct_ptr)) {
-                if (ct_ptr != nullptr) {
-                    mRespContentType = string(ct_ptr);
-                } else {
-                    mRespContentType = "";
-                }
+    if (CURLE_OK == curl_easy_getinfo(mCurlHandle, CURLINFO_CONTENT_TYPE, &ct_ptr)) {
+        if (ct_ptr != nullptr) {
+            mRespContentType = string(ct_ptr);
+        } else {
+            mRespContentType = "";
+        }
     }
     // As the transfer manager lets go of us after completion, disassociate from
     // the TransferManager.
     mTM = nullptr;
 
-        // chain the callback if necessary.
-        if (mCompletionCallback) {
-            mCompletionCallback(this, true);
+    // chain the callback if necessary.
+    if (mCompletionCallback) {
+        mCompletionCallback(this, true);
     }
 }
 
@@ -319,8 +319,8 @@ void Request::setCompletionCallback(std::function<void(Request *, bool)> cb) {
 }
 
 bool Request::doAsync(TransferManager &transferManager) {
-        if (!setupHandle()) {
-            return false;
+    if (!setupHandle()) {
+        return false;
     }
 
     auto curlMultiHandle = transferManager.getCurlMultiHandle();

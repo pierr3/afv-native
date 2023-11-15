@@ -91,40 +91,40 @@ AudioSampleData::AudioSampleData(const AudioSampleData &cpy_src):
     mSampleAlignment(cpy_src.mSampleAlignment), mSampleRate(cpy_src.mBitsPerSample) {
     mSampleCount = cpy_src.mSampleCount;
     mSampleData  = malloc(cpy_src.mSampleCount * cpy_src.mSampleAlignment);
-        if (mSampleData == nullptr) {
-            mSampleCount = 0;
-        } else {
-            memcpy(mSampleData, cpy_src.mSampleData, cpy_src.mSampleCount * cpy_src.mSampleAlignment);
-        }
+    if (mSampleData == nullptr) {
+        mSampleCount = 0;
+    } else {
+        memcpy(mSampleData, cpy_src.mSampleData, cpy_src.mSampleCount * cpy_src.mSampleAlignment);
+    }
 }
 
 AudioSampleData::~AudioSampleData() {
-        if (mSampleData != nullptr) {
-            free(mSampleData);
-            mSampleData  = nullptr;
-            mSampleCount = 0;
+    if (mSampleData != nullptr) {
+        free(mSampleData);
+        mSampleData  = nullptr;
+        mSampleCount = 0;
     }
 }
 
 void AudioSampleData::AppendSamples(uint8_t blockSize, unsigned count, void *data) {
     const unsigned newCount = mSampleCount + count;
     mSampleData             = realloc(mSampleData, newCount * mSampleAlignment);
-        if (mSampleData == nullptr) {
-            mSampleCount = 0;
-            return;
+    if (mSampleData == nullptr) {
+        mSampleCount = 0;
+        return;
     }
     auto *dptr = reinterpret_cast<uint8_t *>(mSampleData);
     dptr += mSampleCount * mSampleAlignment;
-        if (blockSize == mSampleAlignment) {
-            memcpy(dptr, data, count * blockSize);
-        } else {
-            auto *sptr = reinterpret_cast<uint8_t *>(data);
-                for (unsigned c = 0; c < count; c++) {
-                    memcpy(dptr, sptr, mSampleAlignment);
-                    sptr += blockSize;
-                    dptr += mSampleAlignment;
-                }
+    if (blockSize == mSampleAlignment) {
+        memcpy(dptr, data, count * blockSize);
+    } else {
+        auto *sptr = reinterpret_cast<uint8_t *>(data);
+        for (unsigned c = 0; c < count; c++) {
+            memcpy(dptr, sptr, mSampleAlignment);
+            sptr += blockSize;
+            dptr += mSampleAlignment;
         }
+    }
     mSampleCount = newCount;
 }
 
@@ -205,34 +205,34 @@ static vector<WavTOCEntry>::const_iterator FindTOCFor(const vector<WavTOCEntry> 
 static bool readHeader(FILE *srcFile, const struct ChunkHeader &ch, vector<WavTOCEntry> &o_HeaderItems) {
     uint32_t expectedBytesLeft = ch.chunkSize - 4;
 
-        while (expectedBytesLeft > 0) {
-                /* if there's less than a chunkheader less, there's a problem. */
-                if (expectedBytesLeft < sizeof(struct ChunkHeader)) {
-                    return false;
-            }
-
-            WavTOCEntry e;
-                if (1 != fread(&e.ch, sizeof(e.ch), 1, srcFile)) {
-                    return false;
-            }
-            expectedBytesLeft -= sizeof(e.ch);
-
-                /* make sure the expected file size is large enough */
-                if (e.ch.chunkSize > expectedBytesLeft) {
-                    return false;
-            }
-            e.offset = ftell(srcFile);
-            o_HeaderItems.emplace_back(e);
-
-            int pad = 0;
-                if ((e.ch.chunkSize % 2) != 0) {
-                    pad = 1;
-            }
-
-            /* skip forward to the next chunk */
-            fseek(srcFile, e.ch.chunkSize + pad, SEEK_CUR);
-            expectedBytesLeft -= e.ch.chunkSize + pad;
+    while (expectedBytesLeft > 0) {
+        /* if there's less than a chunkheader less, there's a problem. */
+        if (expectedBytesLeft < sizeof(struct ChunkHeader)) {
+            return false;
         }
+
+        WavTOCEntry e;
+        if (1 != fread(&e.ch, sizeof(e.ch), 1, srcFile)) {
+            return false;
+        }
+        expectedBytesLeft -= sizeof(e.ch);
+
+        /* make sure the expected file size is large enough */
+        if (e.ch.chunkSize > expectedBytesLeft) {
+            return false;
+        }
+        e.offset = ftell(srcFile);
+        o_HeaderItems.emplace_back(e);
+
+        int pad = 0;
+        if ((e.ch.chunkSize % 2) != 0) {
+            pad = 1;
+        }
+
+        /* skip forward to the next chunk */
+        fseek(srcFile, e.ch.chunkSize + pad, SEEK_CUR);
+        expectedBytesLeft -= e.ch.chunkSize + pad;
+    }
     return true;
 }
 
@@ -247,54 +247,54 @@ static AudioSampleData *extractData(FILE *fh, const vector<WavTOCEntry> &toc) {
      * Find the format header.
      */
     auto ti = FindTOCFor(toc, WavFormatChunkID);
-        if (ti == toc.end()) {
-            // couldn't find the format chunk
-            return nullptr;
+    if (ti == toc.end()) {
+        // couldn't find the format chunk
+        return nullptr;
     }
     fseek(fh, ti->offset, SEEK_SET);
     int chunkSize = ti->ch.chunkSize;
 
-        /* safety check - the chunk can't be smaller than 16 bytes */
-        if (chunkSize < 16) {
-            return nullptr;
+    /* safety check - the chunk can't be smaller than 16 bytes */
+    if (chunkSize < 16) {
+        return nullptr;
     }
-        /* and cap it at the size of the header struct so we don't buffer overflow */
-        if (chunkSize > sizeof(WavFormatChunk)) {
-            chunkSize = sizeof(WavFormatChunk);
+    /* and cap it at the size of the header struct so we don't buffer overflow */
+    if (chunkSize > sizeof(WavFormatChunk)) {
+        chunkSize = sizeof(WavFormatChunk);
     }
 
     struct WavFormatChunk fc;
-        if (1 != fread(&fc, chunkSize, 1, fh)) {
-            return nullptr;
+    if (1 != fread(&fc, chunkSize, 1, fh)) {
+        return nullptr;
     }
 
-        /* now that we have the header, verify that we can support the format. */
-        if (fc.wFormatTag != WAV_FORMAT_PCM && fc.wFormatTag != WAV_FORMAT_IEEE_FLOAT) {
-            return nullptr;
+    /* now that we have the header, verify that we can support the format. */
+    if (fc.wFormatTag != WAV_FORMAT_PCM && fc.wFormatTag != WAV_FORMAT_IEEE_FLOAT) {
+        return nullptr;
     }
-        /* sanity check the block stride */
-        if (fc.nBlockAlign < minimumBlockAlignment(fc.wBitsPerSample, fc.nChannels)) {
-            return nullptr;
+    /* sanity check the block stride */
+    if (fc.nBlockAlign < minimumBlockAlignment(fc.wBitsPerSample, fc.nChannels)) {
+        return nullptr;
     }
 
     asd = new AudioSampleData(fc.nChannels, fc.wBitsPerSample, fc.nSamplesPerSec, fc.wFormatTag == WAV_FORMAT_IEEE_FLOAT);
 
     /* now to check the data block */
     ti = FindTOCFor(toc, WavDataChunkID);
-        if (ti == toc.end()) {
-            goto fail2;
+    if (ti == toc.end()) {
+        goto fail2;
     }
 
     /* we can live with short reads here, so we use a slightly different strategy */
     fseek(fh, ti->offset, SEEK_SET);
 
     dbuf = reinterpret_cast<uint8_t *>(malloc(ti->ch.chunkSize));
-        if (nullptr == dbuf) {
-            goto fail2;
+    if (nullptr == dbuf) {
+        goto fail2;
     }
     samplesRead = fread(dbuf, fc.nBlockAlign, ti->ch.chunkSize / fc.nBlockAlign, fh);
-        if (samplesRead <= 0) {
-            goto fail;
+    if (samplesRead <= 0) {
+        goto fail;
     }
     asd->AppendSamples(fc.nBlockAlign, static_cast<unsigned>(samplesRead), dbuf);
     free(dbuf);
@@ -312,52 +312,52 @@ AudioSampleData *afv_native::audio::LoadWav(const char *fileName) {
     AudioSampleData    *asd = nullptr;
 
     fh = fopen(fileName, "rb");
-        if (fh == nullptr) {
-            return nullptr;
+    if (fh == nullptr) {
+        return nullptr;
     }
 
     /* first of all, verify that we have an actual wavfile */
     struct ChunkHeader ch;
 
-        if (1 != fread(&ch, sizeof(ch), 1, fh)) {
-            /* short read or error */
-            goto fail;
+    if (1 != fread(&ch, sizeof(ch), 1, fh)) {
+        /* short read or error */
+        goto fail;
     }
-        /* check the top level header. */
-        if (memcmp(WavTopChunkID, ch.chunkID, 4)) {
-            goto fail;
+    /* check the top level header. */
+    if (memcmp(WavTopChunkID, ch.chunkID, 4)) {
+        goto fail;
     }
-        /* minimum sensible size is the WAVE identifier, 2 chunk headers
-         * and the minimum legal WAVFormatChunk body
-         */
-        if (ch.chunkSize < (4 + 16 + 8 + 8)) {
-            goto fail;
+    /* minimum sensible size is the WAVE identifier, 2 chunk headers
+     * and the minimum legal WAVFormatChunk body
+     */
+    if (ch.chunkSize < (4 + 16 + 8 + 8)) {
+        goto fail;
     }
     /* check the WAVE magic */
     char waveMagic[4];
-        if (1 != fread(&waveMagic, 4, 1, fh)) {
-            goto fail;
+    if (1 != fread(&waveMagic, 4, 1, fh)) {
+        goto fail;
     }
-        if (memcmp("WAVE", waveMagic, 4)) {
-            goto fail;
+    if (memcmp("WAVE", waveMagic, 4)) {
+        goto fail;
     }
 
-        /* if were're still here, the file is valid so far, now we need to read
-         * scan the wave file to find the blocks we need */
-        if (!readHeader(fh, ch, toc)) {
-            goto fail;
+    /* if were're still here, the file is valid so far, now we need to read
+     * scan the wave file to find the blocks we need */
+    if (!readHeader(fh, ch, toc)) {
+        goto fail;
     }
 
     asd = extractData(fh, toc);
-        if (asd == nullptr) {
-            goto fail;
+    if (asd == nullptr) {
+        goto fail;
     }
 
     return asd;
 fail:
-        if (fh != nullptr) {
-            fclose(fh);
-            fh = nullptr;
+    if (fh != nullptr) {
+        fclose(fh);
+        fh = nullptr;
     }
     return nullptr;
 }
