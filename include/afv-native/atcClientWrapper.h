@@ -11,12 +11,8 @@ namespace afv_native {
     typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
 }
 
-namespace afv_native::api {
-    //
-    // Logger
-    //
-    
-    AFV_NATIVE_API static void setLogger(std::function<void(std::string subsystem, std::string file, int line, std::string lineOut)> gLogger);
+namespace afv_native::api {    
+    AFV_NATIVE_API void setLogger(std::function<void(std::string subsystem, std::string file, int line, std::string lineOut)> gLogger);
 
     class atcClient {
 
