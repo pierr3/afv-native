@@ -20,7 +20,7 @@
 namespace afv_native { namespace audio {
     class MiniAudioAudioDevice: public AudioDevice {
       public:
-        explicit MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceName, const std::string &inputDeviceName, Api audioApi, int outputChannel = 0);
+        explicit MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceName, const std::string &inputDeviceName, Api audioApi);
         virtual ~MiniAudioAudioDevice();
 
         bool openOutput() override;
@@ -53,11 +53,6 @@ namespace afv_native { namespace audio {
         ma_device    inputDev;
         unsigned int mAudioApi;
         bool         mHasClosedManually = false;
-        //
-        // The output channel parameter allows for sound playback to be played in the left ear, right ear or both
-        // 0: both ears, 1: left ear, 2: right ear
-        //
-        int mOutputChannel = 0;
     };
 }} // namespace afv_native::audio
 

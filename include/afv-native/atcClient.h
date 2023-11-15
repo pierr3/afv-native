@@ -141,7 +141,6 @@ namespace afv_native {
         void setAudioInputDevice(std::string inputDevice);
         void setAudioOutputDevice(std::string outputDevice);
         void setSpeakerOutputDevice(std::string outputDevice);
-        void setHeadsetOutputChannel(int channel);
 
         /** isAPIConnected() indicates if the API Server connection is up.
          *
@@ -296,7 +295,6 @@ namespace afv_native {
         std::string             mAudioInputDeviceName;
         std::string             mAudioOutputDeviceName;
         std::string             mAudioSpeakerDeviceName;
-        int                     mHeadsetOutputChannel = 0;
 
         int                                 linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;

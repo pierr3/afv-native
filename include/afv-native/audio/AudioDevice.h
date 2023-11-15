@@ -147,7 +147,7 @@ namespace afv_native { namespace audio {
         static std::map<Api, std::string> getAPIs();
         static std::map<int, DeviceInfo> getCompatibleInputDevicesForApi(AudioDevice::Api api);
         static std::map<int, DeviceInfo> getCompatibleOutputDevicesForApi(AudioDevice::Api api);
-        static std::shared_ptr<AudioDevice> makeDevice(const std::string &userStreamName, const std::string &outputDeviceId, const std::string &inputDeviceId, Api audioApi = -1, int outputChannel = 0);
+        static std::shared_ptr<AudioDevice> makeDevice(const std::string &userStreamName, const std::string &outputDeviceId, const std::string &inputDeviceId, Api audioApi = -1);
     };
 }} // namespace afv_native::audio
 

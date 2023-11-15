@@ -201,7 +201,7 @@ void ATCClient::startAudio() {
 
     if (!mAudioDevice) {
         LOG("afv::ATCClient", "Initialising Headset Audio...");
-        mAudioDevice = audio::AudioDevice::makeDevice("afv::headset", mAudioOutputDeviceName, mAudioInputDeviceName, mAudioApi, mHeadsetOutputChannel);
+        mAudioDevice = audio::AudioDevice::makeDevice("afv::headset", mAudioOutputDeviceName, mAudioInputDeviceName, mAudioApi);
 
         if (!mAudioDevice) {
             LOG("afv::ATCClient", "Could not initiate headset audio context.");
@@ -367,10 +367,6 @@ void ATCClient::setAudioInputDevice(std::string inputDevice) {
 
 void ATCClient::setAudioOutputDevice(std::string outputDevice) {
     mAudioOutputDeviceName = outputDevice;
-}
-
-void ATCClient::setHeadsetOutputChannel(int channel) {
-    mHeadsetOutputChannel = channel;
 }
 
 void ATCClient::setSpeakerOutputDevice(std::string outputDevice) {
