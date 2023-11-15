@@ -42,12 +42,12 @@ namespace afv_native {
         VoiceServerConnected,
         VoiceServerDisconnected,
         VoiceServerChannelError, // data is a pointer to an int containing the errno
-        VoiceServerError, // data is a pointer to the VoiceSessionError
+        VoiceServerError,        // data is a pointer to the VoiceSessionError
         PttOpen,
         PttClosed,
         StationAliasesUpdated,
         StationTransceiversUpdated,
-        RxOpen, // data is a pointer to an unsigned int containing the frequency
+        RxOpen,   // data is a pointer to an unsigned int containing the frequency
         RxClosed, // data is a pointer to an unsigned int containing the frequency
         AudioError,
         RxStarted,
@@ -70,12 +70,12 @@ namespace afv_native {
 
         enum class APISessionError {
             NoError = 0,
-            ConnectionError, // local socket or curl error - see data returned.
+            ConnectionError,                // local socket or curl error - see data returned.
             BadRequestOrClientIncompatible, // APIServer 400
-            RejectedCredentials, // APIServer 403
-            BadPassword,         // APIServer 401
+            RejectedCredentials,            // APIServer 403
+            BadPassword,                    // APIServer 401
             OtherRequestError,
-            InvalidAuthToken, // local parse error
+            InvalidAuthToken,          // local parse error
             AuthTokenExpiryTimeInPast, // local parse error
 
         };

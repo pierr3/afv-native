@@ -43,8 +43,8 @@ typedef SampleType (*fetchSample)(const void *base, size_t stride, size_t offset
 
 SampleType convert8bit(const void *base, size_t stride, size_t offset, int channels) {
     auto *sampleStart = reinterpret_cast<const uint8_t *>(base) + (stride * offset);
-    float sampleOut = 0.0f;
-    sampleOut = (static_cast<float>(sampleStart[0]) - 128.0f) / 128.0f;
+    float sampleOut   = 0.0f;
+    sampleOut         = (static_cast<float>(sampleStart[0]) - 128.0f) / 128.0f;
         if (channels == 2) {
             sampleOut += (static_cast<float>(sampleStart[1]) - 128.0f) / 128.0f;
             sampleOut /= 2;
@@ -55,7 +55,7 @@ SampleType convert8bit(const void *base, size_t stride, size_t offset, int chann
 SampleType convert16bit(const void *base, size_t stride, size_t offset, int channels) {
     auto *sampleStart = reinterpret_cast<const int16_t *>(reinterpret_cast<const char *>(base) + (stride * offset));
     float sampleOut = 0.0f;
-    sampleOut = static_cast<float>(sampleStart[0]) / 32768.0f;
+    sampleOut       = static_cast<float>(sampleStart[0]) / 32768.0f;
         if (channels == 2) {
             sampleOut += static_cast<float>(sampleStart[1]) / 32768.0f;
             sampleOut /= 2;
@@ -92,31 +92,28 @@ WavSampleStorage::WavSampleStorage(const AudioSampleData &srcdata):
             default:
                 return;
         }
-    const size_t len   = srcdata.getSampleCount();
-    const void  *sData = srcdata.getSampleData();
-    const int stride = srcdata.getSampleAlignment();
-    const int channels = srcdata.getNumChannels();
+    const size_t len      = srcdata.getSampleCount();
+    const void  *sData    = srcdata.getSampleData();
+    const int    stride   = srcdata.getSampleAlignment();
+    const int    channels = srcdata.getNumChannels();
         if (srcdata.getSampleRate() != sampleRateHz) {
             std::vector<SampleType> convertBuffer(len);
                 for (auto i = 0; i < len; i++) {
                     convertBuffer[i] = sampleFetch(sData, stride, i, channels);
                 }
-            mBufferSize = len * sampleRateHz /
-                          srcdata.getSampleRate();
-            mBuffer = new SampleType[mBufferSize];
-            int  res;
-            auto resampler =
-                speex_resampler_init(1, srcdata.getSampleRate(), sampleRateHz, SPEEX_RESAMPLER_QUALITY_DESKTOP, &res);
+            mBufferSize = len * sampleRateHz / srcdata.getSampleRate();
+            mBuffer     = new SampleType[mBufferSize];
+            int res;
+            auto resampler = speex_resampler_init(1, srcdata.getSampleRate(), sampleRateHz, SPEEX_RESAMPLER_QUALITY_DESKTOP, &res);
             speex_resampler_skip_zeros(resampler);
             spx_uint32_t resampleLen = static_cast<spx_uint32_t>(len);
-            spx_uint32_t outputLen = static_cast<spx_uint32_t>(mBufferSize);
-            speex_resampler_process_float(
-                resampler, 0, convertBuffer.data(), &resampleLen, mBuffer, &outputLen);
+            spx_uint32_t outputLen   = static_cast<spx_uint32_t>(mBufferSize);
+            speex_resampler_process_float(resampler, 0, convertBuffer.data(), &resampleLen, mBuffer, &outputLen);
             mBufferSize = outputLen;
             speex_resampler_destroy(resampler);
         } else {
             mBufferSize = srcdata.getSampleCount();
-            mBuffer = new SampleType[srcdata.getSampleCount()];
+            mBuffer     = new SampleType[srcdata.getSampleCount()];
                 for (auto i = 0; i < len; i++) {
                     mBuffer[i] = sampleFetch(sData, stride, i, channels);
                 }
@@ -156,7 +153,7 @@ WavSampleStorage &WavSampleStorage::operator=(const WavSampleStorage &copySrc) {
                 if (mBuffer) {
                     delete[] mBuffer;
             }
-            mBuffer = new SampleType[copySrc.mBufferSize];
+            mBuffer     = new SampleType[copySrc.mBufferSize];
             mBufferSize = copySrc.mBufferSize;
     }
     ::memcpy(mBuffer, copySrc.mBuffer, copySrc.mBufferSize * sizeof(SampleType));

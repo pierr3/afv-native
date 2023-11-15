@@ -37,8 +37,7 @@
 
 using namespace afv_native::http;
 
-TransferManager::TransferManager():
-    mPendingTransfers() {
+TransferManager::TransferManager(): mPendingTransfers() {
     mCurlMultiHandle = curl_multi_init();
     mCurlShareHandle = curl_share_init();
     // share everything.
@@ -75,12 +74,9 @@ void TransferManager::processPendingMultiEvents() {
                 switch (msgCopy.msg) {
                     case CURLMSG_DONE:
                         // remove the easy handle from our management
-                        curl_multi_remove_handle(
-                            mCurlMultiHandle,
-                            msgCopy.easy_handle);
+                        curl_multi_remove_handle(mCurlMultiHandle, msgCopy.easy_handle);
                         // remove the shared_ptr hold we've got on the request itself.
-                        mPendingTransfers.erase(
-                            msgCopy.easy_handle);
+                        mPendingTransfers.erase(msgCopy.easy_handle);
                             // and notify the request object.
                             if (msgCopy.data.result == CURLE_OK) {
                                 req->notifyTransferCompleted();
@@ -102,7 +98,7 @@ void TransferManager::AddToSession(Request *req) const {
 
 void TransferManager::HandleRequest(Request *req) {
         if (req) {
-            auto curlHandle = req->getCurlHandle();
+            auto curlHandle               = req->getCurlHandle();
             mPendingTransfers[curlHandle] = req;
             curl_multi_add_handle(mCurlMultiHandle, curlHandle);
     }

@@ -127,17 +127,13 @@ void UDPChannel::readCallback() {
     }
     auto dtoIter = mDtoHandlers.find(dtoName);
         if (dtoIter == mDtoHandlers.end()) {
-            LOG("udpchannel:readCallback", "no handler for packet-type %s",
-                dtoName.c_str());
+            LOG("udpchannel:readCallback", "no handler for packet-type %s", dtoName.c_str());
             return;
         } else {
                 if (dtoBuf.size() == 2) {
                     dtoIter->second(nullptr, 0);
                 } else {
-                    dtoIter->second(reinterpret_cast<const unsigned char *>(
-                                        dtoBuf.data()) +
-                                        2,
-                                    dtoBuf.size() - 2);
+                    dtoIter->second(reinterpret_cast<const unsigned char *>(dtoBuf.data()) + 2, dtoBuf.size() - 2);
                 }
         }
 }
@@ -148,7 +144,7 @@ bool UDPChannel::open() {
             return false;
     }
     struct sockaddr_storage saddr;
-    int saddr_len = sizeof(saddr);
+    int                     saddr_len = sizeof(saddr);
 
         if (!evutil_parse_sockaddr_port(mAddress.c_str(), reinterpret_cast<struct sockaddr *>(&saddr), &saddr_len)) {
             mUDPSocket = ::socket(saddr.ss_family, SOCK_DGRAM, 0);
@@ -162,8 +158,7 @@ bool UDPChannel::open() {
 
                 if (saddr.ss_family == AF_INET6) {
                     struct sockaddr_in6 baddr = {
-                        AF_INET6,         0, 0,
-                        IN6ADDR_ANY_INIT, 0,
+                        AF_INET6, 0, 0, IN6ADDR_ANY_INIT, 0,
                     };
                         if (::bind(mUDPSocket, reinterpret_cast<struct sockaddr *>(&baddr), sizeof(baddr))) {
                             mLastErrno = evutil_socket_geterror(mUDPSocket);
@@ -187,8 +182,7 @@ bool UDPChannel::open() {
                 }
                 if (::connect(mUDPSocket, reinterpret_cast<struct sockaddr *>(&saddr), saddr_len)) {
                     mLastErrno = evutil_socket_geterror(mUDPSocket);
-                    LOG("udpchannel", "couldn't connect to endpoint address \"%s\": %s",
-                        mAddress.c_str(), evutil_socket_error_to_string(errno));
+                    LOG("udpchannel", "couldn't connect to endpoint address \"%s\": %s", mAddress.c_str(), evutil_socket_error_to_string(errno));
                     close();
                     return false;
             }

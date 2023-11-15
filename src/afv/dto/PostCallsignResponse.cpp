@@ -40,8 +40,7 @@ using namespace afv_native::afv;
 using namespace std;
 using json = nlohmann::json;
 
-PostCallsignResponse::PostCallsignResponse():
-    VoiceServer() {
+PostCallsignResponse::PostCallsignResponse(): VoiceServer() {
 }
 
 PostCallsignResponse::PostCallsignResponse(const PostCallsignResponse &cpysrc):

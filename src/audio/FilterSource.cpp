@@ -51,7 +51,7 @@ SourceStatus FilterSource::getAudioFrame(SampleType *bufferOut) {
         if (mBypass) {
             return mUpstream->getAudioFrame(bufferOut);
     }
-    SampleType thisFrame[frameSizeSamples];
+    SampleType   thisFrame[frameSizeSamples];
     SourceStatus upstreamStatus = mUpstream->getAudioFrame(thisFrame);
         if (upstreamStatus != SourceStatus::OK) {
             memset(bufferOut, 0, frameSizeBytes);

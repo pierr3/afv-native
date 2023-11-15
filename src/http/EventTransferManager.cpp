@@ -102,9 +102,9 @@ int EventTransferManager::socketCallback(CURL *easy, curl_socket_t s, int what, 
 }
 
 void EventTransferManager::evSocketCallback(evutil_socket_t fd, short events, void *arg) {
-    auto *etm = reinterpret_cast<EventTransferManager *>(arg);
-    int running_handles = 0;
-    int curl_evmask     = 0;
+    auto *etm             = reinterpret_cast<EventTransferManager *>(arg);
+    int   running_handles = 0;
+    int   curl_evmask     = 0;
         if (events & EV_READ) {
             curl_evmask |= CURL_CSELECT_IN;
     }
@@ -116,8 +116,8 @@ void EventTransferManager::evSocketCallback(evutil_socket_t fd, short events, vo
 }
 
 void EventTransferManager::evTimerCallback(evutil_socket_t fd, short events, void *arg) {
-    auto *etm = reinterpret_cast<EventTransferManager *>(arg);
-    int running_handles = 0;
+    auto *etm             = reinterpret_cast<EventTransferManager *>(arg);
+    int   running_handles = 0;
 
     curl_multi_socket_action(etm->mCurlMultiHandle, CURL_SOCKET_TIMEOUT, 0, &running_handles);
     etm->processPendingMultiEvents();
@@ -136,7 +136,7 @@ int EventTransferManager::timerCallback(CURLM *multi, long timeout_ms) {
 
             struct timeval tv = {0, 0};
             tv.tv_sec         = timeout_ms / 1000;
-            tv.tv_usec = (timeout_ms % 1000) * 1000;
+            tv.tv_usec        = (timeout_ms % 1000) * 1000;
             event_add(mTimerEvent, &tv);
         }
     return 0;

@@ -89,7 +89,7 @@ namespace afv_native { namespace afv {
 
         // std::map<unsigned int,InputInPort> mInputs;
         std::map<unsigned int, std::shared_ptr<InputInPort>> mInputs;
-        OutputMap mOutputs;
+        OutputMap                                            mOutputs;
     };
 
 }} // namespace afv_native::afv

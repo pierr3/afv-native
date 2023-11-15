@@ -38,9 +38,7 @@ using namespace std;
 
 afv_native::util::monotime_t afv_native::util::monotime_get() {
     const auto monoTime = chrono::steady_clock::now();
-    const auto msTime = chrono::duration_cast<chrono::milliseconds>(
-                            monoTime.time_since_epoch())
-                            .count();
+    const auto msTime = chrono::duration_cast<chrono::milliseconds>(monoTime.time_since_epoch()).count();
 
     return msTime;
 }

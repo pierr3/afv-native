@@ -32,11 +32,11 @@
 namespace atcapi {
     struct event_base *ev_base;
 
-    std::mutex afvMutex;
+    std::mutex                             afvMutex;
     std::unique_ptr<afv_native::ATCClient> client;
-    std::unique_ptr<std::thread> eventThread;
-    std::atomic<bool> isInitialized {false};
-    std::atomic<bool> requestLoopExit {false};
+    std::unique_ptr<std::thread>           eventThread;
+    std::atomic<bool>                      isInitialized {false};
+    std::atomic<bool>                      requestLoopExit {false};
 } // namespace atcapi
 
 using namespace atcapi;
@@ -156,10 +156,9 @@ void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
 
 std::string afv_native::api::atcClient::GetDefaultAudioInputDevice(unsigned int mAudioApi) {
     auto devices = afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(mAudioApi);
-    auto it =
-        std::find_if(devices.begin(), devices.end(), [](auto &kv) {
-            return kv.second.isDefault;
-        });
+    auto it      = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
+        return kv.second.isDefault;
+    });
 
         if (it != devices.end()) {
             return it->second.name;
@@ -172,10 +171,9 @@ std::string afv_native::api::atcClient::GetDefaultAudioInputDevice(unsigned int 
 
 std::string afv_native::api::atcClient::GetDefaultAudioOutputDevice(unsigned int mAudioApi) {
     auto devices = afv_native::audio::AudioDevice::getCompatibleOutputDevicesForApi(mAudioApi);
-    auto it =
-        std::find_if(devices.begin(), devices.end(), [](auto &kv) {
-            return kv.second.isDefault;
-        });
+    auto it      = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
+        return kv.second.isDefault;
+    });
 
         if (it != devices.end()) {
             return it->second.name;

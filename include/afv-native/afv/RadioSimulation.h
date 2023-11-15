@@ -61,19 +61,19 @@ namespace afv_native { namespace afv {
      */
     class RadioState {
       public:
-        unsigned int Frequency;
-        float        Gain;
+        unsigned int                                 Frequency;
+        float                                        Gain;
         std::shared_ptr<audio::RecordedSampleSource> Click;
         std::shared_ptr<audio::RecordedSampleSource> Crackle;
         std::shared_ptr<audio::RecordedSampleSource> AcBus;
         std::shared_ptr<audio::RecordedSampleSource> VhfWhiteNoise;
         std::shared_ptr<audio::RecordedSampleSource> HfWhiteNoise;
-        std::shared_ptr<audio::SineToneSource> BlockTone;
-        audio::VHFFilterSource vhfFilter;
-        int                    mLastRxCount;
-        bool                   mBypassEffects;
-        bool                   mHfSquelch;
-        bool                   mIsReceiving;
+        std::shared_ptr<audio::SineToneSource>       BlockTone;
+        audio::VHFFilterSource                       vhfFilter;
+        int                                          mLastRxCount;
+        bool                                         mBypassEffects;
+        bool                                         mHfSquelch;
+        bool                                         mIsReceiving;
     };
 
     /** CallsignMeta is the per-packetstream metadata stored within the RadioSimulation object.
@@ -83,14 +83,11 @@ namespace afv_native { namespace afv {
      */
     struct CallsignMeta {
         std::shared_ptr<RemoteVoiceSource> source;
-        std::vector<dto::RxTransceiver> transceivers;
+        std::vector<dto::RxTransceiver>    transceivers;
         CallsignMeta();
     };
 
-    enum class RadioSimulationState {
-        RxStarted,
-        RxStopped
-    };
+    enum class RadioSimulationState { RxStarted, RxStopped };
 
     /** RadioSimulation provides the foundation for handling radio channels and mixing them
      * into an audio stream, as well as handling the samples from the micrphone input.
@@ -98,9 +95,9 @@ namespace afv_native { namespace afv {
      * The RadioSimulation object itself provides both an ISampleSource (the output from the radio
      * stack) and an ISampleSink (the input into the voice transmission path).
      *
-     * The implementation assumes continuous recording (and hence input into the ISampleSink methods)
-     * and instead provides the Ptt functions to control the conversion of said input into voice
-     * packets.
+     * The implementation assumes continuous recording (and hence input into the ISampleSink
+     * methods) and instead provides the Ptt functions to control the conversion of said input into
+     * voice packets.
      */
     class RadioSimulation: public audio::ISampleSource, public audio::ISampleSink, public ICompressedFrameSink {
       public:
@@ -135,7 +132,7 @@ namespace afv_native { namespace afv {
         void setEnableOutputEffects(bool enableEffects);
         void setEnableHfSquelch(bool enableHfSquelch);
 
-        void putAudioFrame(const audio::SampleType *bufferIn) override;
+        void                putAudioFrame(const audio::SampleType *bufferIn) override;
         audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut) override;
 
         /** Contains the number of IncomingAudioStreams known to the simulation stack */
@@ -146,27 +143,27 @@ namespace afv_native { namespace afv {
          */
         std::atomic<uint32_t> *AudiableAudioStreams;
 
-        int lastReceivedRadio() const;
+        int                                               lastReceivedRadio() const;
         util::ChainedCallback<void(RadioSimulationState)> RadioStateCallback;
 
       protected:
         /** maintenanceTimerIntervalMs is the internal in milliseconds between periodic cleanups
          * of the inbound audio frame objects.
          *
-         * This maintenance occurs in the main execution thread as not to hold the audio playback thread
-         * unnecessarily, particularly as it may involve alloc/free operations.
+         * This maintenance occurs in the main execution thread as not to hold the audio playback
+         * thread unnecessarily, particularly as it may involve alloc/free operations.
          *
-         * The current constant of 30s should be frequent enough to prevent massive memory issues, without
-         * causing performance issues.
+         * The current constant of 30s should be frequent enough to prevent massive memory issues,
+         * without causing performance issues.
          */
         static const int maintenanceTimerIntervalMs = 30 * 1000; /* every 30s */
 
-        struct event_base *mEvBase;
+        struct event_base               *mEvBase;
         std::shared_ptr<EffectResources> mResources;
-        cryptodto::UDPChannel *mChannel;
-        std::string            mCallsign;
+        cryptodto::UDPChannel           *mChannel;
+        std::string                      mCallsign;
 
-        std::mutex mStreamMapLock;
+        std::mutex                                           mStreamMapLock;
         std::unordered_map<std::string, struct CallsignMeta> mIncomingStreams;
 
         std::mutex              mRadioStateLock;
@@ -180,23 +177,23 @@ namespace afv_native { namespace afv {
 
         unsigned int mLastReceivedRadio;
 
-        /** mChannelBuffer is our single-radio/channel workbuffer - we do our per-channel fx mixing in here before
-         * we mix into the mMixingBuffer
+        /** mChannelBuffer is our single-radio/channel workbuffer - we do our per-channel fx mixing
+         * in here before we mix into the mMixingBuffer
          */
         audio::SampleType *mChannelBuffer;
 
-        /** mMixingBuffer is our aggregated mixing buffer for all radios/channels - when we're finished mixing and
-         * the final effects pass, we copy this to the output/target buffer.
+        /** mMixingBuffer is our aggregated mixing buffer for all radios/channels - when we're
+         * finished mixing and the final effects pass, we copy this to the output/target buffer.
          */
         audio::SampleType *mMixingBuffer;
 
         audio::SampleType *mFetchBuffer;
 
-        std::shared_ptr<VoiceCompressionSink> mVoiceSink;
+        std::shared_ptr<VoiceCompressionSink>     mVoiceSink;
         std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
 
         event::EventCallbackTimer mMaintenanceTimer;
-        RollingAverage<double> mVuMeter;
+        RollingAverage<double>    mVuMeter;
 
         void resetRadioFx(unsigned int radio, bool except_click = false);
 

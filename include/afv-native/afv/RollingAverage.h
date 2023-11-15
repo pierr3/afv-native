@@ -54,7 +54,7 @@ namespace afv_native { namespace afv {
         T addDatum(T next) {
             mRollingAverage += (next - mData[mDOffset]) / mAverageWindow;
             mData[mDOffset] = next;
-            mDOffset = (mDOffset + 1) % mAverageWindow;
+            mDOffset        = (mDOffset + 1) % mAverageWindow;
 
             return mRollingAverage;
         }

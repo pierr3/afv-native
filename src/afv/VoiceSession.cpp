@@ -48,8 +48,7 @@ using json = nlohmann::json;
 
 VoiceSession::VoiceSession(APISession &session, const std::string &callsign):
     mSession(session), mCallsign(callsign), mBaseUrl(""), mVoiceSessionSetupRequest("", http::Method::POST, json()), mVoiceSessionTeardownRequest("", http::Method::DEL, json()), mTransceiverUpdateRequest("", http::Method::POST, json()), mCrossCoupleGroupUpdateRequest("", http::Method::POST, json()),
-    mChannel(session.getEventBase()),
-    mHeartbeatTimer(mSession.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)), mLastHeartbeatReceived(0),
+    mChannel(session.getEventBase()), mHeartbeatTimer(mSession.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)), mLastHeartbeatReceived(0),
     mHeartbeatTimeout(mSession.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)), mLastError(VoiceSessionError::NoError) {
     mSessionType = VoiceSessionType::Pilot;
     updateBaseUrl();
@@ -84,7 +83,7 @@ void VoiceSession::voiceSessionSetupRequestCallback(http::Request *req, bool suc
                     auto *restreq = dynamic_cast<http::RESTRequest *>(req);
                     assert(restreq != nullptr);
                         try {
-                            auto j = restreq->getResponse();
+                            auto                      j = restreq->getResponse();
                             dto::PostCallsignResponse cresp;
                             j.get_to(cresp);
                                 if (!setupSession(cresp)) {
@@ -252,8 +251,7 @@ afv_native::cryptodto::UDPChannel &VoiceSession::getUDPChannel() {
 }
 
 void VoiceSession::updateBaseUrl() {
-    mBaseUrl = mSession.getBaseUrl() + "/api/v1/users/" +
-               mSession.getUsername() + "/callsigns/" + mCallsign;
+    mBaseUrl = mSession.getBaseUrl() + "/api/v1/users/" + mSession.getUsername() + "/callsigns/" + mCallsign;
     mVoiceSessionSetupRequest.setUrl(mBaseUrl);
     mVoiceSessionTeardownRequest.setUrl(mBaseUrl);
     mTransceiverUpdateRequest.setUrl(mBaseUrl + "/transceivers");

@@ -36,7 +36,7 @@
 #include <nlohmann/json.hpp>
 
 using namespace afv_native::afv::dto;
-using json = nlohmann::json;
+using json          = nlohmann::json;
 using ChannelConfig = afv_native::cryptodto::dto::ChannelConfig;
 
 void afv_native::afv::dto::to_json(json &j, const VoiceServerConnectionData &vsd) {
@@ -58,13 +58,10 @@ VoiceServerConnectionData::VoiceServerConnectionData():
 }
 
 VoiceServerConnectionData::VoiceServerConnectionData(const VoiceServerConnectionData &cpysrc):
-    AddressIpV4(cpysrc.AddressIpV4),
-    AddressIpV6(cpysrc.AddressIpV6),
-    ChannelConfig(cpysrc.ChannelConfig) {
+    AddressIpV4(cpysrc.AddressIpV4), AddressIpV6(cpysrc.AddressIpV6), ChannelConfig(cpysrc.ChannelConfig) {
 }
 
 VoiceServerConnectionData::VoiceServerConnectionData(VoiceServerConnectionData &&movesrc) noexcept:
-    AddressIpV4(std::move(movesrc.AddressIpV4)),
-    AddressIpV6(std::move(movesrc.AddressIpV6)),
+    AddressIpV4(std::move(movesrc.AddressIpV4)), AddressIpV6(std::move(movesrc.AddressIpV6)),
     ChannelConfig(std::move(movesrc.ChannelConfig)) {
 }

@@ -39,8 +39,7 @@ using namespace afv_native::afv::dto;
 using namespace std;
 using json = nlohmann::json;
 
-AuthRequest::AuthRequest():
-    Username(), Password(), Client("AFV-Native") {
+AuthRequest::AuthRequest(): Username(), Password(), Client("AFV-Native") {
 }
 
 AuthRequest::AuthRequest(string username, string password, string client):
@@ -48,13 +47,11 @@ AuthRequest::AuthRequest(string username, string password, string client):
 }
 
 AuthRequest::AuthRequest(const AuthRequest &cpysrc):
-    Username(cpysrc.Username), Password(cpysrc.Password),
-    Client(cpysrc.Client) {
+    Username(cpysrc.Username), Password(cpysrc.Password), Client(cpysrc.Client) {
 }
 
 AuthRequest::AuthRequest(AuthRequest &&movesrc) noexcept:
-    Username(std::move(movesrc.Username)),
-    Password(std::move(movesrc.Password)),
+    Username(std::move(movesrc.Username)), Password(std::move(movesrc.Password)),
     Client(std::move(movesrc.Client)) {
 }
 

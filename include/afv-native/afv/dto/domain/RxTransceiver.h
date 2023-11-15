@@ -37,17 +37,16 @@
 #include <cstdint>
 #include <msgpack.hpp>
 
-namespace afv_native { namespace afv {
-    namespace dto {
-        class RxTransceiver {
-          public:
-            RxTransceiver() = default;
+namespace afv_native { namespace afv { namespace dto {
+    class RxTransceiver {
+      public:
+        RxTransceiver() = default;
 
-            uint16_t ID;
-            uint32_t Frequency;  // in Hz.
-            float DistanceRatio; // 0.0-1.0, with 0.1 on the edge of reception range.
+        uint16_t ID;
+        uint32_t Frequency;     // in Hz.
+        float    DistanceRatio; // 0.0-1.0, with 0.1 on the edge of reception range.
 
-            MSGPACK_DEFINE_ARRAY(ID, Frequency, DistanceRatio);
-        };
+        MSGPACK_DEFINE_ARRAY(ID, Frequency, DistanceRatio);
+    };
 }}}    // namespace afv_native::afv::dto
 #endif // AFV_NATIVE_RXTRANSCEIVER_H

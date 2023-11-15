@@ -111,8 +111,8 @@ size_t Channel::decryptChaCha20Poly1305(unsigned char *bodyOut, const unsigned c
 
     size_t        bodyLen = 0;
     unsigned char nonce[aeadModeIVSize];
-    int           dec_len = 0;
-    auto *cipher_context  = EVP_CIPHER_CTX_new();
+    int           dec_len        = 0;
+    auto         *cipher_context = EVP_CIPHER_CTX_new();
 
     makeChaCha20Poly1305Nonce(header.Sequence, nonce);
         if (!EVP_DecryptInit_ex(cipher_context, EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
@@ -172,10 +172,9 @@ bool Channel::Decapsulate(const unsigned char *cipherTextIn, size_t cipherTextLe
     }
     offset += headerSize;
 
-    modeOut = static_cast<cryptodto::CryptoDtoMode>(
-        header.Mode);
+    modeOut = static_cast<cryptodto::CryptoDtoMode>(header.Mode);
 
-    const size_t bodySize = cipherTextLen - offset;
+    const size_t               bodySize = cipherTextLen - offset;
     std::vector<unsigned char> bodyOut(bodySize);
     size_t                     bodyLen = 0;
         switch (header.Mode) {
@@ -188,8 +187,7 @@ bool Channel::Decapsulate(const unsigned char *cipherTextIn, size_t cipherTextLe
                     if (bodySize <= 16) {
                         return false;
                 }
-                bodyLen = decryptChaCha20Poly1305(
-                    bodyOut.data(), cipherTextIn + offset, bodySize, header, cipherTextIn, offset);
+                bodyLen = decryptChaCha20Poly1305(bodyOut.data(), cipherTextIn + offset, bodySize, header, cipherTextIn, offset);
                     if (bodyLen == 0) {
                         return false;
                 }
@@ -204,8 +202,7 @@ bool Channel::Decapsulate(const unsigned char *cipherTextIn, size_t cipherTextLe
         if (nameSize > bodyLen) {
             return false;
     }
-    dtoNameOut = std::move(
-        string(reinterpret_cast<char *>(bodyOut.data()) + 2, nameSize));
+    dtoNameOut = std::move(string(reinterpret_cast<char *>(bodyOut.data()) + 2, nameSize));
     dtoOut.write(reinterpret_cast<char *>(bodyOut.data()) + 2 + nameSize, bodyLen - 2 - nameSize);
 
     sequence   = header.Sequence;
@@ -235,8 +232,7 @@ size_t Channel::Encapsulate(const unsigned char *plainTextBuf, size_t plainTextL
     nLen = headerBuf.size();
     ::memcpy(cipherTextBufOut, &nLen, 2);
     offset += 2;
-    ::memcpy(cipherTextBufOut + offset, headerBuf.data(),
-             headerBuf.size());
+    ::memcpy(cipherTextBufOut + offset, headerBuf.data(), headerBuf.size());
     offset += headerBuf.size();
 
     assert(offset == (headerBuf.size() + 2));

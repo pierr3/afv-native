@@ -38,8 +38,8 @@
 
 namespace afv_native { namespace util {
     std::string Base64Encode(const unsigned char *buffer_in, size_t len);
-    size_t Base64DecodeLen(size_t input_len);
-    size_t Base64Decode(const std::string &base64_in, unsigned char *buffer_out, size_t len);
+    size_t      Base64DecodeLen(size_t input_len);
+    size_t      Base64Decode(const std::string &base64_in, unsigned char *buffer_out, size_t len);
 }} // namespace afv_native::util
 
 #endif // AFV_NATIVE_BASE64_H

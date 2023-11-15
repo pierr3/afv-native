@@ -17,11 +17,7 @@ using namespace afv_native;
 
 ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName, std::string baseUrl):
     mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)), mEvBase(evBase), mTransferManager(mEvBase), mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession),
-    mATCRadioStack(std::make_shared<afv::ATCRadioStack>(
-        mEvBase,
-        mFxRes,
-        &mVoiceSession.getUDPChannel())),
-    mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(0), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
+    mATCRadioStack(std::make_shared<afv::ATCRadioStack>(mEvBase, mFxRes, &mVoiceSession.getUDPChannel())), mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(0), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
@@ -72,8 +68,7 @@ bool ATCClient::connect() {
                     LOG("afv::ATCClient",
                         "API State is not set to disconnected on connect attempt, "
                         "current state is %d",
-                        static_cast<int>(
-                            mAPISession.getState()));
+                        static_cast<int>(mAPISession.getState()));
                     return false;
             }
             mAPISession.Connect();
@@ -138,9 +133,7 @@ void ATCClient::voiceStateCallback(afv::VoiceSessionState state) {
                 mATCRadioStack->reset();
                 voiceError = mVoiceSession.getLastError();
                     if (voiceError == afv::VoiceSessionError::UDPChannelError) {
-                        channelErrno = mVoiceSession
-                                           .getUDPChannel()
-                                           .getLastErrno();
+                        channelErrno = mVoiceSession.getUDPChannel().getLastErrno();
                         ClientEventCallback.invokeAll(ClientEventType::VoiceServerChannelError, &channelErrno, nullptr);
                     } else {
                         ClientEventCallback.invokeAll(ClientEventType::VoiceServerError, &voiceError, nullptr);
@@ -265,14 +258,12 @@ void ATCClient::sendTransceiverUpdate() {
     });
 
     // We now also update any cross coupled transceivers
-    mVoiceSession.postCrossCoupleGroupUpdate(
-        mATCRadioStack->makeCrossCoupleGroupDto(), [this](http::Request *r, bool success) {
-            if (!success) {
-                LOG("ATCClient", "Failed to post cross couple transceivers update with code %s",
-                    std::to_string(r->getStatusCode())
-                        .c_str());
-        }
-        });
+    mVoiceSession.postCrossCoupleGroupUpdate(mATCRadioStack->makeCrossCoupleGroupDto(), [this](http::Request *r, bool success) {
+        if (!success) {
+            LOG("ATCClient", "Failed to post cross couple transceivers update with code %s",
+                std::to_string(r->getStatusCode()).c_str());
+    }
+    });
 
     // We now also get an update on the transceivers for all active stations
     // This is to handle child stations transceiver changes
@@ -459,8 +450,7 @@ void ATCClient::getStation(std::string callsign) {
 
 void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
     auto transceivers = getStationTransceivers();
-    LOG("ATCClient", "Receiving new transceivers for station %s",
-        stationName.c_str());
+    LOG("ATCClient", "Receiving new transceivers for station %s", stationName.c_str());
         // We can now link any pending new transceivers if we had requested them
         if (linkNewTransceiversFrequencyFlag > 0) {
             if (transceivers[stationName].size() > 0)
@@ -475,19 +465,12 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
 
             auto transceivers = getStationTransceivers();
                 if (transceivers[stationName].size() > 0) {
-                    auto it = std::find_if(
-                        mATCRadioStack->mRadioState
-                            .begin(),
-                        mATCRadioStack->mRadioState
-                            .end(),
-                        [&stationName](const auto &t) {
-                            return t.second.stationName == stationName;
-                        });
-                        if (it !=
-                            mATCRadioStack
-                                ->mRadioState.end()) {
-                            mATCRadioStack->setTransceivers(
-                                it->second.Frequency, transceivers[stationName]);
+                    auto it = std::find_if(mATCRadioStack->mRadioState.begin(),
+                                           mATCRadioStack->mRadioState.end(), [&stationName](const auto &t) {
+                                               return t.second.stationName == stationName;
+                                           });
+                        if (it != mATCRadioStack->mRadioState.end()) {
+                            mATCRadioStack->setTransceivers(it->second.Frequency, transceivers[stationName]);
                     }
             }
         }
@@ -505,12 +488,9 @@ std::vector<afv::dto::Station> ATCClient::getStationAliases() const {
 
 void ATCClient::logAudioStatistics() {
         if (mAudioDevice) {
-            LOG("ATCClient", "Headset Buffer Underflows: %d",
-                mAudioDevice->OutputUnderflows.load());
-            LOG("ATCClient", "Speaker Buffer Underflows: %d",
-                mSpeakerDevice->OutputUnderflows.load());
-            LOG("ATCClient", "Input Buffer Overflows: %d",
-                mAudioDevice->InputOverflows.load());
+            LOG("ATCClient", "Headset Buffer Underflows: %d", mAudioDevice->OutputUnderflows.load());
+            LOG("ATCClient", "Speaker Buffer Underflows: %d", mSpeakerDevice->OutputUnderflows.load());
+            LOG("ATCClient", "Input Buffer Overflows: %d", mAudioDevice->InputOverflows.load());
     }
 }
 
@@ -558,9 +538,7 @@ void ATCClient::setOnHeadset(unsigned int freq, bool onHeadset) {
 }
 
 bool ATCClient::getOnHeadset(unsigned int freq) {
-    return mATCRadioStack->mRadioState.count(freq) != 0 ?
-               mATCRadioStack->mRadioState[freq].onHeadset :
-               true;
+    return mATCRadioStack->mRadioState.count(freq) != 0 ? mATCRadioStack->mRadioState[freq].onHeadset : true;
 }
 
 void ATCClient::requestStationTransceivers(std::string inStation) {
@@ -595,8 +573,7 @@ void ATCClient::linkTransceivers(std::string callsign, unsigned int freq) {
         } else {
             linkNewTransceiversFrequencyFlag = freq;
             this->requestStationTransceivers(callsign);
-            LOG("ATCClient", "Need to fetch transceivers for station %s",
-                callsign.c_str());
+            LOG("ATCClient", "Need to fetch transceivers for station %s", callsign.c_str());
         }
 }
 

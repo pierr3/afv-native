@@ -42,12 +42,7 @@ using namespace afv_native;
 
 Client::Client(struct event_base *evBase, const std::string &resourceBasePath, unsigned int numRadios, const std::string &clientName, std::string baseUrl):
     mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)), mEvBase(evBase), mTransferManager(mEvBase), mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession),
-    mRadioSim(std::make_shared<afv::RadioSimulation>(
-        mEvBase,
-        mFxRes,
-        &mVoiceSession.getUDPChannel(),
-        numRadios)),
-    mAudioDevice(), mClientLatitude(0.0), mClientLongitude(0.0), mClientAltitudeMSLM(0.0), mClientAltitudeGLM(0.0), mRadioState(2), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mTransceiverUpdateTimer(mEvBase, std::bind(&Client::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(0), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
+    mRadioSim(std::make_shared<afv::RadioSimulation>(mEvBase, mFxRes, &mVoiceSession.getUDPChannel(), numRadios)), mAudioDevice(), mClientLatitude(0.0), mClientLongitude(0.0), mClientAltitudeMSLM(0.0), mClientAltitudeGLM(0.0), mRadioState(2), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mTransceiverUpdateTimer(mEvBase, std::bind(&Client::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(0), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
     mAPISession.StateCallback.addCallback(this, std::bind(&Client::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&Client::aliasUpdateCallback, this));
     mVoiceSession.StateCallback.addCallback(this, std::bind(&Client::voiceStateCallback, this, std::placeholders::_1));
@@ -55,8 +50,7 @@ Client::Client(struct event_base *evBase, const std::string &resourceBasePath, u
     // forcibly synchronise the RadioSim state.
     mRadioSim->setTxRadio(0);
         for (size_t i = 0; i < mRadioState.size(); i++) {
-            mRadioSim->setFrequency(i,
-                                    mRadioState[i].mNextFreq);
+            mRadioSim->setFrequency(i, mRadioState[i].mNextFreq);
         }
 }
 
@@ -166,9 +160,7 @@ void Client::voiceStateCallback(afv::VoiceSessionState state) {
                 mRadioSim->reset();
                 voiceError = mVoiceSession.getLastError();
                     if (voiceError == afv::VoiceSessionError::UDPChannelError) {
-                        channelErrno = mVoiceSession
-                                           .getUDPChannel()
-                                           .getLastErrno();
+                        channelErrno = mVoiceSession.getUDPChannel().getLastErrno();
                         ClientEventCallback.invokeAll(ClientEventType::VoiceServerChannelError, &channelErrno);
                     } else {
                         ClientEventCallback.invokeAll(ClientEventType::VoiceServerError, &voiceError);
@@ -194,8 +186,8 @@ void Client::sessionStateCallback(afv::APISessionState state) {
                 break;
             case afv::APISessionState::Disconnected:
                 LOG("afv_native::Client", "Disconnected from AFV API Server.  Terminating sessions");
-                // because we only ever commence a normal API Session teardown from a voicesession hook,
-                // we don't need to call into voiceSession in this case only.
+                // because we only ever commence a normal API Session teardown from a voicesession
+                // hook, we don't need to call into voiceSession in this case only.
                 ClientEventCallback.invokeAll(ClientEventType::APIServerDisconnected, nullptr);
                 break;
             case afv::APISessionState::Error:
@@ -276,10 +268,8 @@ void Client::sendTransceiverUpdate() {
      */
     mVoiceSession.postTransceiverUpdate(transceiverDto, [this, transceiverDto](http::Request *r, bool success) {
         if (success && r->getStatusCode() == 200) {
-                for (unsigned i = 0;
-                     i < this->mRadioState.size(); i++) {
-                    this->mRadioState[i].mCurrentFreq =
-                        transceiverDto[i].Frequency;
+                for (unsigned i = 0; i < this->mRadioState.size(); i++) {
+                    this->mRadioState[i].mCurrentFreq = transceiverDto[i].Frequency;
                 }
             this->mTxUpdatePending = false;
             this->unguardPtt();
@@ -431,10 +421,8 @@ std::vector<afv::dto::Station> Client::getStationAliases() const {
 
 void Client::logAudioStatistics() {
         if (mAudioDevice) {
-            LOG("Client", "Output Buffer Underflows: %d",
-                mAudioDevice->OutputUnderflows.load());
-            LOG("Client", "Input Buffer Overflows: %d",
-                mAudioDevice->InputOverflows.load());
+            LOG("Client", "Output Buffer Underflows: %d", mAudioDevice->OutputUnderflows.load());
+            LOG("Client", "Input Buffer Overflows: %d", mAudioDevice->InputOverflows.load());
     }
 }
 

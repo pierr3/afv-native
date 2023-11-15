@@ -43,8 +43,7 @@ using namespace afv_native::cryptodto::dto;
 using namespace afv_native::cryptodto;
 using namespace afv_native::util;
 
-ChannelConfig::ChannelConfig():
-    ChannelTag(), HmacKey() {
+ChannelConfig::ChannelConfig(): ChannelTag(), HmacKey() {
     memset(AeadTransmitKey, 0, aeadModeKeySize);
     memset(AeadReceiveKey, 0, aeadModeKeySize);
 }
@@ -56,14 +55,13 @@ ChannelConfig::ChannelConfig(const ChannelConfig &cpysrc):
 }
 
 ChannelConfig::ChannelConfig(ChannelConfig &&movesrc) noexcept:
-    ChannelTag(std::move(movesrc.ChannelTag)),
-    HmacKey(std::move(movesrc.HmacKey)) {
+    ChannelTag(std::move(movesrc.ChannelTag)), HmacKey(std::move(movesrc.HmacKey)) {
     memcpy(AeadTransmitKey, movesrc.AeadTransmitKey, aeadModeKeySize);
     memcpy(AeadReceiveKey, movesrc.AeadReceiveKey, aeadModeKeySize);
 }
 
 static void setKey(unsigned char *key, const string &base64_key, size_t outputSize) {
-    size_t input_limit = 4 * ((outputSize + 2) / 3);
+    size_t      input_limit = 4 * ((outputSize + 2) / 3);
     std::string key_copy;
         if (base64_key.length() > input_limit) {
             key_copy = base64_key.substr(0, input_limit);
@@ -71,22 +69,20 @@ static void setKey(unsigned char *key, const string &base64_key, size_t outputSi
             key_copy = base64_key;
         }
 
-    const size_t key_buffer_len =
-        Base64DecodeLen(key_copy.length());
+    const size_t               key_buffer_len = Base64DecodeLen(key_copy.length());
     std::vector<unsigned char> key_buffer(key_buffer_len);
-    size_t final_len =
-        Base64Decode(key_copy, key_buffer.data(), key_buffer_len);
+    size_t final_len = Base64Decode(key_copy, key_buffer.data(), key_buffer_len);
     ::memcpy(key, key_buffer.data(), min(final_len, outputSize));
 }
 
 void afv_native::cryptodto::dto::to_json(json &j, const ChannelConfig &cc) {
-    auto receiveKey = Base64Encode(cc.AeadReceiveKey, aeadModeKeySize);
+    auto receiveKey  = Base64Encode(cc.AeadReceiveKey, aeadModeKeySize);
     auto transmitKey = Base64Encode(cc.AeadTransmitKey, aeadModeKeySize);
-    j = json {
-        {"channelTag", cc.ChannelTag},
-        {"aeadReceiveKey", receiveKey},
-        {"aeadTransmitKey", transmitKey},
-        {"hmacKey", nullptr},
+    j                = json {
+                       {"channelTag", cc.ChannelTag},
+                       {"aeadReceiveKey", receiveKey},
+                       {"aeadTransmitKey", transmitKey},
+                       {"hmacKey", nullptr},
     };
 }
 

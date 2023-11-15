@@ -36,12 +36,11 @@
 
 #include <string>
 
-namespace afv_native { namespace afv {
-    namespace dto {
-        class IAudioVoiceRoom {
-          public:
-            std::string VoiceRoom;
-        };
+namespace afv_native { namespace afv { namespace dto {
+    class IAudioVoiceRoom {
+      public:
+        std::string VoiceRoom;
+    };
 }}} // namespace afv_native::afv::dto
 
 #endif // AFV_NATIVE_IAUDIOVOICEROOM_H

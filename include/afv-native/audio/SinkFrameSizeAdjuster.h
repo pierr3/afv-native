@@ -42,7 +42,7 @@ namespace afv_native { namespace audio {
     class SinkFrameSizeAdjuster: public ISampleSink {
       protected:
         std::shared_ptr<ISampleSink> mDestinationSink;
-        const unsigned int mSourceFrameSize;
+        const unsigned int           mSourceFrameSize;
 
         size_t      mSinkBufferOffset;
         SampleType *mSinkBuffer;

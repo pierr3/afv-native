@@ -54,7 +54,7 @@ BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 BreakStringLiterals: false
-ColumnLimit: 50
+ColumnLimit: 100
 CompactNamespaces: true
 Cpp11BracedListStyle: true
 DeriveLineEnding: false

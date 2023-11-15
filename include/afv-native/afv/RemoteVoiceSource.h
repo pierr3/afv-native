@@ -45,8 +45,8 @@
 
 namespace afv_native { namespace afv {
 
-    /** frameTimeOut is the maximum number of frames we will receive without audio data before we declare the
-     * stream dead.
+    /** frameTimeOut is the maximum number of frames we will receive without audio data before we
+     * declare the stream dead.
      */
     const int frameTimeOut = 10;
 
@@ -79,13 +79,13 @@ namespace afv_native { namespace afv {
         virtual ~RemoteVoiceSource();
         RemoteVoiceSource(const RemoteVoiceSource &copySrc) = delete;
 
-        void appendAudioDTO(const dto::IAudio &audio);
+        void                appendAudioDTO(const dto::IAudio &audio);
         audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut) override;
 
         util::monotime_t getLastActivityTime() const;
 
-        /** flush resets the stream, preserving any jitter adjustments, but otherwise clearing the codec state and
-         * jitter buffered packets.
+        /** flush resets the stream, preserving any jitter adjustments, but otherwise clearing the
+         * codec state and jitter buffered packets.
          */
         void flush();
         bool isActive() const;

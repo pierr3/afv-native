@@ -39,20 +39,19 @@
 #include <msgpack.hpp>
 #include <vector>
 
-namespace afv_native { namespace afv {
-    namespace dto {
-        class AudioTxOnTransceivers: public IAudio {
-          public:
-            AudioTxOnTransceivers() = default;
+namespace afv_native { namespace afv { namespace dto {
+    class AudioTxOnTransceivers: public IAudio {
+      public:
+        AudioTxOnTransceivers() = default;
 
-            std::vector<TxTransceiver> Transceivers;
+        std::vector<TxTransceiver> Transceivers;
 
-            MSGPACK_DEFINE_ARRAY(Callsign, SequenceCounter, Audio, LastPacket, Transceivers);
+        MSGPACK_DEFINE_ARRAY(Callsign, SequenceCounter, Audio, LastPacket, Transceivers);
 
-            static std::string getName() {
-                return "AT";
-            }
-        };
+        static std::string getName() {
+            return "AT";
+        }
+    };
 }}} // namespace afv_native::afv::dto
 
 #endif // AFV_NATIVE_AUDIOTXONTRANSCEIVERS_H

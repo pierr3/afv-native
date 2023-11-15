@@ -114,8 +114,8 @@ ReceiveOutcome SequenceTest::Received(sequence_t newSequence) {
             return ReceiveOutcome::Overflow;
     }
     // if we're inside the window now, mask and return.
-    sequence_t bitidx = newSequence - _min - 1;
-    sequence_bitfield_t mask = 1ULL << bitidx;
+    sequence_t          bitidx = newSequence - _min - 1;
+    sequence_bitfield_t mask   = 1ULL << bitidx;
     _bitfield |= mask;
     return ReceiveOutcome::Overflow;
 }

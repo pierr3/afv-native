@@ -15,11 +15,11 @@ namespace atisapi {
 
     struct event_base *ev_base;
 
-    std::mutex afvMutex;
+    std::mutex                              afvMutex;
     std::unique_ptr<afv_native::ATISClient> client;
-    std::unique_ptr<std::thread> eventThread;
-    std::atomic<bool> keepAlive {false};
-    std::atomic<bool> isInitialized {false};
+    std::unique_ptr<std::thread>            eventThread;
+    std::atomic<bool>                       keepAlive {false};
+    std::atomic<bool>                       isInitialized {false};
 } // namespace atisapi
 
 using namespace atisapi;
@@ -36,9 +36,9 @@ AFV_API void Initialize(char *atisFile, char *clientName) {
 #endif
 
     ev_base = event_base_new();
-    client = std::make_unique<afv_native::ATISClient>(ev_base, atisFile, clientName);
+    client  = std::make_unique<afv_native::ATISClient>(ev_base, atisFile, clientName);
 
-    keepAlive = true;
+    keepAlive   = true;
     eventThread = std::make_unique<std::thread>([] {
         while (keepAlive) {
             event_base_loop(ev_base, EVLOOP_NONBLOCK);

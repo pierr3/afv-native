@@ -42,7 +42,7 @@ using namespace afv_native::audio;
 SinkFrameSizeAdjuster::SinkFrameSizeAdjuster(std::shared_ptr<ISampleSink> destSink, unsigned int sinkFrameSize):
     mDestinationSink(std::move(destSink)), mSourceFrameSize(sinkFrameSize), mSinkBufferOffset(0) {
     const size_t bufferSize = frameSizeSamples * sizeof(SampleType);
-    mSinkBuffer = new SampleType[bufferSize];
+    mSinkBuffer             = new SampleType[bufferSize];
         if (nullptr != mSinkBuffer) {
             ::memset(mSinkBuffer, 0, bufferSize);
     }

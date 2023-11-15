@@ -44,7 +44,7 @@ std::shared_ptr<audio::ISampleSink> ATCInputMixer::attachInputDevice(unsigned in
 }
 
 void ATCInputMixer::attachOutput(unsigned int localOutputPort, std::shared_ptr<audio::ISampleSink> sink, unsigned int remoteInputPort) {
-    OutputSpec out = OutputSpec(sink, remoteInputPort);
+    OutputSpec out            = OutputSpec(sink, remoteInputPort);
     mOutputs[localOutputPort] = out;
 }
 
@@ -68,8 +68,7 @@ void ATCInputMixer::makeMixerConnection(unsigned int srcport, unsigned int dstpo
 
         } else {
             // Already exists
-            MixerMap::iterator iter2 =
-                iter->second.find(dstport);
+            MixerMap::iterator iter2 = iter->second.find(dstport);
                 if (iter2 == iter->second.end()) {
                     // Output isn't present yet, add it:
                     iter->second.insert(MixerMap::value_type(dstport, connect));

@@ -39,22 +39,21 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-namespace afv_native { namespace afv {
-    namespace dto {
-        class PostCallsignResponse {
-          public:
-            PostCallsignResponse();
+namespace afv_native { namespace afv { namespace dto {
+    class PostCallsignResponse {
+      public:
+        PostCallsignResponse();
 
-            PostCallsignResponse(const PostCallsignResponse &cpysrc);
+        PostCallsignResponse(const PostCallsignResponse &cpysrc);
 
-            PostCallsignResponse(PostCallsignResponse &&movesrc) noexcept;
+        PostCallsignResponse(PostCallsignResponse &&movesrc) noexcept;
 
-            VoiceServerConnectionData VoiceServer;
-        };
+        VoiceServerConnectionData VoiceServer;
+    };
 
-        void from_json(const nlohmann::json &j, PostCallsignResponse &ar);
+    void from_json(const nlohmann::json &j, PostCallsignResponse &ar);
 
-        void to_json(nlohmann::json &j, const PostCallsignResponse &ar);
+    void to_json(nlohmann::json &j, const PostCallsignResponse &ar);
 }}} // namespace afv_native::afv::dto
 
 #endif // AFV_NATIVE_POSTCALLSIGNRESPONSE_H

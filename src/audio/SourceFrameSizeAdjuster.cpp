@@ -68,7 +68,7 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut) {
                 } else {
                     // the remaining samples to copy must be less than a frame.
                     // fill our holding buffer.
-                    sourceRes = mOriginSource->getAudioFrame(mSourceBuffer);
+                    sourceRes           = mOriginSource->getAudioFrame(mSourceBuffer);
                     mSourceBufferOffset = 0;
                         if (sourceRes != SourceStatus::OK) {
                             // something broke. silencefill the buffer, and return OK, but kill our source handle.
@@ -88,7 +88,7 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut) {
 SourceFrameSizeAdjuster::SourceFrameSizeAdjuster(std::shared_ptr<ISampleSource> originSource, unsigned int outputFrameSize):
     mOriginSource(std::move(originSource)), mDestinationFrameSize(outputFrameSize), mSourceBufferOffset(0) {
     const size_t bufferSize = frameSizeSamples * sizeof(SampleType);
-    mSourceBuffer = new SampleType[bufferSize];
+    mSourceBuffer           = new SampleType[bufferSize];
     ::memset(mSourceBuffer, 0, bufferSize);
 }
 

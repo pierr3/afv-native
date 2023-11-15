@@ -37,15 +37,14 @@
 #include <string>
 #include <vector>
 
-namespace afv_native { namespace afv {
-    namespace dto {
-        class IAudio {
-          public:
-            std::string Callsign;
-            uint32_t    SequenceCounter;
-            std::vector<unsigned char> Audio;
-            bool                       LastPacket;
-        };
+namespace afv_native { namespace afv { namespace dto {
+    class IAudio {
+      public:
+        std::string                Callsign;
+        uint32_t                   SequenceCounter;
+        std::vector<unsigned char> Audio;
+        bool                       LastPacket;
+    };
 }}} // namespace afv_native::afv::dto
 
 #endif // AFV_NATIVE_IAUDIO_H

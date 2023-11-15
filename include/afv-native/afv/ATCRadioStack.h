@@ -51,16 +51,18 @@ namespace afv_native { namespace afv {
 
     class OutputDeviceState {
       public:
-        /** mChannelBuffer is our single-radio/channel workbuffer - we do our per-channel fx mixing in here before
-         * we mix into the mMixingBuffer
+        /** mChannelBuffer is our single-radio/channel workbuffer - we do our per-channel fx mixing
+         * in here before we mix into the mMixingBuffer
          */
         audio::SampleType *mChannelBuffer;
 
-        /** mMixingBuffer is our aggregated mixing buffer for all radios/channels - when we're finished mixing and
-         * the final effects pass, we copy this to the output/target buffer.
+        /** mMixingBuffer is our aggregated mixing buffer for all radios/channels - when we're
+         * finished mixing and the final effects pass, we copy this to the output/target buffer.
          */
-        audio::SampleType *mMixingBuffer;
 
+        audio::SampleType *mMixingBuffer; // for single channel mode
+        audio::SampleType *mLeftMixingBuffer;
+        audio::SampleType *mRightMixingBuffer;
         audio::SampleType *mFetchBuffer;
 
         OutputDeviceState();
@@ -73,17 +75,17 @@ namespace afv_native { namespace afv {
      */
     class ATCRadioState {
       public:
-        unsigned int Frequency;
-        float        Gain = 1.0;
+        unsigned int                                 Frequency;
+        float                                        Gain = 1.0;
         std::shared_ptr<audio::RecordedSampleSource> Click;
-        std::shared_ptr<audio::PinkNoiseGenerator> WhiteNoise;
+        std::shared_ptr<audio::PinkNoiseGenerator>   WhiteNoise;
         std::shared_ptr<audio::RecordedSampleSource> Crackle;
-        std::shared_ptr<audio::SineToneSource> BlockTone;
-        audio::VHFFilterSource *vhfFilter;
-        std::string lastTransmitCallsign;
-        int         mLastRxCount;
-        bool        mBypassEffects;
-        bool onHeadset = true; // If we're not on the headset, we're on the Speaker
+        std::shared_ptr<audio::SineToneSource>       BlockTone;
+        audio::VHFFilterSource                      *vhfFilter;
+        std::string                                  lastTransmitCallsign;
+        int                                          mLastRxCount;
+        bool                                         mBypassEffects;
+        bool        onHeadset   = true; // If we're not on the headset, we're on the Speaker
         bool        tx          = false;
         bool        rx          = false;
         bool        xc          = false;
@@ -130,17 +132,17 @@ namespace afv_native { namespace afv {
         void setTick(std::shared_ptr<audio::ITick> tick);
 
         void setTransceivers(unsigned int freq, std::vector<afv::dto::StationTransceiver> transceivers);
-        std::vector<afv::dto::Transceiver> makeTransceiverDto();
+        std::vector<afv::dto::Transceiver>      makeTransceiverDto();
         std::vector<afv::dto::CrossCoupleGroup> makeCrossCoupleGroupDto();
-        void setOnHeadset(unsigned int freq, bool onHeadset);
-        void setGain(unsigned int freq, float gain);
-        void setGainAll(float gain);
+        void                                    setOnHeadset(unsigned int freq, bool onHeadset);
+        void                                    setGain(unsigned int freq, float gain);
+        void                                    setGainAll(float gain);
 
         bool getEnableInputFilters() const;
         void setEnableInputFilters(bool enableInputFilters);
 
-        void setEnableOutputEffects(bool enableEffects);
-        std::string lastTransmitOnFreq(unsigned int freq);
+        void                                  setEnableOutputEffects(bool enableEffects);
+        std::string                           lastTransmitOnFreq(unsigned int freq);
         std::shared_ptr<audio::ISampleSource> speakerDevice() {
             return mSpeakerDevice;
         }
@@ -149,7 +151,7 @@ namespace afv_native { namespace afv {
         }
 
         audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut, bool onHeadset);
-        void putAudioFrame(const audio::SampleType *bufferIn) override;
+        void                putAudioFrame(const audio::SampleType *bufferIn) override;
 
         void sendCachedAtisFrame();
 
@@ -160,16 +162,17 @@ namespace afv_native { namespace afv {
         std::atomic<uint32_t> IncomingAudioStreams;
 
         std::map<unsigned int, ATCRadioState> mRadioState;
+        bool                                  mSplitChannels = false;
 
       protected:
-        static const int maintenanceTimerIntervalMs = 30 * 1000;
+        static const int       maintenanceTimerIntervalMs = 30 * 1000;
         struct event_base     *mEvBase;
         cryptodto::UDPChannel *mChannel;
         std::string            mCallsign;
 
         util::ChainedCallback<void(ClientEventType, void *, void *)> *ClientEventCallback;
 
-        std::mutex mStreamMapLock;
+        std::mutex                                 mStreamMapLock;
         std::map<std::string, struct CallsignMeta> mIncomingStreams;
 
         std::mutex mRadioStateLock;
@@ -184,19 +187,23 @@ namespace afv_native { namespace afv {
         std::vector<std::vector<unsigned char>> mStoredAtisData;
 
         std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
-        std::shared_ptr<OutputAudioDevice> mHeadsetDevice;
-        std::shared_ptr<OutputAudioDevice> mSpeakerDevice;
+        std::shared_ptr<OutputAudioDevice>        mHeadsetDevice;
+        std::shared_ptr<OutputAudioDevice>        mSpeakerDevice;
 
         std::shared_ptr<audio::ITick> mTick;
+        unsigned int                  mLastReceivedRadio;
 
-        std::atomic<uint32_t> mTxSequence;
+        std::atomic<uint32_t>                 mTxSequence;
         std::shared_ptr<VoiceCompressionSink> mVoiceSink;
-        std::shared_ptr<OutputDeviceState> mHeadsetState;
-        std::shared_ptr<OutputDeviceState> mSpeakerState;
-        std::shared_ptr<EffectResources> mResources;
+        std::shared_ptr<OutputDeviceState>    mHeadsetState;
+        std::shared_ptr<OutputDeviceState>    mSpeakerState;
+        std::shared_ptr<EffectResources>      mResources;
+
+        std::unordered_map<std::string, struct CallsignMeta> mHeadsetIncomingStreams;
+        std::unordered_map<std::string, struct CallsignMeta> mSpeakerIncomingStreams;
 
         event::EventCallbackTimer mMaintenanceTimer;
-        RollingAverage<double> mVuMeter;
+        RollingAverage<double>    mVuMeter;
         void processCompressedFrame(std::vector<unsigned char> compressedData) override;
         void maintainIncomingStreams();
 
@@ -215,6 +222,8 @@ namespace afv_native { namespace afv {
         void remove_unused_frequency(unsigned int freq);
 
         bool _process_radio(const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache, std::map<void *, audio::SampleType[audio::frameSizeSamples]> &eqSampleCache, size_t rxIter, std::shared_ptr<OutputDeviceState> state);
+
+        void interleave(audio::SampleType *leftChannel, audio::SampleType *rightChannel, audio::SampleType *outputBuffer, size_t numSamples);
 
         /** mix_buffers is a utility function that mixes two buffers of audio together.  The src_dst
          * buffer is assumed to be the final output buffer and is modified by the mixing in place.

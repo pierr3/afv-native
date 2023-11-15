@@ -12,12 +12,10 @@ void logger(void *pUserData, ma_uint32 logLevel, const char *message) {
 
 MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceName, const std::string &inputDeviceName, AudioDevice::Api audioApi, int outputChannel):
     AudioDevice(), mUserStreamName(userStreamName), mOutputDeviceName(outputDeviceName), mInputDeviceName(inputDeviceName), mInputInitialized(false), mOutputInitialized(false), mOutputChannel(outputChannel), mAudioApi(audioApi) {
-    ma_context_config contextConfig = ma_context_config_init();
-    contextConfig.threadPriority = ma_thread_priority_normal;
-    contextConfig.jack.pClientName =
-        mUserStreamName.c_str();
-    contextConfig.pulse.pApplicationName =
-        mUserStreamName.c_str();
+    ma_context_config contextConfig      = ma_context_config_init();
+    contextConfig.threadPriority         = ma_thread_priority_normal;
+    contextConfig.jack.pClientName       = mUserStreamName.c_str();
+    contextConfig.pulse.pApplicationName = mUserStreamName.c_str();
 
     ma_result result;
 
@@ -104,34 +102,21 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleInputDevices(un
                             // log detailed device info
                             {
                                 ma_device_info detailedDeviceInfo;
-                                result = ma_context_get_device_info(
-                                    &context, ma_device_type_capture,
-                                    &devices[i].id, &detailedDeviceInfo);
+                                result = ma_context_get_device_info(&context, ma_device_type_capture,
+                                                                    &devices[i].id, &detailedDeviceInfo);
                                     if (result == MA_SUCCESS) {
                                         LOG("MiniAudioAudioDevice", "Input: %s (Default: %s, Format Count: %d)",
-                                            devices[i]
-                                                .name,
-                                            detailedDeviceInfo
-                                                    .isDefault ?
-                                                "Yes" :
-                                                "No",
-                                            detailedDeviceInfo
-                                                .nativeDataFormatCount);
+                                            devices[i].name, detailedDeviceInfo.isDefault ? "Yes" : "No",
+                                            detailedDeviceInfo.nativeDataFormatCount);
 
                                         ma_uint32 iFormat;
-                                            for (iFormat = 0; iFormat < detailedDeviceInfo
-                                                                            .nativeDataFormatCount;
-                                                 ++iFormat) {
+                                            for (iFormat = 0; iFormat < detailedDeviceInfo.nativeDataFormatCount; ++iFormat) {
                                                 LOG("MiniAudioAudioDevice", "   --> Format: %s, Channels: %d, Sample Rate: %d",
                                                     ma_get_format_name(detailedDeviceInfo
                                                                            .nativeDataFormats[iFormat]
                                                                            .format),
-                                                    detailedDeviceInfo
-                                                        .nativeDataFormats[iFormat]
-                                                        .channels,
-                                                    detailedDeviceInfo
-                                                        .nativeDataFormats[iFormat]
-                                                        .sampleRate);
+                                                    detailedDeviceInfo.nativeDataFormats[iFormat].channels,
+                                                    detailedDeviceInfo.nativeDataFormats[iFormat].sampleRate);
                                             }
                                     } else {
                                         LOG("MiniAudioAudioDevice", "Error getting input device info: %s", ma_result_description(result));
@@ -182,34 +167,21 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleOutputDevices(u
                             // log detailed device info
                             {
                                 ma_device_info detailedDeviceInfo;
-                                result = ma_context_get_device_info(
-                                    &context, ma_device_type_playback,
-                                    &devices[i].id, &detailedDeviceInfo);
+                                result = ma_context_get_device_info(&context, ma_device_type_playback,
+                                                                    &devices[i].id, &detailedDeviceInfo);
                                     if (result == MA_SUCCESS) {
                                         LOG("MiniAudioAudioDevice", "Output: %s (Default: %s, Format Count: %d)",
-                                            devices[i]
-                                                .name,
-                                            detailedDeviceInfo
-                                                    .isDefault ?
-                                                "Yes" :
-                                                "No",
-                                            detailedDeviceInfo
-                                                .nativeDataFormatCount);
+                                            devices[i].name, detailedDeviceInfo.isDefault ? "Yes" : "No",
+                                            detailedDeviceInfo.nativeDataFormatCount);
 
                                         ma_uint32 iFormat;
-                                            for (iFormat = 0; iFormat < detailedDeviceInfo
-                                                                            .nativeDataFormatCount;
-                                                 ++iFormat) {
+                                            for (iFormat = 0; iFormat < detailedDeviceInfo.nativeDataFormatCount; ++iFormat) {
                                                 LOG("MiniAudioAudioDevice", "   --> Format: %s, Channels: %d, Sample Rate: %d",
                                                     ma_get_format_name(detailedDeviceInfo
                                                                            .nativeDataFormats[iFormat]
                                                                            .format),
-                                                    detailedDeviceInfo
-                                                        .nativeDataFormats[iFormat]
-                                                        .channels,
-                                                    detailedDeviceInfo
-                                                        .nativeDataFormats[iFormat]
-                                                        .sampleRate);
+                                                    detailedDeviceInfo.nativeDataFormats[iFormat].channels,
+                                                    detailedDeviceInfo.nativeDataFormats[iFormat].sampleRate);
                                             }
                                     } else {
                                         LOG("MiniAudioAudioDevice", "Error getting output device info: %s", ma_result_description(result));
@@ -239,12 +211,11 @@ bool MiniAudioAudioDevice::initOutput() {
 
     ma_device_id outputDeviceId;
         if (!getDeviceForName(mOutputDeviceName, false, outputDeviceId)) {
-            LOG("MiniAudioAudioDevice::initOutput()", "No device found for %s",
-                mOutputDeviceName.c_str());
+            LOG("MiniAudioAudioDevice::initOutput()", "No device found for %s", mOutputDeviceName.c_str());
             return false; // no device found
     }
 
-    ma_device_config cfg = ma_device_config_init(ma_device_type_playback);
+    ma_device_config cfg   = ma_device_config_init(ma_device_type_playback);
     cfg.playback.pDeviceID = &outputDeviceId;
     cfg.playback.format    = ma_format_f32;
     cfg.playback.channels  = 1;
@@ -266,7 +237,7 @@ bool MiniAudioAudioDevice::initOutput() {
                     my_channels[0] = MA_CHANNEL_RIGHT;
             }
 
-            cfg.playback.pChannelMap = my_channels;
+            cfg.playback.pChannelMap    = my_channels;
             cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
     }
     ma_result result;
@@ -298,20 +269,19 @@ bool MiniAudioAudioDevice::initInput() {
 
     ma_device_id inputDeviceId;
         if (!getDeviceForName(mInputDeviceName, true, inputDeviceId)) {
-            LOG("MiniAudioAudioDevice::initInput()", "No device found for %s",
-                mInputDeviceName.c_str());
+            LOG("MiniAudioAudioDevice::initInput()", "No device found for %s", mInputDeviceName.c_str());
             return false; // no device found
     }
 
-    ma_device_config cfg = ma_device_config_init(ma_device_type_capture);
-    cfg.capture.pDeviceID  = &inputDeviceId;
-    cfg.capture.format     = ma_format_f32;
-    cfg.capture.channels   = 1;
-    cfg.capture.shareMode  = ma_share_mode_shared;
-    cfg.sampleRate         = sampleRateHz;
-    cfg.periodSizeInFrames = frameSizeSamples;
-    cfg.pUserData          = this;
-    cfg.dataCallback       = maInputCallback;
+    ma_device_config cfg     = ma_device_config_init(ma_device_type_capture);
+    cfg.capture.pDeviceID    = &inputDeviceId;
+    cfg.capture.format       = ma_format_f32;
+    cfg.capture.channels     = 1;
+    cfg.capture.shareMode    = ma_share_mode_shared;
+    cfg.sampleRate           = sampleRateHz;
+    cfg.periodSizeInFrames   = frameSizeSamples;
+    cfg.pUserData            = this;
+    cfg.dataCallback         = maInputCallback;
     cfg.notificationCallback = maNotificationCallback;
 
     ma_result result;
@@ -338,8 +308,7 @@ bool MiniAudioAudioDevice::getDeviceForName(const std::string &deviceName, bool 
         if (!allDevices.empty()) {
                 for (const auto &devicePair: allDevices) {
                         if (devicePair.second.name == deviceName) {
-                            deviceId =
-                                devicePair.second.id;
+                            deviceId = devicePair.second.id;
                             return true;
                     }
                 }
@@ -382,20 +351,17 @@ int MiniAudioAudioDevice::inputCallback(const void *inputBuffer, unsigned int nF
 }
 
 void MiniAudioAudioDevice::maOutputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount) {
-    auto device = reinterpret_cast<MiniAudioAudioDevice *>(
-        pDevice->pUserData);
+    auto device = reinterpret_cast<MiniAudioAudioDevice *>(pDevice->pUserData);
     device->outputCallback(pOutput, frameCount);
 }
 
 void MiniAudioAudioDevice::maInputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount) {
-    auto device = reinterpret_cast<MiniAudioAudioDevice *>(
-        pDevice->pUserData);
+    auto device = reinterpret_cast<MiniAudioAudioDevice *>(pDevice->pUserData);
     device->inputCallback(pInput, frameCount);
 }
 
 void MiniAudioAudioDevice::maNotificationCallback(const ma_device_notification *pNotification) {
-    auto device = reinterpret_cast<MiniAudioAudioDevice *>(
-        pNotification->pDevice->pUserData);
+    auto device = reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
     device->notificationCallback(pNotification);
 };
 
@@ -430,9 +396,7 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(A
     auto allDevices = MiniAudioAudioDevice::getCompatibleInputDevices(api);
     map<int, AudioDevice::DeviceInfo> returnDevices;
         for (const auto &p: allDevices) {
-            returnDevices.emplace(
-                p.first,
-                AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false));
+            returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false));
         }
     return returnDevices;
 }
@@ -441,9 +405,7 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleOutputDevicesForApi(
     auto allDevices = MiniAudioAudioDevice::getCompatibleOutputDevices(api);
     map<int, AudioDevice::DeviceInfo> returnDevices;
         for (const auto &p: allDevices) {
-            returnDevices.emplace(
-                p.first,
-                AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false));
+            returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false));
         }
     return returnDevices;
 }
@@ -461,14 +423,11 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
             return;
     }
 
-        if (!pNotification->pDevice ||
-            !pNotification->pDevice->pContext ||
-            pNotification->pDevice->pContext == NULL) {
+        if (!pNotification->pDevice || !pNotification->pDevice->pContext || pNotification->pDevice->pContext == NULL) {
             return;
     }
 
-    auto device = reinterpret_cast<MiniAudioAudioDevice *>(
-        pNotification->pDevice->pUserData);
+    auto device = reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
 
         if (pNotification->type == ma_device_notification_type_stopped) {
                 if (mHasClosedManually) {

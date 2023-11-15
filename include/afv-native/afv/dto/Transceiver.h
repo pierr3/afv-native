@@ -38,24 +38,23 @@
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
 
-namespace afv_native { namespace afv {
-    namespace dto {
-        class Transceiver {
-          public:
-            uint16_t ID;
-            uint32_t Frequency;
-            double   LatDeg;
-            double   LonDeg;
-            double   HeightMslM;
-            double   HeightAglM;
+namespace afv_native { namespace afv { namespace dto {
+    class Transceiver {
+      public:
+        uint16_t ID;
+        uint32_t Frequency;
+        double   LatDeg;
+        double   LonDeg;
+        double   HeightMslM;
+        double   HeightAglM;
 
-            Transceiver(uint16_t id, uint32_t freq, double lat, double lon, double msl, double agl);
+        Transceiver(uint16_t id, uint32_t freq, double lat, double lon, double msl, double agl);
 
-            MSGPACK_DEFINE_ARRAY(ID, Frequency, LatDeg, LonDeg, HeightMslM, HeightAglM);
-        };
+        MSGPACK_DEFINE_ARRAY(ID, Frequency, LatDeg, LonDeg, HeightMslM, HeightAglM);
+    };
 
-        void from_json(const nlohmann::json &j, Transceiver &ar);
-        void to_json(nlohmann::json &j, const Transceiver &ar);
+    void from_json(const nlohmann::json &j, Transceiver &ar);
+    void to_json(nlohmann::json &j, const Transceiver &ar);
 }}} // namespace afv_native::afv::dto
 
 #endif // AFV_NATIVE_TRANSCEIVER_H

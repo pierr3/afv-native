@@ -59,8 +59,7 @@ SourceStatus OutputMixer::getAudioFrame(SampleType *RESTRICT bufferOut) {
                 if (src_rv == SourceStatus::OK) {
                     didMix = true;
                         for (i = 0; i < frameSizeSamples; i++) {
-                            bufferOut[i] +=
-                                (src_iter.gain * intermediate_buffer[i]);
+                            bufferOut[i] += (src_iter.gain * intermediate_buffer[i]);
                         }
                 } else {
                         if (src_rv == SourceStatus::Error) {

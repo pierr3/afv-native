@@ -73,16 +73,14 @@ void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio) {
     ::memset(&newPacket, 0, sizeof(newPacket));
 
         if (audio.LastPacket) {
-            mEnding = true;
+            mEnding         = true;
             mEndingSequence = audio.SequenceCounter;
         } else {
             mEnding = false;
         }
 
-    newPacket.data =
-        static_cast<char *>(::malloc(audio.Audio.size()));
-    memcpy(newPacket.data, audio.Audio.data(),
-           audio.Audio.size());
+    newPacket.data = static_cast<char *>(::malloc(audio.Audio.size()));
+    memcpy(newPacket.data, audio.Audio.data(), audio.Audio.size());
     newPacket.len       = audio.Audio.size();
     newPacket.timestamp = audio.SequenceCounter;
     newPacket.span      = 1;
@@ -126,11 +124,8 @@ SourceStatus RemoteVoiceSource::getAudioFrame(SampleType *bufferOut) {
                         break;
                     case JITTER_BUFFER_OK:
                         mCurrentFrame = tsOut;
-                        opus_res = opus_decode_float(
-                            mDecoder,
-                            reinterpret_cast<unsigned char *>(
-                                pktOut.data),
-                            pktOut.len, bufferOut, frameSizeSamples, false);
+                        opus_res      = opus_decode_float(
+                            mDecoder, reinterpret_cast<unsigned char *>(pktOut.data), pktOut.len, bufferOut, frameSizeSamples, false);
                         ::free(pktOut.data);
                         break;
                     default:

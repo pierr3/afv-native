@@ -114,9 +114,7 @@ void ATISClient::voiceStateCallback(afv::VoiceSessionState state) {
 
                 voiceError = mVoiceSession.getLastError();
                     if (voiceError == afv::VoiceSessionError::UDPChannelError) {
-                        channelErrno = mVoiceSession
-                                           .getUDPChannel()
-                                           .getLastErrno();
+                        channelErrno = mVoiceSession.getUDPChannel().getLastErrno();
                         ClientEventCallback.invokeAll(ClientEventType::VoiceServerChannelError, &channelErrno);
                     } else {
                         ClientEventCallback.invokeAll(ClientEventType::VoiceServerError, &voiceError);
@@ -142,8 +140,8 @@ void ATISClient::sessionStateCallback(afv::APISessionState state) {
                 break;
             case afv::APISessionState::Disconnected:
                 LOG("afv_native::ATISClient", "Disconnected from AFV API Server.  Terminating sessions");
-                // because we only ever commence a normal API Session teardown from a voicesession hook,
-                // we don't need to call into voiceSession in this case only.
+                // because we only ever commence a normal API Session teardown from a voicesession
+                // hook, we don't need to call into voiceSession in this case only.
                 ClientEventCallback.invokeAll(ClientEventType::APIServerDisconnected, nullptr);
                 break;
             case afv::APISessionState::Error:
@@ -158,7 +156,7 @@ void ATISClient::sessionStateCallback(afv::APISessionState state) {
 }
 
 void ATISClient::startAudio() {
-    looped = false;
+    looped        = false;
     auto *wavData = audio::LoadWav(mATISFileName.c_str());
         if (nullptr == wavData) {
             LOG("ATISClient", "failed to load atis wavfile");
@@ -275,8 +273,8 @@ void ATISClient::setEnableInputFilters(bool enableInputFilters) {
 void ATISClient::putAudioFrame(const audio::SampleType *bufferIn) {
     // do the peak/Vu calcs
     {
-        auto *b = bufferIn;
-        int   i = audio::frameSizeSamples - 1;
+        auto             *b    = bufferIn;
+        int               i    = audio::frameSizeSamples - 1;
         audio::SampleType peak = fabs(*(b++));
             while (i-- > 0) {
                 peak = std::max<audio::SampleType>(peak, fabs(*(b++)));
@@ -296,12 +294,10 @@ void ATISClient::putAudioFrame(const audio::SampleType *bufferIn) {
 void ATISClient::sendCachedFrame() {
         if (mChannel != nullptr && mChannel->isOpen()) {
             dto::AudioTxOnTransceivers audioOutDto;
-            {
-                audioOutDto.Transceivers.emplace_back(0);
-            }
+            { audioOutDto.Transceivers.emplace_back(0); }
             audioOutDto.SequenceCounter = std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
-            audioOutDto.Callsign = mCallsign;
-            audioOutDto.Audio = mStoredData[cacheNum];
+            audioOutDto.Callsign        = mCallsign;
+            audioOutDto.Audio           = mStoredData[cacheNum];
             cacheNum++;
             if (cacheNum > mStoredData.size())
                 cacheNum = 0;
@@ -339,12 +335,10 @@ void ATISClient::processCompressedFrame(std::vector<unsigned char> compressedDat
 
         if (mChannel != nullptr && mChannel->isOpen()) {
             dto::AudioTxOnTransceivers audioOutDto;
-            {
-                audioOutDto.Transceivers.emplace_back(0);
-            }
+            { audioOutDto.Transceivers.emplace_back(0); }
             audioOutDto.SequenceCounter = std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
-            audioOutDto.Callsign = mCallsign;
-            audioOutDto.Audio = std::move(compressedData);
+            audioOutDto.Callsign        = mCallsign;
+            audioOutDto.Audio           = std::move(compressedData);
 
             mChannel->sendDto(audioOutDto);
     }

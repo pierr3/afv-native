@@ -37,8 +37,7 @@
 using json = nlohmann::json;
 using namespace afv_native::afv::dto;
 
-Station::Station():
-    ID(""), Name(""), Frequency(0), FrequencyAlias(0) {
+Station::Station(): ID(""), Name(""), Frequency(0), FrequencyAlias(0) {
 }
 
 void afv_native::afv::dto::from_json(const json &j, Station &s) {
@@ -46,15 +45,10 @@ void afv_native::afv::dto::from_json(const json &j, Station &s) {
     j.at("name").get_to(s.Name);
 
         try {
-            auto freq = j.at("frequency").is_number_integer() ?
-                            j.at("frequency").get<int>() :
-                            0;
-            auto freqAlias =
-                j.at("frequencyAlias").is_number_integer() ?
-                    j.at("frequencyAlias").get<int>() :
-                    0;
+            auto freq = j.at("frequency").is_number_integer() ? j.at("frequency").get<int>() : 0;
+            auto freqAlias = j.at("frequencyAlias").is_number_integer() ? j.at("frequencyAlias").get<int>() : 0;
 
-            s.Frequency = std::move(freq);
+            s.Frequency      = std::move(freq);
             s.FrequencyAlias = std::move(freqAlias);
         } catch (const json::out_of_range &) {
     }

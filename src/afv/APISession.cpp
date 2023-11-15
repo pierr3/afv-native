@@ -111,18 +111,13 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
                     std::error_code ec;
                     auto dec_token = jwt::decode(mBearerToken, algorithms({"none"}), ec, verify(false));
                         if (ec) {
-                            LOG("APISession", "couldn't parse bearer token: %s",
-                                ec.message().c_str());
+                            LOG("APISession", "couldn't parse bearer token: %s", ec.message().c_str());
                             mBearerToken = "";
                             raiseError(APISessionError::InvalidAuthToken);
                             return;
                         } else {
-                                if (dec_token
-                                        .payload()
-                                        .has_claim("exp")) {
-                                    const time_t expiry = dec_token
-                                                              .payload()
-                                                              .get_claim_value<uint64_t>("exp");
+                                if (dec_token.payload().has_claim("exp")) {
+                                    const time_t expiry = dec_token.payload().get_claim_value<uint64_t>("exp");
                                     const int timeRemaining = expiry - ::time(nullptr);
                                         if (timeRemaining <= 60) {
                                             // FIXME: report error upstream.
@@ -133,14 +128,11 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
                                     }
                                     LOG("APISession", "API Token Expires in %d seconds", expiry - time(nullptr));
                                     // refresh 1 minute before token expiry.
-                                    mRefreshTokenTimer
-                                        .enable((timeRemaining - 60) * 1000);
+                                    mRefreshTokenTimer.enable((timeRemaining - 60) * 1000);
                                 } else {
                                     LOG("APISession", "no expiry claim - assuming 1 hour.",
-                                        ec.message()
-                                            .c_str());
-                                    mRefreshTokenTimer
-                                        .enable(59 * 60 * 1000); // refresh in 59 minutes.
+                                        ec.message().c_str());
+                                    mRefreshTokenTimer.enable(59 * 60 * 1000); // refresh in 59 minutes.
                                 }
                         }
                 } catch (const std::exception &e) {
@@ -156,8 +148,7 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
             // if it were an immediate disconnect.
             mBearerToken = "";
                 if (!success) {
-                    LOG("APISession", "curl internal error during login: %s",
-                        req->getCurlError().c_str());
+                    LOG("APISession", "curl internal error during login: %s", req->getCurlError().c_str());
                     raiseError(APISessionError::ConnectionError);
                 } else {
                     LOG("APISession", "got error from API server: Response Code %d", req->getStatusCode());
@@ -259,20 +250,17 @@ void APISession::_getStationCallback(http::RESTRequest *req, bool success, std::
         if (success && req->getStatusCode() == 200) {
             auto jsReturn = req->getResponse();
 
-            bool found = false;
+            bool                                 found = false;
             std::pair<std::string, unsigned int> ret;
 
-                if (!jsReturn.contains("name") ||
-                    !jsReturn.contains("frequency") ||
+                if (!jsReturn.contains("name") || !jsReturn.contains("frequency") ||
                     !jsReturn["frequency"].is_number_integer()) {
                     LOG("APISession", "get station data returned did not contains name or frequency.  Ignoring.");
                 } else {
-                    found = true;
-                    int foundFreq =
-                        jsReturn["frequency"].get<int>();
-                    std::string foundName =
-                        jsReturn["name"].get<std::string>();
-                    ret = {foundName, foundFreq};
+                    found                 = true;
+                    int         foundFreq = jsReturn["frequency"].get<int>();
+                    std::string foundName = jsReturn["name"].get<std::string>();
+                    ret                   = {foundName, foundFreq};
                 }
 
             StationSearchCallback.invokeAll(found, ret);
@@ -302,14 +290,12 @@ void APISession::_stationsCallback(http::RESTRequest *req, bool success) {
                             dto::Station s;
                                 try {
                                     sJson.get_to(s);
-                                    mAliasedStations
-                                        .emplace_back(s);
+                                    mAliasedStations.emplace_back(s);
                                 } catch (nlohmann::json::exception &e) {
                                     LOG("APISession", "couldn't decode station alias: %s", e.what());
                             }
                         }
-                    LOG("APISession", "got %d station aliases.",
-                        mAliasedStations.size());
+                    LOG("APISession", "got %d station aliases.", mAliasedStations.size());
                     AliasUpdateCallback.invokeAll();
                 }
         } else {
@@ -374,10 +360,7 @@ void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std:
                 } else {
                         for (const auto &sJson: jsReturn) {
                                 try {
-                                    ret.insert({sJson["name"]
-                                                    .get<std::string>(),
-                                                sJson["frequency"]
-                                                    .get<int>()});
+                                    ret.insert({sJson["name"].get<std::string>(), sJson["frequency"].get<int>()});
                                 } catch (nlohmann::json::exception &e) {
                                     LOG("APISession", "couldn't decode vccs transceivers: %s", e.what());
                             }
@@ -409,18 +392,14 @@ void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool succe
                             dto::StationTransceiver st;
                                 try {
                                     sJson.get_to(st);
-                                    mStationTransceivers[stdName]
-                                        .emplace_back(st);
+                                    mStationTransceivers[stdName].emplace_back(st);
                                 } catch (nlohmann::json::exception &e) {
                                     LOG("APISession", "couldn't decode station transceivers: %s", e.what());
                             }
                         }
                     LOG("APISession", "got %d station transceivers for station %s.",
-                        mStationTransceivers[stdName]
-                            .size(),
-                        stdName.c_str());
-                    StationTransceiversUpdateCallback
-                        .invokeAll(stdName);
+                        mStationTransceivers[stdName].size(), stdName.c_str());
+                    StationTransceiversUpdateCallback.invokeAll(stdName);
                 }
         } else {
                 if (!success) {

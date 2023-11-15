@@ -73,15 +73,13 @@ inline int minimumBlockAlignment(int sampleSize, int numChannels) {
 AudioSampleData::AudioSampleData(int numChannels, int bitsPerSample, int sampleRate, bool isFloat):
     mNumChannels(numChannels), mBitsPerSample(bitsPerSample), mSampleRate(sampleRate), mIsFloat(isFloat) {
     mSampleAlignment = minimumBlockAlignment(mBitsPerSample, mNumChannels);
-    mSampleCount = 0;
-    mSampleData  = nullptr;
+    mSampleCount     = 0;
+    mSampleData      = nullptr;
 }
 
 AudioSampleData::AudioSampleData(AudioSampleData &&move_src) noexcept:
-    mNumChannels(move_src.mNumChannels),
-    mBitsPerSample(move_src.mBitsPerSample),
-    mSampleAlignment(move_src.mSampleAlignment),
-    mSampleRate(move_src.mBitsPerSample) {
+    mNumChannels(move_src.mNumChannels), mBitsPerSample(move_src.mBitsPerSample),
+    mSampleAlignment(move_src.mSampleAlignment), mSampleRate(move_src.mBitsPerSample) {
     mSampleData           = move_src.mSampleData;
     mSampleCount          = move_src.mSampleCount;
     move_src.mSampleData  = nullptr;
@@ -89,18 +87,14 @@ AudioSampleData::AudioSampleData(AudioSampleData &&move_src) noexcept:
 }
 
 AudioSampleData::AudioSampleData(const AudioSampleData &cpy_src):
-    mNumChannels(cpy_src.mNumChannels),
-    mBitsPerSample(cpy_src.mBitsPerSample),
-    mSampleAlignment(cpy_src.mSampleAlignment),
-    mSampleRate(cpy_src.mBitsPerSample) {
+    mNumChannels(cpy_src.mNumChannels), mBitsPerSample(cpy_src.mBitsPerSample),
+    mSampleAlignment(cpy_src.mSampleAlignment), mSampleRate(cpy_src.mBitsPerSample) {
     mSampleCount = cpy_src.mSampleCount;
-    mSampleData =
-        malloc(cpy_src.mSampleCount * cpy_src.mSampleAlignment);
+    mSampleData  = malloc(cpy_src.mSampleCount * cpy_src.mSampleAlignment);
         if (mSampleData == nullptr) {
             mSampleCount = 0;
         } else {
-            memcpy(mSampleData, cpy_src.mSampleData,
-                   cpy_src.mSampleCount * cpy_src.mSampleAlignment);
+            memcpy(mSampleData, cpy_src.mSampleData, cpy_src.mSampleCount * cpy_src.mSampleAlignment);
         }
 }
 
@@ -114,7 +108,7 @@ AudioSampleData::~AudioSampleData() {
 
 void AudioSampleData::AppendSamples(uint8_t blockSize, unsigned count, void *data) {
     const unsigned newCount = mSampleCount + count;
-    mSampleData = realloc(mSampleData, newCount * mSampleAlignment);
+    mSampleData             = realloc(mSampleData, newCount * mSampleAlignment);
         if (mSampleData == nullptr) {
             mSampleCount = 0;
             return;
@@ -294,8 +288,7 @@ static AudioSampleData *extractData(FILE *fh, const vector<WavTOCEntry> &toc) {
     /* we can live with short reads here, so we use a slightly different strategy */
     fseek(fh, ti->offset, SEEK_SET);
 
-    dbuf =
-        reinterpret_cast<uint8_t *>(malloc(ti->ch.chunkSize));
+    dbuf = reinterpret_cast<uint8_t *>(malloc(ti->ch.chunkSize));
         if (nullptr == dbuf) {
             goto fail2;
     }

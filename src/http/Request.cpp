@@ -143,12 +143,10 @@ void Request::setHeader(const std::string &header, const std::string &value) {
     struct curl_slist *newHeaders;
         if (value.empty()) {
             auto headerOut = header + ";";
-            newHeaders     = curl_slist_append(
-                mHeaders, headerOut.c_str());
+            newHeaders     = curl_slist_append(mHeaders, headerOut.c_str());
         } else {
             auto headerOut = header + ": " + value;
-            newHeaders = curl_slist_append(
-                mHeaders, headerOut.c_str());
+            newHeaders     = curl_slist_append(mHeaders, headerOut.c_str());
         }
         if (newHeaders != nullptr) {
             mHeaders = newHeaders;
@@ -309,9 +307,7 @@ int Request::getUploadProgress() const {
 }
 
 string Request::getResponseBody() const {
-    return string(
-        reinterpret_cast<const char *>(mResp.data()),
-        mResp.size());
+    return string(reinterpret_cast<const char *>(mResp.data()), mResp.size());
 }
 
 CURL *Request::getCurlHandle() const {
@@ -335,8 +331,7 @@ bool Request::doAsync(TransferManager &transferManager) {
 }
 
 void Request::shareState(TransferManager &transferManager) {
-    curl_easy_setopt(mCurlHandle, CURLOPT_SHARE,
-                     transferManager.getCurlMultiHandle());
+    curl_easy_setopt(mCurlHandle, CURLOPT_SHARE, transferManager.getCurlMultiHandle());
 }
 
 const string &Request::getUrl() const {

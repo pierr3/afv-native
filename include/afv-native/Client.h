@@ -216,10 +216,10 @@ namespace afv_native {
         void logAudioStatistics();
 
         std::shared_ptr<const afv::RadioSimulation> getRadioSimulation() const;
-        std::shared_ptr<const audio::AudioDevice> getAudioDevice() const;
+        std::shared_ptr<const audio::AudioDevice>   getAudioDevice() const;
 
-        /** getRxActive returns if the nominated radio is currently Receiving voice, irrespective as to if it's audiable
-         * or not.
+        /** getRxActive returns if the nominated radio is currently Receiving voice, irrespective as
+         * to if it's audiable or not.
          *
          * @param radioNumber the number (starting from 0) of the radio to probe
          * @return true if the radio would have voice to play, false otherwise.
@@ -239,19 +239,19 @@ namespace afv_native {
             int mNextFreq;
         };
 
-        struct event_base *mEvBase;
+        struct event_base                    *mEvBase;
         std::shared_ptr<afv::EffectResources> mFxRes;
 
-        http::EventTransferManager mTransferManager;
-        afv::APISession   mAPISession;
-        afv::VoiceSession mVoiceSession;
+        http::EventTransferManager            mTransferManager;
+        afv::APISession                       mAPISession;
+        afv::VoiceSession                     mVoiceSession;
         std::shared_ptr<afv::RadioSimulation> mRadioSim;
-        std::shared_ptr<audio::AudioDevice> mAudioDevice;
+        std::shared_ptr<audio::AudioDevice>   mAudioDevice;
 
-        double mClientLatitude;
-        double mClientLongitude;
-        double mClientAltitudeMSLM;
-        double mClientAltitudeGLM;
+        double                               mClientLatitude;
+        double                               mClientLongitude;
+        double                               mClientAltitudeMSLM;
+        double                               mClientAltitudeGLM;
         std::vector<struct ClientRadioState> mRadioState;
 
         std::string mCallsign;
@@ -264,7 +264,7 @@ namespace afv_native {
         bool mWantPtt;
         bool mPtt;
 
-        bool areTransceiversSynced() const;
+        bool                               areTransceiversSynced() const;
         std::vector<afv::dto::Transceiver> makeTransceiverDto();
         /* sendTransceiverUpdate sends the update now, in process.
          * queueTransceiverUpdate schedules it for the next eventloop.  This is a
@@ -285,8 +285,8 @@ namespace afv_native {
 
         std::string             mClientName;
         audio::AudioDevice::Api mAudioApi;
-        std::string mAudioInputDeviceName;
-        std::string mAudioOutputDeviceName;
+        std::string             mAudioInputDeviceName;
+        std::string             mAudioOutputDeviceName;
 
       public:
     };

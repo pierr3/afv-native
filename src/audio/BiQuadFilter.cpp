@@ -28,7 +28,7 @@ namespace afv_native { namespace audio {
 
     void BiQuadFilter::setLowPassFilter(float sampleRate, float cutoffFrequency, float q) {
         // H(s) = 1 / (s^2 + s/Q + 1)
-        auto w0 = 2 * M_PI * cutoffFrequency / sampleRate;
+        auto w0    = 2 * M_PI * cutoffFrequency / sampleRate;
         auto cosw0 = cos(w0);
         auto alpha = sin(w0) / (2 * q);
 
@@ -43,11 +43,11 @@ namespace afv_native { namespace audio {
 
     void BiQuadFilter::setPeakingEq(float sampleRate, float centreFrequency, float q, float dbGain) {
         // H(s) = (s^2 + s*(A/Q) + 1) / (s^2 + s/(A*Q) + 1)
-        auto w0 = 2 * M_PI * centreFrequency / sampleRate;
+        auto w0    = 2 * M_PI * centreFrequency / sampleRate;
         auto cosw0 = cos(w0);
         auto sinw0 = sin(w0);
         auto alpha = sinw0 / (2 * q);
-        auto a = pow(10, dbGain / 40); // TODO: should we square root this value?
+        auto a     = pow(10, dbGain / 40); // TODO: should we square root this value?
 
         auto b0  = 1 + alpha * a;
         auto b1  = -2 * cosw0;
@@ -60,15 +60,15 @@ namespace afv_native { namespace audio {
 
     void BiQuadFilter::setLowShelfFilter(float sampleRate, float centreFrequency, float q, float dbGain) {
         // H(s) = A * (s^2 + (sqrt(A)/Q)*s + A)/(A*s^2 + (sqrt(A)/Q)*s + 1)
-        auto w0 = 2 * M_PI * centreFrequency / sampleRate;
+        auto w0    = 2 * M_PI * centreFrequency / sampleRate;
         auto cosw0 = cos(w0);
         auto sinw0 = sin(w0);
         auto alpha = sinw0 / (2 * q);
-        auto A = pow(10, dbGain / 40); // TODO: should we square root this value?
+        auto A     = pow(10, dbGain / 40); // TODO: should we square root this value?
 
-        auto b0 = A * ((A + 1) - (A - 1) * cos(w0) + 2 * sqrt(A) * alpha);
-        auto b1 = 2 * A * ((A - 1) - (A + 1) * cos(w0));
-        auto b2 = A * ((A + 1) - (A - 1) * cos(w0) - 2 * sqrt(A) * alpha);
+        auto b0  = A * ((A + 1) - (A - 1) * cos(w0) + 2 * sqrt(A) * alpha);
+        auto b1  = 2 * A * ((A - 1) - (A + 1) * cos(w0));
+        auto b2  = A * ((A + 1) - (A - 1) * cos(w0) - 2 * sqrt(A) * alpha);
         auto aa0 = (A + 1) + (A - 1) * cos(w0) + 2 * sqrt(A) * alpha;
         auto aa1 = -2 * ((A - 1) + (A + 1) * cos(w0));
         auto aa2 = (A + 1) + (A - 1) * cos(w0) - 2 * sqrt(A) * alpha;
@@ -77,15 +77,15 @@ namespace afv_native { namespace audio {
 
     void BiQuadFilter::setHighShelfFilter(float sampleRate, float centreFrequency, float q, float dbGain) {
         // H(s) = A * (A*s^2 + (sqrt(A)/Q)*s + 1)/(s^2 + (sqrt(A)/Q)*s + A)
-        auto w0 = 2 * M_PI * centreFrequency / sampleRate;
+        auto w0    = 2 * M_PI * centreFrequency / sampleRate;
         auto cosw0 = cos(w0);
         auto sinw0 = sin(w0);
         auto alpha = sinw0 / (2 * q);
-        auto A = pow(10, dbGain / 40); // TODO: should we square root this value?
+        auto A     = pow(10, dbGain / 40); // TODO: should we square root this value?
 
-        auto b0 = A * ((A + 1) + (A - 1) * cos(w0) + 2 * sqrt(A) * alpha);
-        auto b1 = -2 * A * ((A - 1) + (A + 1) * cos(w0));
-        auto b2 = A * ((A + 1) + (A - 1) * cos(w0) - 2 * sqrt(A) * alpha);
+        auto b0  = A * ((A + 1) + (A - 1) * cos(w0) + 2 * sqrt(A) * alpha);
+        auto b1  = -2 * A * ((A - 1) + (A + 1) * cos(w0));
+        auto b2  = A * ((A + 1) + (A - 1) * cos(w0) - 2 * sqrt(A) * alpha);
         auto aa0 = (A + 1) - (A - 1) * cos(w0) + 2 * sqrt(A) * alpha;
         auto aa1 = 2 * ((A - 1) - (A + 1) * cos(w0));
         auto aa2 = (A + 1) - (A - 1) * cos(w0) - 2 * sqrt(A) * alpha;
@@ -94,7 +94,7 @@ namespace afv_native { namespace audio {
 
     void BiQuadFilter::setHighPassFilter(float sampleRate, float cutoffFrequency, float q) {
         // H(s) = s^2 / (s^2 + s/Q + 1)
-        auto w0 = 2 * M_PI * cutoffFrequency / sampleRate;
+        auto w0    = 2 * M_PI * cutoffFrequency / sampleRate;
         auto cosw0 = cos(w0);
         auto alpha = sin(w0) / (2 * q);
 

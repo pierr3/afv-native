@@ -49,7 +49,7 @@ namespace afv_native { namespace afv {
      */
     class VoiceCompressionSink: public audio::ISampleSink {
       protected:
-        OpusEncoder *mEncoder;
+        OpusEncoder          *mEncoder;
         ICompressedFrameSink &mCompressedFrameSink;
 
       public:

@@ -62,8 +62,7 @@ string afv_native::util::Base64Encode(const unsigned char *buffer_in, size_t len
     std::vector<unsigned char> out_buf(output_len);
     EVP_EncodeBlock(out_buf.data(), buffer_in, len);
 
-    string base64_value(
-        reinterpret_cast<char *>(out_buf.data()));
+    string base64_value(reinterpret_cast<char *>(out_buf.data()));
     return std::move(base64_value);
 }
 
@@ -80,8 +79,5 @@ size_t afv_native::util::Base64Decode(const string &base64_in, unsigned char *bu
         if (Base64DecodeLen(input_len) > len) {
             input_len = (len / 3) * 4;
     }
-    return EVP_DecodeBlock(buffer_out,
-                           reinterpret_cast<const unsigned char *>(
-                               base64_in.c_str()),
-                           input_len);
+    return EVP_DecodeBlock(buffer_out, reinterpret_cast<const unsigned char *>(base64_in.c_str()), input_len);
 }

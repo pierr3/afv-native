@@ -60,20 +60,18 @@ static void defaultLogger(std::string subsystem, std::string file, int line, std
     }
         if (nullptr != gLoggerFh) {
 #ifdef NDEBUG
-            fprintf(gLoggerFh, "%s: %s: %s\n", dateTimeBuf,
-                    subsystem.c_str(), outputLine.c_str());
+            fprintf(gLoggerFh, "%s: %s: %s\n", dateTimeBuf, subsystem.c_str(), outputLine.c_str());
 #else
-            fprintf(gLoggerFh, "%s: %s: %s(%d): %s\n", dateTimeBuf,
-                    subsystem.c_str(), file.c_str(), line,
+            fprintf(gLoggerFh, "%s: %s: %s(%d): %s\n", dateTimeBuf, subsystem.c_str(), file.c_str(), line,
                     outputLine.c_str());
 #endif
             fflush(gLoggerFh);
     }
 }
 
-static afv_native::log_fn legacyLogger = nullptr;
-static afv_native::modern_log_fn gLogger = defaultLogger;
-static std::mutex gLoggerLock;
+static afv_native::log_fn        legacyLogger = nullptr;
+static afv_native::modern_log_fn gLogger      = defaultLogger;
+static std::mutex                gLoggerLock;
 
 void afv_native::__Log(const char *file, int line, const char *subsystem, const char *format, ...) {
         if (gLogger == nullptr) {
@@ -98,8 +96,7 @@ void afv_native::__Log(const char *file, int line, const char *subsystem, const 
 
 void afv_native::setLegacyLogger(afv_native::log_fn newLogger) {
     gLogger = [&newLogger](std::string subsystem, std::string file, int line, std::string lineOut) {
-        newLogger(subsystem.c_str(), file.c_str(), line,
-                  lineOut.c_str());
+        newLogger(subsystem.c_str(), file.c_str(), line, lineOut.c_str());
     };
 }
 
@@ -124,8 +121,7 @@ void afv_native::__Dumphex(const char *file, int line, const char *subsystem, co
             {
                 std::lock_guard<std::mutex> logLock(gLoggerLock);
 
-                gLogger(subsystem, file, line,
-                        lineout.str());
+                gLogger(subsystem, file, line, lineout.str());
             }
         }
 }

@@ -37,20 +37,18 @@
 #include <cstdint>
 #include <msgpack.hpp>
 
-namespace afv_native { namespace afv {
-    namespace dto {
-        class TxTransceiver {
-          public:
-            TxTransceiver() = default;
+namespace afv_native { namespace afv { namespace dto {
+    class TxTransceiver {
+      public:
+        TxTransceiver() = default;
 
-            explicit TxTransceiver(uint16_t newID):
-                ID(newID) {
-            }
+        explicit TxTransceiver(uint16_t newID): ID(newID) {
+        }
 
-            uint16_t ID;
+        uint16_t ID;
 
-            MSGPACK_DEFINE_ARRAY(ID);
-        };
+        MSGPACK_DEFINE_ARRAY(ID);
+    };
 }}} // namespace afv_native::afv::dto
 
 #endif // AFV_NATIVE_TXTRANSCEIVER_H

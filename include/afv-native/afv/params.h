@@ -39,9 +39,9 @@
 namespace afv_native { namespace afv {
     const std::string NetworkVersion = "3a5ddc6d-cf5d-4319-bd0e-d184f772db80";
 
-    const unsigned afvHeartbeatIntervalMs = 3000;
-    const unsigned afvHeartbeatTimeoutMs  = 10000;
-    const unsigned afvTransceiverUpdateIntervalMs = 20000;
+    const unsigned afvHeartbeatIntervalMs            = 3000;
+    const unsigned afvHeartbeatTimeoutMs             = 10000;
+    const unsigned afvTransceiverUpdateIntervalMs    = 20000;
     const unsigned afvATCTransceiverUpdateIntervalMs = 60000;
 
 }} // namespace afv_native::afv

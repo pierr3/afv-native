@@ -37,8 +37,7 @@
 using namespace afv_native::cryptodto::dto;
 using namespace afv_native::cryptodto;
 
-Header::Header():
-    ChannelTag(), Sequence(0), Mode(CryptoModeUndefined) {
+Header::Header(): ChannelTag(), Sequence(0), Mode(CryptoModeUndefined) {
 }
 
 Header::Header(std::string channelTag, uint64_t sequence, CryptoDtoMode mode):

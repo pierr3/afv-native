@@ -36,12 +36,11 @@
 
 #include <string>
 
-namespace afv_native { namespace afv {
-    namespace dto {
-        class IAudioDirect {
-          public:
-            std::string ToCallsign;
-        };
+namespace afv_native { namespace afv { namespace dto {
+    class IAudioDirect {
+      public:
+        std::string ToCallsign;
+    };
 }}} // namespace afv_native::afv::dto
 
 #endif // AFV_NATIVE_IAUDIODIRECT_H
