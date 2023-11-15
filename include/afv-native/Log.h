@@ -49,7 +49,9 @@ namespace afv_native {
     typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
 
     void __Log(const char *file, int line, const char *subsystem, const char *format, ...);
-    void setLogger(afv_native::log_fn newLogger);
+    void setLegacyLogger(afv_native::log_fn newLogger);
+    void setLogger(std::function<void(std::string subsystem, std::string file,
+                                       int line, std::string lineOut)> newLogger);
     void __Dumphex(const char *file, int line, const char *subsystem, const void *buf, size_t len);
 }
 

@@ -7,13 +7,16 @@
 #include <functional>
 #include "hardwareType.h"
 
-namespace afv_native::api {
+namespace afv_native {
+    typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
+}
 
+namespace afv_native::api {
     //
     // Logger
     //
-    typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
-    AFV_NATIVE_API static void setLogger(afv_native::api::log_fn gLogger);
+    
+    AFV_NATIVE_API static void setLogger(std::function<void(std::string subsystem, std::string file, int line, std::string lineOut)> gLogger);
 
     class atcClient {
 
@@ -106,6 +109,7 @@ namespace afv_native::api {
             //
             // Deprecated functions
             //
-            AFV_NATIVE_DEPRECATED static void setLogger(afv_native::api::log_fn gLogger);
+            [[deprecated("Use modern afv_native::api::setLogger() instead")]]
+            AFV_NATIVE_DEPRECATED static void setLogger(afv_native::log_fn gLogger);
     };
 }

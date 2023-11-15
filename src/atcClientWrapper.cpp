@@ -43,10 +43,10 @@ std::atomic<bool> requestLoopExit{false};
 using namespace atcapi;
 
 void afv_native::api::atcClient::setLogger(afv_native::log_fn gLogger) {
-  afv_native::setLogger(gLogger);
+  afv_native::setLegacyLogger(gLogger);
 }
 
-void afv_native::api::setLogger(afv_native::log_fn gLogger) {
+void afv_native::api::setLogger(std::function<void(std::string subsystem, std::string file, int line, std::string lineOut)> gLogger) {
   afv_native::setLogger(gLogger);
 }
 
