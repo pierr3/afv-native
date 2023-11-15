@@ -29,21 +29,19 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_IFILTER_H
 #define AFV_NATIVE_IFILTER_H
 
 #include <afv-native/audio/audio_params.h>
 
-namespace afv_native {
-    namespace audio {
-        class IFilter {
-        public:
-            virtual SampleType TransformOne(SampleType sampleIn) = 0;
-            virtual ~IFilter() = default;
-        };
-    }
-}
+namespace afv_native { namespace audio {
+    class IFilter {
+      public:
+        virtual SampleType TransformOne(SampleType sampleIn) = 0;
+        virtual ~IFilter() = default;
+    };
+}} // namespace afv_native::audio
 
-#endif //AFV_NATIVE_IFILTER_H
+#endif // AFV_NATIVE_IFILTER_H

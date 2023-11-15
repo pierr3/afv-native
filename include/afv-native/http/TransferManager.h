@@ -29,76 +29,72 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_TRANSFERMANAGER_H
 #define AFV_NATIVE_TRANSFERMANAGER_H
 
-#include <unordered_map>
-#include <memory>
 #include <curl/curl.h>
+#include <memory>
+#include <unordered_map>
 
-namespace afv_native {
-    namespace http {
+namespace afv_native { namespace http {
 
-        class Request;
+    class Request;
 
-        /** TransferManager manages all of the running HTTP/HTTPS transfers, making sure
-         * completion notifications get fired, etc - and generally keeping things
-         * running without blocking the thread.  It also keeps SSL session and
-         * cookie data to share between requests.
+    /** TransferManager manages all of the running HTTP/HTTPS transfers, making sure
+     * completion notifications get fired, etc - and generally keeping things
+     * running without blocking the thread.  It also keeps SSL session and
+     * cookie data to share between requests.
+     */
+    class TransferManager {
+      protected:
+        CURLM  *mCurlMultiHandle;
+        CURLSH *mCurlShareHandle;
+
+        std::unordered_map<CURL *, Request *> mPendingTransfers;
+
+        /** processPendingMultiEvents triggers a reconcilation of any outstanding
+         * completion notifications from curl and notifies the request objects
+         * that their transfers are finished.
          */
-        class TransferManager {
-        protected:
-            CURLM *mCurlMultiHandle;
-            CURLSH *mCurlShareHandle;
+        void processPendingMultiEvents();
 
-            std::unordered_map<CURL *, Request *> mPendingTransfers;
+      public:
+        TransferManager();
 
-            /** processPendingMultiEvents triggers a reconcilation of any outstanding
-             * completion notifications from curl and notifies the request objects
-             * that their transfers are finished.
-             */
-            void processPendingMultiEvents();
+        /* no copy constructor - TransferManger must not be copied as it would break the internal states. */
+        TransferManager(const TransferManager &cpysrc) = delete;
 
-        public:
-            TransferManager();
+        /** Joins a Request to the shared state carried by this TransferManager.
+         *
+         * @param req the Request object to join to the shared state.
+         */
+        [[deprecated("Use the shareState method on Request instead")]] void AddToSession(Request *req) const;
 
-            /* no copy constructor - TransferManger must not be copied as it would break the internal states. */
-            TransferManager(const TransferManager &cpysrc) = delete;
+        void registerForAsyncCallback(Request &req);
+        void removeAsyncCallback(Request &req);
 
-            /** Joins a Request to the shared state carried by this TransferManager.
-             *
-             * @param req the Request object to join to the shared state.
-             */
-            [[deprecated("Use the shareState method on Request instead")]]
-            void AddToSession(Request *req) const;
+        /** Schedules a Request to be processed asynchronously by this
+         * TransferManager.  Once you call this method on a Request object,
+         * you must not invoke it's local doSync() method.
+         *
+         * @param req The Request object to process
+         */
+        [[deprecated("Use the doAsync method on Request instead")]] virtual void HandleRequest(Request *req);
 
-            void registerForAsyncCallback(Request &req);
-            void removeAsyncCallback(Request &req);
+        virtual ~TransferManager();
 
-            /** Schedules a Request to be processed asynchronously by this
-             * TransferManager.  Once you call this method on a Request object,
-             * you must not invoke it's local doSync() method.
-             *
-             * @param req The Request object to process
-             */
-            [[deprecated("Use the doAsync method on Request instead")]]
-            virtual void HandleRequest(Request *req);
+        /** Process any outstanding events without blocking. */
+        virtual void process();
 
-            virtual ~TransferManager();
-
-            /** Process any outstanding events without blocking. */
-            virtual void process();
-
-            /** Return the internal CURLM handle
-             *
-             * @note This is not guaranteed to be available in the future.
-             *
-             * @return the internal CURLM handle
-             */
-            CURLM *getCurlMultiHandle() const;
-        };
-    }
-}
-#endif //AFV_NATIVE_TRANSFERMANAGER_H
+        /** Return the internal CURLM handle
+         *
+         * @note This is not guaranteed to be available in the future.
+         *
+         * @return the internal CURLM handle
+         */
+        CURLM *getCurlMultiHandle() const;
+    };
+}}     // namespace afv_native::http
+#endif // AFV_NATIVE_TRANSFERMANAGER_H

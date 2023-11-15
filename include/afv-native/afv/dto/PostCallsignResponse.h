@@ -29,37 +29,32 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_POSTCALLSIGNRESPONSE_H
 #define AFV_NATIVE_POSTCALLSIGNRESPONSE_H
 
-
-#include <string>
+#include "afv-native/afv/dto/VoiceServerConnectionData.h"
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
+#include <string>
 
-#include "afv-native/afv/dto/VoiceServerConnectionData.h"
+namespace afv_native { namespace afv {
+    namespace dto {
+        class PostCallsignResponse {
+          public:
+            PostCallsignResponse();
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class PostCallsignResponse {
-            public:
-                PostCallsignResponse();
+            PostCallsignResponse(const PostCallsignResponse &cpysrc);
 
-                PostCallsignResponse(const PostCallsignResponse &cpysrc);
+            PostCallsignResponse(PostCallsignResponse &&movesrc) noexcept;
 
-                PostCallsignResponse(PostCallsignResponse &&movesrc) noexcept;
+            VoiceServerConnectionData VoiceServer;
+        };
 
-                VoiceServerConnectionData VoiceServer;
-            };
+        void from_json(const nlohmann::json &j, PostCallsignResponse &ar);
 
-            void from_json(const nlohmann::json &j, PostCallsignResponse &ar);
+        void to_json(nlohmann::json &j, const PostCallsignResponse &ar);
+}}} // namespace afv_native::afv::dto
 
-            void to_json(nlohmann::json &j, const PostCallsignResponse &ar);
-        }
-    }
-}
-
-#endif //AFV_NATIVE_POSTCALLSIGNRESPONSE_H
+#endif // AFV_NATIVE_POSTCALLSIGNRESPONSE_H

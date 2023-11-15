@@ -29,48 +29,38 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/event/EventTimer.h"
 
 using namespace afv_native::event;
 
-void EventTimer::evCallback(evutil_socket_t fd, short events, void *arg)
-{
+void EventTimer::evCallback(evutil_socket_t fd, short events, void *arg) {
     auto *eventObj = reinterpret_cast<EventTimer *>(arg);
     eventObj->triggered();
 }
 
-EventTimer::EventTimer(struct event_base *evBase)
-{
+EventTimer::EventTimer(struct event_base *evBase) {
     mEvent = event_new(evBase,
-            -1, // fd
-            0, // event flags
-            EventTimer::evCallback,
-            this);
+                       -1, // fd
+                       0,  // event flags
+                       EventTimer::evCallback, this);
 }
 
-EventTimer::~EventTimer()
-{
+EventTimer::~EventTimer() {
     event_del(mEvent);
     event_free(mEvent);
 }
 
-bool EventTimer::pending()
-{
+bool EventTimer::pending() {
     return event_pending(mEvent, EV_TIMEOUT, nullptr);
 }
 
-void EventTimer::enable(unsigned int delayMs)
-{
-    struct timeval timeout = {
-            static_cast<int>(delayMs)/1000,
-            static_cast<int>(delayMs%1000)*1000
-    };
+void EventTimer::enable(unsigned int delayMs) {
+    struct timeval timeout = {static_cast<int>(delayMs) / 1000, static_cast<int>(delayMs % 1000) * 1000};
     event_add(mEvent, &timeout);
 }
 
-void EventTimer::disable()
-{
+void EventTimer::disable() {
     event_del(mEvent);
 }

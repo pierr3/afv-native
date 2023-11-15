@@ -29,33 +29,29 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_SINKFRAMESIZEADJUSTER_H
 #define AFV_NATIVE_SINKFRAMESIZEADJUSTER_H
 
-#include <memory>
-#include <cstdint>
-
 #include "afv-native/audio/ISampleSink.h"
+#include <cstdint>
+#include <memory>
 
-namespace afv_native {
-    namespace audio {
-        class SinkFrameSizeAdjuster: public ISampleSink {
-        protected:
-            std::shared_ptr<ISampleSink> mDestinationSink;
-            const unsigned int mSourceFrameSize;
+namespace afv_native { namespace audio {
+    class SinkFrameSizeAdjuster: public ISampleSink {
+      protected:
+        std::shared_ptr<ISampleSink> mDestinationSink;
+        const unsigned int mSourceFrameSize;
 
-            size_t mSinkBufferOffset;
-            SampleType *mSinkBuffer;
-        public:
-            SinkFrameSizeAdjuster(std::shared_ptr<ISampleSink> destSink, unsigned int sinkFrameSize);
-            virtual ~SinkFrameSizeAdjuster();
-            void putAudioFrame(const SampleType *bufferIn) override;
+        size_t      mSinkBufferOffset;
+        SampleType *mSinkBuffer;
 
-        };
-    }
-}
+      public:
+        SinkFrameSizeAdjuster(std::shared_ptr<ISampleSink> destSink, unsigned int sinkFrameSize);
+        virtual ~SinkFrameSizeAdjuster();
+        void putAudioFrame(const SampleType *bufferIn) override;
+    };
+}} // namespace afv_native::audio
 
-
-#endif //AFV_NATIVE_SINKFRAMESIZEADJUSTER_H
+#endif // AFV_NATIVE_SINKFRAMESIZEADJUSTER_H

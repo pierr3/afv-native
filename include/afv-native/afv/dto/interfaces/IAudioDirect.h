@@ -29,22 +29,19 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_IAUDIODIRECT_H
 #define AFV_NATIVE_IAUDIODIRECT_H
 
 #include <string>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class IAudioDirect {
-            public:
-                std::string ToCallsign;
-            };
-        }
-    }
-}
+namespace afv_native { namespace afv {
+    namespace dto {
+        class IAudioDirect {
+          public:
+            std::string ToCallsign;
+        };
+}}} // namespace afv_native::afv::dto
 
-#endif //AFV_NATIVE_IAUDIODIRECT_H
+#endif // AFV_NATIVE_IAUDIODIRECT_H

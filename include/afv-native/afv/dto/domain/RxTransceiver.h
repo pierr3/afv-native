@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_RXTRANSCEIVER_H
 #define AFV_NATIVE_RXTRANSCEIVER_H
@@ -37,20 +37,17 @@
 #include <cstdint>
 #include <msgpack.hpp>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class RxTransceiver {
-            public:
-                RxTransceiver() = default;
+namespace afv_native { namespace afv {
+    namespace dto {
+        class RxTransceiver {
+          public:
+            RxTransceiver() = default;
 
-                uint16_t ID;
-                uint32_t Frequency; // in Hz.
-                float DistanceRatio; // 0.0-1.0, with 0.1 on the edge of reception range.
+            uint16_t ID;
+            uint32_t Frequency;  // in Hz.
+            float DistanceRatio; // 0.0-1.0, with 0.1 on the edge of reception range.
 
-                MSGPACK_DEFINE_ARRAY(ID, Frequency, DistanceRatio);
-            };
-        }
-    }
-}
-#endif //AFV_NATIVE_RXTRANSCEIVER_H
+            MSGPACK_DEFINE_ARRAY(ID, Frequency, DistanceRatio);
+        };
+}}}    // namespace afv_native::afv::dto
+#endif // AFV_NATIVE_RXTRANSCEIVER_H

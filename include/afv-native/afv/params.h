@@ -29,23 +29,21 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_PARAMS_H
 #define AFV_NATIVE_PARAMS_H
 
 #include <string>
 
-namespace afv_native {
-    namespace afv {
-        const std::string NetworkVersion = "3a5ddc6d-cf5d-4319-bd0e-d184f772db80";
+namespace afv_native { namespace afv {
+    const std::string NetworkVersion = "3a5ddc6d-cf5d-4319-bd0e-d184f772db80";
 
-        const unsigned afvHeartbeatIntervalMs = 3000;
-        const unsigned afvHeartbeatTimeoutMs = 10000;
-        const unsigned afvTransceiverUpdateIntervalMs = 20000;
-        const unsigned afvATCTransceiverUpdateIntervalMs = 60000;
-    
-    }
-}
+    const unsigned afvHeartbeatIntervalMs = 3000;
+    const unsigned afvHeartbeatTimeoutMs  = 10000;
+    const unsigned afvTransceiverUpdateIntervalMs = 20000;
+    const unsigned afvATCTransceiverUpdateIntervalMs = 60000;
 
-#endif //AFV_NATIVE_PARAMS_H
+}} // namespace afv_native::afv
+
+#endif // AFV_NATIVE_PARAMS_H

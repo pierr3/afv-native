@@ -29,15 +29,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/cryptodto/dto/ChannelConfig.h"
-
-#include <algorithm>
-#include <nlohmann/json.hpp>
-
 #include <afv-native/cryptodto/params.h>
 #include <afv-native/util/base64.h>
+#include <algorithm>
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 using namespace std;
@@ -46,69 +44,60 @@ using namespace afv_native::cryptodto;
 using namespace afv_native::util;
 
 ChannelConfig::ChannelConfig():
-    ChannelTag(),
-    HmacKey()
-{
+    ChannelTag(), HmacKey() {
     memset(AeadTransmitKey, 0, aeadModeKeySize);
     memset(AeadReceiveKey, 0, aeadModeKeySize);
 }
 
 ChannelConfig::ChannelConfig(const ChannelConfig &cpysrc):
-    ChannelTag(cpysrc.ChannelTag),
-    HmacKey(cpysrc.HmacKey)
-{
+    ChannelTag(cpysrc.ChannelTag), HmacKey(cpysrc.HmacKey) {
     memcpy(AeadTransmitKey, cpysrc.AeadTransmitKey, aeadModeKeySize);
     memcpy(AeadReceiveKey, cpysrc.AeadReceiveKey, aeadModeKeySize);
 }
 
 ChannelConfig::ChannelConfig(ChannelConfig &&movesrc) noexcept:
     ChannelTag(std::move(movesrc.ChannelTag)),
-    HmacKey(std::move(movesrc.HmacKey))
-{
+    HmacKey(std::move(movesrc.HmacKey)) {
     memcpy(AeadTransmitKey, movesrc.AeadTransmitKey, aeadModeKeySize);
     memcpy(AeadReceiveKey, movesrc.AeadReceiveKey, aeadModeKeySize);
 }
 
-static void
-setKey(unsigned char *key, const string &base64_key, size_t outputSize)
-{
+static void setKey(unsigned char *key, const string &base64_key, size_t outputSize) {
     size_t input_limit = 4 * ((outputSize + 2) / 3);
     std::string key_copy;
-    if (base64_key.length() > input_limit) {
-        key_copy = base64_key.substr(0, input_limit);
-    } else {
-        key_copy = base64_key;
-    }
+        if (base64_key.length() > input_limit) {
+            key_copy = base64_key.substr(0, input_limit);
+        } else {
+            key_copy = base64_key;
+        }
 
-    const size_t key_buffer_len = Base64DecodeLen(key_copy.length());
+    const size_t key_buffer_len =
+        Base64DecodeLen(key_copy.length());
     std::vector<unsigned char> key_buffer(key_buffer_len);
-    size_t final_len = Base64Decode(key_copy, key_buffer.data(), key_buffer_len);
+    size_t final_len =
+        Base64Decode(key_copy, key_buffer.data(), key_buffer_len);
     ::memcpy(key, key_buffer.data(), min(final_len, outputSize));
 }
 
-void
-afv_native::cryptodto::dto::to_json(json &j, const ChannelConfig &cc)
-{
+void afv_native::cryptodto::dto::to_json(json &j, const ChannelConfig &cc) {
     auto receiveKey = Base64Encode(cc.AeadReceiveKey, aeadModeKeySize);
     auto transmitKey = Base64Encode(cc.AeadTransmitKey, aeadModeKeySize);
-    j = json{
-        {"channelTag",      cc.ChannelTag},
-        {"aeadReceiveKey",  receiveKey},
+    j = json {
+        {"channelTag", cc.ChannelTag},
+        {"aeadReceiveKey", receiveKey},
         {"aeadTransmitKey", transmitKey},
-        {"hmacKey",         nullptr},
+        {"hmacKey", nullptr},
     };
 }
 
-void
-afv_native::cryptodto::dto::from_json(const json &j, ChannelConfig &cc)
-{
+void afv_native::cryptodto::dto::from_json(const json &j, ChannelConfig &cc) {
     std::string receiveKeyB64;
     std::string transmitKeyB64;
 
     j.at("channelTag").get_to(cc.ChannelTag);
     j.at("aeadReceiveKey").get_to(receiveKeyB64);
     j.at("aeadTransmitKey").get_to(transmitKeyB64);
-    //j.at("hmacKey").get_to(cc.HmacKey);
+    // j.at("hmacKey").get_to(cc.HmacKey);
     setKey(cc.AeadReceiveKey, receiveKeyB64, aeadModeKeySize);
     setKey(cc.AeadTransmitKey, transmitKeyB64, aeadModeKeySize);
 };

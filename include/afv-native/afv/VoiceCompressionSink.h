@@ -29,40 +29,37 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_VOICECOMPRESSIONSINK_H
 #define AFV_NATIVE_VOICECOMPRESSIONSINK_H
 
+#include "afv-native/audio/ISampleSink.h"
 #include <opus/opus.h>
 #include <vector>
 
-#include "afv-native/audio/ISampleSink.h"
+namespace afv_native { namespace afv {
+    class ICompressedFrameSink {
+      public:
+        virtual void processCompressedFrame(std::vector<unsigned char> compressedData) = 0;
+    };
 
-namespace afv_native {
-    namespace afv {
-        class ICompressedFrameSink {
-        public:
-            virtual void processCompressedFrame(std::vector<unsigned char> compressedData) = 0;
-        };
+    /** VoiceCompressionSink is an SampleSink that accepts samples from an origin and
+     * encodes them via opus, and hands them to the next layer in the mess.
+     */
+    class VoiceCompressionSink: public audio::ISampleSink {
+      protected:
+        OpusEncoder *mEncoder;
+        ICompressedFrameSink &mCompressedFrameSink;
 
-        /** VoiceCompressionSink is an SampleSink that accepts samples from an origin and
-         * encodes them via opus, and hands them to the next layer in the mess.
-         */
-        class VoiceCompressionSink: public audio::ISampleSink {
-        protected:
-            OpusEncoder *mEncoder;
-            ICompressedFrameSink &mCompressedFrameSink;
-        public:
-            VoiceCompressionSink(ICompressedFrameSink &sink);
-            virtual ~VoiceCompressionSink();
-            int open();
-            void close();
-            void reset();
-            void putAudioFrame(const audio::SampleType *bufferIn) override;
-        };
-    }
-}
+      public:
+        VoiceCompressionSink(ICompressedFrameSink &sink);
+        virtual ~VoiceCompressionSink();
+        int  open();
+        void close();
+        void reset();
+        void putAudioFrame(const audio::SampleType *bufferIn) override;
+    };
+}} // namespace afv_native::afv
 
-
-#endif //AFV_NATIVE_VOICECOMPRESSIONSINK_H
+#endif // AFV_NATIVE_VOICECOMPRESSIONSINK_H

@@ -29,10 +29,9 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/afv/EffectResources.h"
-
 #include "afv-native/audio/WavFile.h"
 #include "afv-native/audio/WavSampleStorage.h"
 
@@ -40,31 +39,26 @@ using namespace afv_native;
 using namespace afv_native::afv;
 using namespace std;
 
-static audio::AudioSampleData *
-_load(const std::string &file_path)
-{
+static audio::AudioSampleData *_load(const std::string &file_path) {
     return audio::LoadWav(file_path.c_str());
 }
 
-static shared_ptr<audio::WavSampleStorage>
-try_load(const std::string &file)
-{
+static shared_ptr<audio::WavSampleStorage> try_load(const std::string &file) {
     auto *audData = _load(file);
-    if (nullptr == audData) {
-        return shared_ptr<audio::WavSampleStorage>(nullptr);
+        if (nullptr == audData) {
+            return shared_ptr<audio::WavSampleStorage>(nullptr);
     }
     auto result = make_shared<audio::WavSampleStorage>(*audData);
-    
-    //ME: Fix Leak
+
+    // ME: Fix Leak
     delete audData;
-    
+
     return result;
 }
 
-EffectResources::EffectResources(const string &file_path)
-{
-    mClick = try_load(file_path+"/Click_f32.wav");
-    mCrackle = try_load(file_path+"/Crackle_f32.wav");
+EffectResources::EffectResources(const string &file_path) {
+    mClick = try_load(file_path + "/Click_f32.wav");
+    mCrackle = try_load(file_path + "/Crackle_f32.wav");
     mAcBus = try_load(file_path + "/AC_Bus_f32.wav");
     mVhfWhiteNoise = try_load(file_path + "/WhiteNoise_f32.wav");
     mHfWhiteNoise = try_load(file_path + "/HF_WhiteNoise_f32.wav");

@@ -29,32 +29,30 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_CLIENT_H
 #define AFV_NATIVE_CLIENT_H
 
-#include "afv-native/afv/RadioSimulation.h"
-
-#include <memory>
-#include <event2/event.h>
-
-#include "afv-native/event.h"
 #include "afv-native/afv/APISession.h"
 #include "afv-native/afv/EffectResources.h"
+#include "afv-native/afv/RadioSimulation.h"
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
+#include "afv-native/event.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/http/EventTransferManager.h"
 #include "afv-native/http/RESTRequest.h"
+#include <event2/event.h>
+#include <memory>
 
 namespace afv_native {
     /** Client provides a fully functional PilotClient that can be integrated into
      * an application.
      */
     class Client {
-    public:
+      public:
         /** Construct an AFV-native Pilot Client.
          *
          * The pilot client will be in the disconnected state and ready to have
@@ -78,12 +76,7 @@ namespace afv_native {
          * @param clientName The name of this client to advertise to the
          *      audio-subsystem.
          */
-        Client(
-                struct event_base *evBase,
-                const std::string &resourceBasePath,
-                unsigned int numRadios = 2,
-                const std::string &clientName = "AFV-Native",
-                std::string baseUrl = "https://voice1.vatsim.uk");
+        Client(struct event_base *evBase, const std::string &resourceBasePath, unsigned int numRadios = 2, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.uk");
 
         virtual ~Client();
 
@@ -203,7 +196,7 @@ namespace afv_native {
          * The second argument is a pointer to data relevant to the callback.  The memory it points to is only
          * guaranteed to be available for the duration of the callback.
          */
-        util::ChainedCallback<void(ClientEventType,void*)>  ClientEventCallback;
+        util::ChainedCallback<void(ClientEventType, void *)> ClientEventCallback;
 
         /** getStationAliases returns a vector of all the known station aliases.
          *
@@ -240,7 +233,7 @@ namespace afv_native {
          */
         bool getTxActive(unsigned int radioNumber);
 
-    protected:
+      protected:
         struct ClientRadioState {
             int mCurrentFreq;
             int mNextFreq;
@@ -250,7 +243,7 @@ namespace afv_native {
         std::shared_ptr<afv::EffectResources> mFxRes;
 
         http::EventTransferManager mTransferManager;
-        afv::APISession mAPISession;
+        afv::APISession   mAPISession;
         afv::VoiceSession mVoiceSession;
         std::shared_ptr<afv::RadioSimulation> mRadioSim;
         std::shared_ptr<audio::AudioDevice> mAudioDevice;
@@ -283,17 +276,20 @@ namespace afv_native {
         void stopTransceiverUpdate();
 
         void aliasUpdateCallback();
-    private:
+
+      private:
         void unguardPtt();
-    protected:
+
+      protected:
         event::EventCallbackTimer mTransceiverUpdateTimer;
 
-        std::string mClientName;
+        std::string             mClientName;
         audio::AudioDevice::Api mAudioApi;
         std::string mAudioInputDeviceName;
         std::string mAudioOutputDeviceName;
-    public:
-    };
-}
 
-#endif //AFV_NATIVE_CLIENT_H
+      public:
+    };
+} // namespace afv_native
+
+#endif // AFV_NATIVE_CLIENT_H

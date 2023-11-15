@@ -29,48 +29,43 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_CHAINEDCALLBACK_H
 #define AFV_NATIVE_CHAINEDCALLBACK_H
 
-#include <unordered_map>
 #include <functional>
+#include <unordered_map>
 
-namespace afv_native {
-    namespace util {
+namespace afv_native { namespace util {
 
-        template<class>
-        class ChainedCallback;
+    template <class>
+    class ChainedCallback;
 
-        /** ChainedCallback provides a way to template no-return-value callbacks
-         * with a owner-reference for safe cleanup in complex class heirachies.
-         *
-         * @tparam Args the argument list for the callback function.
-         */
-        template<class... Args>
-        class ChainedCallback<void(Args...)> {
-            std::unordered_map<void *, std::function<void(Args...)> > mCallbacks;
-        public:
-            ChainedCallback():
-                    mCallbacks()
-            {
-            }
+    /** ChainedCallback provides a way to template no-return-value callbacks
+     * with a owner-reference for safe cleanup in complex class heirachies.
+     *
+     * @tparam Args the argument list for the callback function.
+     */
+    template <class... Args>
+    class ChainedCallback<void(Args...)> {
+        std::unordered_map<void *, std::function<void(Args...)>> mCallbacks;
 
-            virtual ~ChainedCallback() = default;
+      public:
+        ChainedCallback(): mCallbacks() {
+        }
 
-            void addCallback(void *ref, std::function<void(Args...)> fp)
-            {
-                mCallbacks[ref] = fp;
-            }
+        virtual ~ChainedCallback() = default;
 
-            void removeCallback(void *ref)
-            {
-                mCallbacks.erase(ref);
-            }
+        void addCallback(void *ref, std::function<void(Args...)> fp) {
+            mCallbacks[ref] = fp;
+        }
 
-            void invokeAll(Args... args)
-            {
+        void removeCallback(void *ref) {
+            mCallbacks.erase(ref);
+        }
+
+        void invokeAll(Args... args) {
                 for (auto &f: mCallbacks) {
 #ifdef __GNUC__
                     std::__invoke(f.second, std::forward<Args>(args)...);
@@ -78,10 +73,8 @@ namespace afv_native {
                     std::invoke(f.second, std::forward<Args>(args)...);
 #endif
                 }
-            }
-        };
-    }
-}
+        }
+    };
+}} // namespace afv_native::util
 
-
-#endif //AFV_NATIVE_CHAINEDCALLBACK_H
+#endif // AFV_NATIVE_CHAINEDCALLBACK_H

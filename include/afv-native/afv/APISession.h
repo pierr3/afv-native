@@ -29,107 +29,103 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_APISESSION_H
 #define AFV_NATIVE_APISESSION_H
 
-#include <string>
-#include <memory>
-#include <event2/event.h>
-#include <map>
-
 #include "afv-native/afv/dto/Station.h"
 #include "afv-native/afv/dto/StationTransceiver.h"
-#include "afv-native/http/TransferManager.h"
-#include "afv-native/http/Request.h"
-#include "afv-native/http/RESTRequest.h"
-#include "afv-native/util/ChainedCallback.h"
-#include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/event.h"
+#include "afv-native/event/EventCallbackTimer.h"
+#include "afv-native/http/RESTRequest.h"
+#include "afv-native/http/Request.h"
+#include "afv-native/http/TransferManager.h"
+#include "afv-native/util/ChainedCallback.h"
+#include <event2/event.h>
+#include <map>
+#include <memory>
+#include <string>
 
-namespace afv_native
-{
-    namespace afv
-    {
-        class VoiceSession;
+namespace afv_native { namespace afv {
+    class VoiceSession;
 
-        class APISession
-        {
-        public:
-            APISession(event_base* evBase, http::TransferManager& tm, std::string baseUrl, std::string clientName);
+    class APISession {
+      public:
+        APISession(event_base *evBase, http::TransferManager &tm, std::string baseUrl, std::string clientName);
 
-            const std::string& getUsername() const;
+        const std::string &getUsername() const;
 
-            void setUsername(const std::string& username);
+        void setUsername(const std::string &username);
 
-            void setPassword(const std::string& password);
+        void setPassword(const std::string &password);
 
-            void setAuthenticationFor(http::Request& r);
+        void setAuthenticationFor(http::Request &r);
 
-            http::TransferManager& getTransferManager() const;
+        http::TransferManager &getTransferManager() const;
 
-            struct event_base* getEventBase() const;
+        struct event_base *getEventBase() const;
 
-            APISessionState getState() const;
+        APISessionState getState() const;
 
-            const std::string& getBaseUrl() const;
-            void setBaseUrl(std::string newUrl);
+        const std::string &getBaseUrl() const;
+        void setBaseUrl(std::string newUrl);
 
-            void Connect();
-            void Disconnect();
+        void Connect();
+        void Disconnect();
 
-            APISessionError getLastError() const;
+        APISessionError getLastError() const;
 
-            void updateStationAliases();
-            void requestStationTransceivers(std::string stationName);
-            void requestStationVccs(std::string stationName);
-            void getStation(std::string stationName);
-            std::vector<dto::Station> getStationAliases() const;
-			std::map<std::string, std::vector<dto::StationTransceiver>> getStationTransceivers() const;
+        void updateStationAliases();
+        void requestStationTransceivers(std::string stationName);
+        void requestStationVccs(std::string stationName);
+        void getStation(std::string stationName);
+        std::vector<dto::Station> getStationAliases() const;
+        std::map<std::string, std::vector<dto::StationTransceiver>> getStationTransceivers() const;
 
-            /** Callbacks registered against StateCallback will be called whenever
-             * the APISession changes state.
-            */
-            util::ChainedCallback<void(APISessionState)> StateCallback;
-            util::ChainedCallback<void(void)> AliasUpdateCallback;
-			util::ChainedCallback<void(std::string)> StationTransceiversUpdateCallback;
-            util::ChainedCallback<void(std::string, std::map<std::string, unsigned int>)> StationVccsCallback;
-            util::ChainedCallback<void(bool, std::pair<std::string, unsigned int>)> StationSearchCallback;
-        protected:
-            void _authenticationCallback(http::RESTRequest* req, bool success);
-            void _stationsCallback(http::RESTRequest* req, bool success);
-			void _stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName);
-            void _stationVccsCallback(http::RESTRequest* req, bool success, std::string stationName);
-            void _getStationCallback(http::RESTRequest* req, bool success, std::string stationName);
-            void setState(APISessionState newState);
-            void raiseError(APISessionError error);
+        /** Callbacks registered against StateCallback will be called whenever
+         * the APISession changes state.
+         */
+        util::ChainedCallback<void(APISessionState)> StateCallback;
+        util::ChainedCallback<void(void)> AliasUpdateCallback;
+        util::ChainedCallback<void(std::string)> StationTransceiversUpdateCallback;
+        util::ChainedCallback<void(std::string, std::map<std::string, unsigned int>)> StationVccsCallback;
+        util::ChainedCallback<void(bool, std::pair<std::string, unsigned int>)> StationSearchCallback;
 
-            struct event_base* mEvBase;
-            http::TransferManager& mTransferManager;
-            std::string mBaseURL;
-            std::string mUsername;
-            std::string mPassword;
-            std::string mClientName;
+      protected:
+        void _authenticationCallback(http::RESTRequest *req, bool success);
+        void _stationsCallback(http::RESTRequest *req, bool success);
+        void _stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName);
+        void _stationVccsCallback(http::RESTRequest *req, bool success, std::string stationName);
+        void _getStationCallback(http::RESTRequest *req, bool success, std::string stationName);
+        void setState(APISessionState newState);
+        void raiseError(APISessionError error);
 
-            std::string mBearerToken;
+        struct event_base     *mEvBase;
+        http::TransferManager &mTransferManager;
+        std::string            mBaseURL;
+        std::string            mUsername;
+        std::string            mPassword;
+        std::string            mClientName;
 
-            http::RESTRequest mAuthenticationRequest;
+        std::string mBearerToken;
 
-            event::EventCallbackTimer mRefreshTokenTimer;
+        http::RESTRequest mAuthenticationRequest;
 
-            APISessionError mLastError;
+        event::EventCallbackTimer mRefreshTokenTimer;
 
-            http::RESTRequest mStationAliasRequest;
-			http::RESTRequest mStationTransceiversRequest;
-            http::RESTRequest mGetStationRequest;
-            http::RESTRequest mVccsRequest;
-            std::vector<dto::Station> mAliasedStations;
-			std::map<std::string, std::vector<dto::StationTransceiver>> mStationTransceivers;
-        private:
-            APISessionState mState;
-        };
-    }
-}
+        APISessionError mLastError;
 
-#endif //AFV_NATIVE_APISESSION_H
+        http::RESTRequest mStationAliasRequest;
+        http::RESTRequest mStationTransceiversRequest;
+        http::RESTRequest mGetStationRequest;
+        http::RESTRequest mVccsRequest;
+        std::vector<dto::Station> mAliasedStations;
+        std::map<std::string, std::vector<dto::StationTransceiver>> mStationTransceivers;
+
+      private:
+        APISessionState mState;
+    };
+}} // namespace afv_native::afv
+
+#endif // AFV_NATIVE_APISESSION_H

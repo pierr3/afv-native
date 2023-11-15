@@ -29,22 +29,24 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_LOG_H
 #define AFV_NATIVE_LOG_H
 
-#include <string>
 #include <cstdarg>
 #include <ctime>
-#include <vector>
-#include <sstream>
-#include <ios>
-#include <iomanip>
 #include <functional>
+#include <iomanip>
+#include <ios>
+#include <sstream>
+#include <string>
+#include <vector>
 
-#define LOG(subsystem,...) ::afv_native::__Log(__FILE__, __LINE__, subsystem, __VA_ARGS__)
-#define LOGDUMPHEX(subsystem,buf,len) ::afv_native::__Dumphex(__FILE__,__LINE__, subsystem, buf, len)
+#define LOG(subsystem, ...) \
+    ::afv_native::__Log(__FILE__, __LINE__, subsystem, __VA_ARGS__)
+#define LOGDUMPHEX(subsystem, buf, len) \
+    ::afv_native::__Dumphex(__FILE__, __LINE__, subsystem, buf, len)
 
 namespace afv_native {
     typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
@@ -54,6 +56,6 @@ namespace afv_native {
     void setLegacyLogger(afv_native::log_fn newLogger);
     void setLogger(afv_native::modern_log_fn newLogger);
     void __Dumphex(const char *file, int line, const char *subsystem, const void *buf, size_t len);
-}
+} // namespace afv_native
 
-#endif //AFV_NATIVE_LOG_H
+#endif // AFV_NATIVE_LOG_H

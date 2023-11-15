@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_PINKNOISEGENERATOR_H
 #define AFV_NATIVE_PINKNOISEGENERATOR_H
@@ -37,52 +37,47 @@
 #include "afv-native/audio/ISampleSource.h"
 #include "afv-native/audio/WhiteNoiseGenerator.h"
 
-namespace afv_native {
-    namespace audio {
-        /** PinkNoiseGenerator generates pink noise.
-         *
-         * The Pink Noise is based on a filter by Paul Kellett published on musicdsp.org.  It incorporates the downscale
-         * "fix" from NAudio.
-         */
-        class PinkNoiseGenerator: public ISampleSource {
-        public:
-            explicit PinkNoiseGenerator(float gain = 1.0):
-                white(),
-                mGain(gain),
-                mB{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-            {}
+namespace afv_native { namespace audio {
+    /** PinkNoiseGenerator generates pink noise.
+     *
+     * The Pink Noise is based on a filter by Paul Kellett published on musicdsp.org.  It incorporates the downscale
+     * "fix" from NAudio.
+     */
+    class PinkNoiseGenerator: public ISampleSource {
+      public:
+        explicit PinkNoiseGenerator(float gain = 1.0):
+            white(), mGain(gain),
+            mB {0.0, 0.0, 0.0, 0.0, 0.0, 0.0} {
+        }
 
-            inline SampleType iterateOneSample() {
-                SampleType w = white.iterateOneSample();
+        inline SampleType iterateOneSample() {
+            SampleType w = white.iterateOneSample();
 
-                mB[0] = 0.99886 * mB[0] + w * 0.0555179;
-                mB[1] = 0.99332 * mB[1] + w * 0.0750759;
-                mB[2] = 0.96900 * mB[2] + w * 0.1538520;
-                mB[3] = 0.86650 * mB[3] + w * 0.3104856;
-                mB[4] = 0.55000 * mB[4] + w * 0.5329522;
-                mB[5] = -0.7616 * mB[5] - w * 0.0168980;
-                SampleType pOut = mB[0] + mB[1] + mB[2] + mB[3] + mB[4] + mB[5] + mB[6] + w * 0.5362;
-                mB[6] = w * 0.115926;
-                return (pOut/5.0f) * mGain;
-            }
+            mB[0] = 0.99886 * mB[0] + w * 0.0555179;
+            mB[1] = 0.99332 * mB[1] + w * 0.0750759;
+            mB[2] = 0.96900 * mB[2] + w * 0.1538520;
+            mB[3] = 0.86650 * mB[3] + w * 0.3104856;
+            mB[4] = 0.55000 * mB[4] + w * 0.5329522;
+            mB[5] = -0.7616 * mB[5] - w * 0.0168980;
+            SampleType pOut = mB[0] + mB[1] + mB[2] + mB[3] + mB[4] + mB[5] + mB[6] + w * 0.5362;
+            mB[6] = w * 0.115926;
+            return (pOut / 5.0f) * mGain;
+        }
 
-            SourceStatus getAudioFrame(SampleType *bufferOut) override
-            {
-                size_t ctrLeft = frameSizeSamples;
+        SourceStatus getAudioFrame(SampleType *bufferOut) override {
+            size_t ctrLeft = frameSizeSamples;
                 while (ctrLeft--) {
                     *(bufferOut++) = iterateOneSample();
                 }
-                return SourceStatus::OK;
-            }
+            return SourceStatus::OK;
+        }
 
-        protected:
-            WhiteNoiseGenerator white;
-            float mGain;
+      protected:
+        WhiteNoiseGenerator white;
+        float               mGain;
 
-            SampleType mB[7];
-        };
-    }
-}
+        SampleType mB[7];
+    };
+}} // namespace afv_native::audio
 
-
-#endif //AFV_NATIVE_PINKNOISEGENERATOR_H
+#endif // AFV_NATIVE_PINKNOISEGENERATOR_H

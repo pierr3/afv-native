@@ -8,26 +8,24 @@
 #ifndef atcClient_h
 #define atcClient_h
 
-#include "afv-native/afv/ATCRadioStack.h"
-
-#include <memory>
-#include <event2/event.h>
-
-#include "afv-native/event.h"
 #include "afv-native/afv/APISession.h"
+#include "afv-native/afv/ATCRadioStack.h"
 #include "afv-native/afv/EffectResources.h"
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
+#include "afv-native/event.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/http/EventTransferManager.h"
+#include <event2/event.h>
+#include <memory>
 
 namespace afv_native {
     /** ATCClient provides a fully functional ATC Client that can be integrated into
      * an application.
      */
     class ATCClient {
-    public:
+      public:
         /** Construct an AFV-native ATC Client.
          *
          * The pilot client will be in the disconnected state and ready to have
@@ -49,11 +47,7 @@ namespace afv_native {
          * @param clientName The name of this client to advertise to the
          *      audio-subsystem.
          */
-        ATCClient(
-                struct event_base *evBase,
-                const std::string &resourceBasePath,
-                const std::string &clientName = "AFV-Native",
-                std::string baseUrl = "https://voice1.vatsim.uk");
+        ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.uk");
 
         virtual ~ATCClient();
 
@@ -82,7 +76,7 @@ namespace afv_native {
          *
          */
         void setTx(unsigned int freq, bool active);
-        
+
         void setRx(unsigned int freq, bool active);
 
         void setXc(unsigned int freq, bool active);
@@ -111,7 +105,7 @@ namespace afv_native {
         bool isAtisListening();
 
         void setRT(bool rtState);
-        
+
         void setOnHeadset(unsigned int freq, bool onHeadset);
         bool getOnHeadset(unsigned int freq);
 
@@ -185,7 +179,7 @@ namespace afv_native {
          * The second argument is a pointer to data relevant to the callback.  The memory it points to is only
          * guaranteed to be available for the duration of the callback.
          */
-        util::ChainedCallback<void(ClientEventType,void*,void*)>  ClientEventCallback;
+        util::ChainedCallback<void(ClientEventType, void *, void *)> ClientEventCallback;
 
         /** getStationAliases returns a vector of all the known station aliases.
          *
@@ -225,7 +219,7 @@ namespace afv_native {
         bool GetTxState(unsigned int freq);
         bool GetRxState(unsigned int freq);
         bool GetXcState(unsigned int freq);
-        
+
         /** requestStationTransceivers requests the list of transceivers associated with the named station
          *
          *  @param inStation the name of the station to list the transceivers
@@ -233,30 +227,29 @@ namespace afv_native {
         void requestStationTransceivers(std::string inStation);
 
         void requestStationVccs(std::string inStation);
-        
+
         void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "");
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
         void linkTransceivers(std::string callsign, unsigned int freq);
 
         void setHardware(HardwareType hardware);
-        
+
         void setTick(std::shared_ptr<audio::ITick> tick);
 
         void getStation(std::string callsign);
-        
-        std::shared_ptr<audio::AudioDevice> mAudioDevice;
-    protected:
 
+        std::shared_ptr<audio::AudioDevice> mAudioDevice;
+
+      protected:
         struct event_base *mEvBase;
         std::shared_ptr<afv::EffectResources> mFxRes;
 
         http::EventTransferManager mTransferManager;
-        afv::APISession mAPISession;
+        afv::APISession   mAPISession;
         afv::VoiceSession mVoiceSession;
         std::shared_ptr<afv::ATCRadioStack> mATCRadioStack;
         std::shared_ptr<audio::AudioDevice> mSpeakerDevice;
-        
 
         std::string mCallsign;
 
@@ -270,7 +263,6 @@ namespace afv_native {
 
         bool mAudioStoppedThroughCallback = false;
 
-        
         std::vector<afv::dto::Transceiver> makeTransceiverDto();
         /* sendTransceiverUpdate sends the update now, in process.
          * queueTransceiverUpdate schedules it for the next eventloop.  This is a
@@ -291,24 +283,24 @@ namespace afv_native {
 
       private:
         void unguardPtt();
-    protected:
-        event::EventCallbackTimer mTransceiverUpdateTimer;
-        
 
-        std::string mClientName;
+      protected:
+        event::EventCallbackTimer mTransceiverUpdateTimer;
+
+        std::string             mClientName;
         audio::AudioDevice::Api mAudioApi;
         std::string mAudioInputDeviceName;
         std::string mAudioOutputDeviceName;
         std::string mAudioSpeakerDeviceName;
-        int mHeadsetOutputChannel = 0;
+        int         mHeadsetOutputChannel = 0;
 
         int linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
 
         HardwareType activeHardware;
-        
-    public:
+
+      public:
     };
-}
+} // namespace afv_native
 
 #endif /* atcClient_h */

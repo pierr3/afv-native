@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_EVENTTIMER_H
 #define AFV_NATIVE_EVENTTIMER_H
@@ -37,28 +37,27 @@
 #include <event2/event.h>
 #include <event2/util.h>
 
-namespace afv_native {
-    namespace event {
-        /** EventTimer is a one-shot periodic event to be fired by libevent.
-             *
-             */
-        class EventTimer {
-        private:
-            static void evCallback(evutil_socket_t fd, short events, void *arg);
-        protected:
-            struct event *mEvent;
+namespace afv_native { namespace event {
+    /** EventTimer is a one-shot periodic event to be fired by libevent.
+     *
+     */
+    class EventTimer {
+      private:
+        static void evCallback(evutil_socket_t fd, short events, void *arg);
 
-            virtual void triggered() = 0;
-        public:
-            EventTimer(struct event_base *evBase);
-            virtual ~EventTimer();
+      protected:
+        struct event *mEvent;
 
-            bool pending();
-            void enable(unsigned int delayMs);
-            void disable();
-        };
-    }
-}
+        virtual void triggered() = 0;
 
+      public:
+        EventTimer(struct event_base *evBase);
+        virtual ~EventTimer();
 
-#endif //AFV_NATIVE_EVENTTIMER_H
+        bool pending();
+        void enable(unsigned int delayMs);
+        void disable();
+    };
+}} // namespace afv_native::event
+
+#endif // AFV_NATIVE_EVENTTIMER_H

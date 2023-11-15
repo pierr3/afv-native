@@ -29,72 +29,64 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/afv/VoiceCompressionSink.h"
-
-#include <vector>
-
 #include "afv-native/Log.h"
+#include <vector>
 
 using namespace ::afv_native;
 using namespace ::afv_native::afv;
 using namespace ::std;
 
 VoiceCompressionSink::VoiceCompressionSink(ICompressedFrameSink &sink):
-		mEncoder(nullptr),
-        mCompressedFrameSink(sink)
-{
+    mEncoder(nullptr), mCompressedFrameSink(sink) {
     open();
 }
 
-VoiceCompressionSink::~VoiceCompressionSink()
-{
+VoiceCompressionSink::~VoiceCompressionSink() {
     close();
 }
 
-int VoiceCompressionSink::open()
-{
+int VoiceCompressionSink::open() {
     int opus_status = 0;
-    if (mEncoder != nullptr) {
-        return 0;
+        if (mEncoder != nullptr) {
+            return 0;
     }
     mEncoder = opus_encoder_create(audio::sampleRateHz, 1, OPUS_APPLICATION_VOIP, &opus_status);
-    if (opus_status != OPUS_OK) {
-        LOG("VoiceCompressionSink", "Got error initialising Opus Codec: %s", opus_strerror(opus_status));
-        mEncoder = nullptr;
-    } else {
-        opus_status = opus_encoder_ctl(mEncoder, OPUS_SET_BITRATE(audio::encoderBitrate));
         if (opus_status != OPUS_OK) {
-            LOG("VoiceCompressionSink", "error setting bitrate on codec: %s", opus_strerror(opus_status));
+            LOG("VoiceCompressionSink", "Got error initialising Opus Codec: %s", opus_strerror(opus_status));
+            mEncoder = nullptr;
+        } else {
+            opus_status = opus_encoder_ctl(mEncoder, OPUS_SET_BITRATE(audio::encoderBitrate));
+                if (opus_status != OPUS_OK) {
+                    LOG("VoiceCompressionSink", "error setting bitrate on codec: %s", opus_strerror(opus_status));
+            }
         }
-    }
     return opus_status;
 }
 
-void VoiceCompressionSink::close()
-{
-    if (nullptr != mEncoder) {
-        opus_encoder_destroy(mEncoder);
-        mEncoder = nullptr;
+void VoiceCompressionSink::close() {
+        if (nullptr != mEncoder) {
+            opus_encoder_destroy(mEncoder);
+            mEncoder = nullptr;
     }
 }
 
-void VoiceCompressionSink::reset()
-{
+void VoiceCompressionSink::reset() {
     close();
     open();
 }
 
-void VoiceCompressionSink::putAudioFrame(const audio::SampleType *bufferIn)
-{
+void VoiceCompressionSink::putAudioFrame(const audio::SampleType *bufferIn) {
     vector<unsigned char> outBuffer(audio::targetOutputFrameSizeBytes);
-    auto enc_len = opus_encode_float(mEncoder, bufferIn, audio::frameSizeSamples, outBuffer.data(), outBuffer.size());
-    if (enc_len < 0) {
-        LOG("VoiceCompressionSink", "error encoding frame: %s", opus_strerror(enc_len));
-        return;
+    auto enc_len = opus_encode_float(mEncoder, bufferIn, audio::frameSizeSamples,
+                                     outBuffer.data(),
+                                     outBuffer.size());
+        if (enc_len < 0) {
+            LOG("VoiceCompressionSink", "error encoding frame: %s", opus_strerror(enc_len));
+            return;
     }
     outBuffer.resize(enc_len);
     mCompressedFrameSink.processCompressedFrame(outBuffer);
 }
-

@@ -29,32 +29,29 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_SINETONESOURCE_H
 #define AFV_NATIVE_SINETONESOURCE_H
 
 #include "afv-native/audio/ISampleSource.h"
 
-namespace afv_native {
-    namespace audio {
-        /** SineToneSource generates a sinewave in realtime.
-         *
-         * @note: This is computationally heavy with some libcs and should be
-         * avoided.
-         */
-        class SineToneSource: public ISampleSource {
-        protected:
-            double mFrequency;
-            float mGain;
-            size_t mFillCount;
+namespace afv_native { namespace audio {
+    /** SineToneSource generates a sinewave in realtime.
+     *
+     * @note: This is computationally heavy with some libcs and should be
+     * avoided.
+     */
+    class SineToneSource: public ISampleSource {
+      protected:
+        double mFrequency;
+        float  mGain;
+        size_t mFillCount;
 
-        public:
-            explicit SineToneSource(double freqHz, float gain=1.0);
-            SourceStatus getAudioFrame(SampleType *bufferOut) override;
-        };
-    }
-}
+      public:
+        explicit SineToneSource(double freqHz, float gain = 1.0);
+        SourceStatus getAudioFrame(SampleType *bufferOut) override;
+    };
+}} // namespace afv_native::audio
 
-
-#endif //AFV_NATIVE_SINETONESOURCE_H
+#endif // AFV_NATIVE_SINETONESOURCE_H

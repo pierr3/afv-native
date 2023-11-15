@@ -29,121 +29,113 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_VOICESESSION_H
 #define AFV_NATIVE_VOICESESSION_H
 
-#include <string>
-#include <event2/util.h>
-
 #include "afv-native/afv/APISession.h"
-#include "afv-native/afv/dto/VoiceServerConnectionData.h"
+#include "afv-native/afv/dto/CrossCoupleGroup.h"
 #include "afv-native/afv/dto/PostCallsignResponse.h"
 #include "afv-native/afv/dto/Transceiver.h"
-#include "afv-native/afv/dto/CrossCoupleGroup.h"
+#include "afv-native/afv/dto/VoiceServerConnectionData.h"
 #include "afv-native/cryptodto/UDPChannel.h"
-#include "afv-native/http/Request.h"
-#include "afv-native/http/RESTRequest.h"
 #include "afv-native/event/EventCallbackTimer.h"
-#include "afv-native/util/monotime.h"
+#include "afv-native/http/RESTRequest.h"
+#include "afv-native/http/Request.h"
 #include "afv-native/util/ChainedCallback.h"
+#include "afv-native/util/monotime.h"
+#include <event2/util.h>
+#include <string>
 
-namespace afv_native {
-    namespace afv {
-        class APISession;
+namespace afv_native { namespace afv {
+    class APISession;
 
-        enum class VoiceSessionState {
-            Connected,
-            Disconnected,
-            Error
-        };
+    enum class VoiceSessionState {
+        Connected,
+        Disconnected,
+        Error
+    };
 
-        enum class VoiceSessionError {
-            NoError = 0,
-            UDPChannelError,
-            BadResponseFromAPIServer,
-            Timeout,
-        };
-    
-        enum class VoiceSessionType {
-            Pilot = 0,
-            ATC
-        };
+    enum class VoiceSessionError {
+        NoError = 0,
+        UDPChannelError,
+        BadResponseFromAPIServer,
+        Timeout,
+    };
 
-        class VoiceSession {
-        public:
-            util::ChainedCallback<void(VoiceSessionState)> StateCallback;
+    enum class VoiceSessionType {
+        Pilot = 0,
+        ATC
+    };
 
-            VoiceSession(APISession &session, const std::string &callsign = "");
-            virtual ~VoiceSession();
+    class VoiceSession {
+      public:
+        util::ChainedCallback<void(VoiceSessionState)> StateCallback;
 
-            void setCallsign(const std::string &newCallsign);
-            void setType(VoiceSessionType inType);
+        VoiceSession(APISession &session, const std::string &callsign = "");
+        virtual ~VoiceSession();
 
-            bool isConnected() const;
+        void setCallsign(const std::string &newCallsign);
+        void setType(VoiceSessionType inType);
 
-            bool Connect();
-            void Disconnect(bool do_close = true, bool reconnect = false);
-            void postTransceiverUpdate(
-                    const std::vector<dto::Transceiver> &txDto,
-                    std::function<void(http::Request *, bool)> callback);
-            void postCrossCoupleGroupUpdate(
-                    const std::vector<dto::CrossCoupleGroup> &ccDto,
-                    std::function<void(http::Request *, bool)> callback);
-            cryptodto::UDPChannel & getUDPChannel();
+        bool isConnected() const;
 
-            VoiceSessionError getLastError() const;
-            VoiceSessionType type() const;
-            
+        bool Connect();
+        void Disconnect(bool do_close = true, bool reconnect = false);
+        void postTransceiverUpdate(const std::vector<dto::Transceiver> &txDto, std::function<void(http::Request *, bool)> callback);
+        void postCrossCoupleGroupUpdate(const std::vector<dto::CrossCoupleGroup> &ccDto, std::function<void(http::Request *, bool)> callback);
+        cryptodto::UDPChannel &getUDPChannel();
 
-        protected:
-            APISession &mSession;
-            std::string mCallsign;
-            std::string mBaseUrl;
+        VoiceSessionError getLastError() const;
+        VoiceSessionType  type() const;
 
-            void updateBaseUrl();
+      protected:
+        APISession &mSession;
+        std::string mCallsign;
+        std::string mBaseUrl;
 
-            cryptodto::UDPChannel mChannel;
-            
-            VoiceSessionType mSessionType;
+        void updateBaseUrl();
 
-            event::EventCallbackTimer mHeartbeatTimer;
-            util::monotime_t mLastHeartbeatReceived;
-            event::EventCallbackTimer mHeartbeatTimeout;
+        cryptodto::UDPChannel mChannel;
 
-            VoiceSessionError mLastError;
+        VoiceSessionType mSessionType;
 
-            /** setupSession use the information in the PostCallsignResponse DTO to start up
-             * the UDP session and tasks
-             *
-             * @param cresp the DTO detailing the session encryption keys, endpoint
-             *      address, and other details.
-             * @returns true if successful, false if the session couldn't be set up
-             *
-             * @note failures are usually caused by Network Socket problems - most other
-             *     causes can't fail until their callback fires.
-             */
-            bool setupSession(const dto::PostCallsignResponse &cresp);
+        event::EventCallbackTimer mHeartbeatTimer;
+        util::monotime_t mLastHeartbeatReceived;
+        event::EventCallbackTimer mHeartbeatTimeout;
 
-            /** failSession tears down the voice session and it's UDP channel due to failure,
-             * timeout or explicit disconnect.
-             */
-            void failSession();
+        VoiceSessionError mLastError;
 
-            void sendHeartbeatCallback();
-            void receivedHeartbeat();
-            void heartbeatTimedOut();
+        /** setupSession use the information in the PostCallsignResponse DTO to start up
+         * the UDP session and tasks
+         *
+         * @param cresp the DTO detailing the session encryption keys, endpoint
+         *      address, and other details.
+         * @returns true if successful, false if the session couldn't be set up
+         *
+         * @note failures are usually caused by Network Socket problems - most other
+         *     causes can't fail until their callback fires.
+         */
+        bool setupSession(const dto::PostCallsignResponse &cresp);
 
-            void sessionStateCallback(APISessionState state);
-            void voiceSessionSetupRequestCallback(http::Request *req, bool success);
+        /** failSession tears down the voice session and it's UDP channel due to failure,
+         * timeout or explicit disconnect.
+         */
+        void failSession();
 
-            http::RESTRequest mVoiceSessionSetupRequest;
-            http::RESTRequest mVoiceSessionTeardownRequest;
-            http::RESTRequest mTransceiverUpdateRequest;
-            http::RESTRequest mCrossCoupleGroupUpdateRequest;
-        };
-    }
-}
+        void sendHeartbeatCallback();
+        void receivedHeartbeat();
+        void heartbeatTimedOut();
 
-#endif //AFV_NATIVE_VOICESESSION_H
+        void sessionStateCallback(APISessionState state);
+        void voiceSessionSetupRequestCallback(http::Request *req, bool success);
+
+        http::RESTRequest mVoiceSessionSetupRequest;
+        http::RESTRequest mVoiceSessionTeardownRequest;
+        http::RESTRequest mTransceiverUpdateRequest;
+        http::RESTRequest mCrossCoupleGroupUpdateRequest;
+    };
+}} // namespace afv_native::afv
+
+#endif // AFV_NATIVE_VOICESESSION_H

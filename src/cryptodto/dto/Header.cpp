@@ -29,25 +29,18 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/cryptodto/dto/Header.h"
-
 #include "afv-native/cryptodto/params.h"
 
 using namespace afv_native::cryptodto::dto;
 using namespace afv_native::cryptodto;
 
 Header::Header():
-    ChannelTag(),
-    Sequence(0),
-    Mode(CryptoModeUndefined)
-{
+    ChannelTag(), Sequence(0), Mode(CryptoModeUndefined) {
 }
 
 Header::Header(std::string channelTag, uint64_t sequence, CryptoDtoMode mode):
-    ChannelTag(std::move(channelTag)),
-    Sequence(sequence),
-    Mode(static_cast<int>(mode))
-{
+    ChannelTag(std::move(channelTag)), Sequence(sequence), Mode(static_cast<int>(mode)) {
 }

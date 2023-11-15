@@ -29,19 +29,15 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/audio/SpeexPreprocessor.h"
 #include "afv-native/audio/audio_params.h"
 
 using namespace afv_native::audio;
 
-SpeexPreprocessor::SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream) :
-    mUpstreamSink(std::move(upstream)),
-    mPreprocessorState(nullptr),
-    mSpeexFrame(),
-    mOutputFrame()
-{
+SpeexPreprocessor::SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream):
+    mUpstreamSink(std::move(upstream)), mPreprocessorState(nullptr), mSpeexFrame(), mOutputFrame() {
     mPreprocessorState = speex_preprocess_state_init(frameSizeSamples, sampleRateHz);
 
     int iarg = 1;
@@ -62,32 +58,29 @@ SpeexPreprocessor::SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream) :
     speex_preprocess_ctl(mPreprocessorState, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &iarg);
 }
 
-SpeexPreprocessor::~SpeexPreprocessor()
-{
+SpeexPreprocessor::~SpeexPreprocessor() {
     speex_preprocess_state_destroy(mPreprocessorState);
 }
 
-void SpeexPreprocessor::putAudioFrame(const SampleType *bufferIn)
-{
-    for (size_t i = 0; i < frameSizeSamples; i++) {
-        mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
-    }
+void SpeexPreprocessor::putAudioFrame(const SampleType *bufferIn) {
+        for (size_t i = 0; i < frameSizeSamples; i++) {
+            mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
+        }
     speex_preprocess_run(mPreprocessorState, mSpeexFrame);
-    for (size_t i = 0; i < frameSizeSamples; i++) {
-        mOutputFrame[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
-    }
-    if (mUpstreamSink) {
-        mUpstreamSink->putAudioFrame(mOutputFrame);
+        for (size_t i = 0; i < frameSizeSamples; i++) {
+            mOutputFrame[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
+        }
+        if (mUpstreamSink) {
+            mUpstreamSink->putAudioFrame(mOutputFrame);
     }
 }
 
-void SpeexPreprocessor::transformFrame(SampleType *bufferOut, const SampleType bufferIn[])
-{
-    for (size_t i = 0; i < frameSizeSamples; i++) {
-        mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
-    }
+void SpeexPreprocessor::transformFrame(SampleType *bufferOut, const SampleType bufferIn[]) {
+        for (size_t i = 0; i < frameSizeSamples; i++) {
+            mSpeexFrame[i] = static_cast<spx_int16_t>(bufferIn[i] * 32767.0f);
+        }
     speex_preprocess_run(mPreprocessorState, mSpeexFrame);
-    for (size_t i = 0; i < frameSizeSamples; i++) {
-        bufferOut[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
-    }
+        for (size_t i = 0; i < frameSizeSamples; i++) {
+            bufferOut[i] = static_cast<float>(mSpeexFrame[i]) / 32768.0f;
+        }
 }

@@ -29,35 +29,33 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_AUDIO_PARAMS_H
 #define AFV_NATIVE_AUDIO_PARAMS_H
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
-namespace afv_native {
-    namespace audio {
-        /** samples per frame, as hard-coded into the GeoVR client */
-        const int frameLengthMs = 20;
+namespace afv_native { namespace audio {
+    /** samples per frame, as hard-coded into the GeoVR client */
+    const int frameLengthMs = 20;
 
-        const int sampleRateHz = 48000;
+    const int sampleRateHz = 48000;
 
-        const int frameSizeSamples = (sampleRateHz * frameLengthMs / 1000);
+    const int frameSizeSamples = (sampleRateHz * frameLengthMs / 1000);
 
-        const int32_t encoderBitrate = 16384;   /* 16Kibps */
+    const int32_t encoderBitrate = 16384; /* 16Kibps */
 
-        /** approximate target size of outputFrames in bytes */
-        const int targetOutputFrameSizeBytes = encoderBitrate * 1000 / frameLengthMs / 8;
+    /** approximate target size of outputFrames in bytes */
+    const int targetOutputFrameSizeBytes = encoderBitrate * 1000 / frameLengthMs / 8;
 
-        const int compressedSourceCacheTimeoutMs = 1000 * 60; /* 1 minute */
+    const int compressedSourceCacheTimeoutMs = 1000 * 60; /* 1 minute */
 
-        /* note:  changing this type will require changing some of the opus decoder usage. */
-        typedef float SampleType;
+    /* note:  changing this type will require changing some of the opus decoder usage. */
+    typedef float SampleType;
 
-        const size_t frameSizeBytes = frameSizeSamples * sizeof(SampleType);
-    }
-}
+    const size_t frameSizeBytes = frameSizeSamples * sizeof(SampleType);
+}} // namespace afv_native::audio
 
-#endif //AFV_NATIVE_AUDIO_PARAMS_H
+#endif // AFV_NATIVE_AUDIO_PARAMS_H

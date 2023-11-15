@@ -36,50 +36,46 @@
  */
 
 /*
- * This module is only intended to support a narrow subset of possible Wav 
+ * This module is only intended to support a narrow subset of possible Wav
  * files, namely: PCM only.
-*/
+ */
 
 #ifndef AFV_NATIVE_WAVFILE_H
 #define AFV_NATIVE_WAVFILE_H
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 
-namespace afv_native {
-    namespace audio {
-        class AudioSampleData {
-        protected:
-            int8_t mNumChannels;
-            int8_t mBitsPerSample;
-            uint8_t mSampleAlignment;
-            int mSampleRate;
+namespace afv_native { namespace audio {
+    class AudioSampleData {
+      protected:
+        int8_t  mNumChannels;
+        int8_t  mBitsPerSample;
+        uint8_t mSampleAlignment;
+        int     mSampleRate;
 
-            unsigned mSampleCount;
-            void *mSampleData;
+        unsigned mSampleCount;
+        void    *mSampleData;
 
-            bool mIsFloat;
+        bool mIsFloat;
 
-        public:
-            AudioSampleData(int numChannels, int bitsPerSample, int sampleRate, bool isFloat = false);
-            AudioSampleData(AudioSampleData &&move_src) noexcept;
-            AudioSampleData(const AudioSampleData &cpy_src);
-            virtual            ~AudioSampleData();
+      public:
+        AudioSampleData(int numChannels, int bitsPerSample, int sampleRate, bool isFloat = false);
+        AudioSampleData(AudioSampleData &&move_src) noexcept;
+        AudioSampleData(const AudioSampleData &cpy_src);
+        virtual ~AudioSampleData();
 
-            int8_t getNumChannels() const;
-            int8_t getBitsPerSample() const;
-            uint8_t getSampleAlignment() const;
-            int getSampleRate() const;
-            size_t getSampleCount() const;
-            const void *getSampleData() const;
-            bool isFloat() const;
-            void AppendSamples(uint8_t blockSize, unsigned count, void *data);
-        };
+        int8_t      getNumChannels() const;
+        int8_t      getBitsPerSample() const;
+        uint8_t     getSampleAlignment() const;
+        int         getSampleRate() const;
+        size_t      getSampleCount() const;
+        const void *getSampleData() const;
+        bool        isFloat() const;
+        void AppendSamples(uint8_t blockSize, unsigned count, void *data);
+    };
 
-        AudioSampleData *LoadWav(const char *fileName);
-    }
-}
-
+    AudioSampleData *LoadWav(const char *fileName);
+}} // namespace afv_native::audio
 
 #endif /* AFV_NATIVE_WAVFILE_H */
-

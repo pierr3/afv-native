@@ -29,29 +29,27 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_RESTREQUEST_H
 #define AFV_NATIVE_RESTREQUEST_H
 
+#include "afv-native/http/Request.h"
 #include <nlohmann/json.hpp>
 
-#include "afv-native/http/Request.h"
+namespace afv_native { namespace http {
+    class RESTRequest: public virtual Request {
+      public:
+        RESTRequest(std::string path, Method method, const nlohmann::json &request);
+        /* no copy constructor - RESTRequest must not be copied as it would break the internal states. */
+        RESTRequest(const RESTRequest &cpysrc) = delete;
 
-namespace afv_native {
-    namespace http {
-        class RESTRequest: public virtual Request {
-        public:
-            RESTRequest(std::string path, Method method, const nlohmann::json &request);
-            /* no copy constructor - RESTRequest must not be copied as it would break the internal states. */
-            RESTRequest(const RESTRequest &cpysrc) = delete;
+      protected:
+        bool setupHandle() override;
 
-        protected:
-            bool setupHandle() override;
-        public:
-            nlohmann::json getResponse() const;
-        };
-    }
-}
+      public:
+        nlohmann::json getResponse() const;
+    };
+}} // namespace afv_native::http
 
-#endif //AFV_NATIVE_RESTREQUEST_H
+#endif // AFV_NATIVE_RESTREQUEST_H

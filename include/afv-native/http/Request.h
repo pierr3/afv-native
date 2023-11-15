@@ -29,182 +29,174 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_REQUEST_H
 #define AFV_NATIVE_REQUEST_H
 
-#include <string>
-#include <functional>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
-
 #include "afv-native/http/http.h"
+#include <curl/curl.h>
+#include <functional>
+#include <nlohmann/json.hpp>
+#include <string>
 
-namespace afv_native {
-    namespace http {
-        class TransferManager;
+namespace afv_native { namespace http {
+    class TransferManager;
 
-        class Request {
-        private:
-            static size_t curlWriteCallback(char *buffer, size_t size, size_t nitems, void *userdata);
-            static size_t curlReadCallback(char *buffer, size_t size, size_t nitems, void *userdata);
-            static int curlTransferInfoCallback(
-                    void *clientp,
-                    curl_off_t dltotal,
-                    curl_off_t dlnow,
-                    curl_off_t ultotal,
-                    curl_off_t ulnow);
+    class Request {
+      private:
+        static size_t curlWriteCallback(char *buffer, size_t size, size_t nitems, void *userdata);
+        static size_t curlReadCallback(char *buffer, size_t size, size_t nitems, void *userdata);
+        static int curlTransferInfoCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 
-            void transferInfoCallback(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
-            size_t writeCallback(char *buffer, size_t size, size_t nitems);
-            size_t readCallback(char *buffer, size_t size, size_t nitems);
+        void transferInfoCallback(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+        size_t writeCallback(char *buffer, size_t size, size_t nitems);
+        size_t readCallback(char *buffer, size_t size, size_t nitems);
 
-        protected:
-            Method mMethod;
-            std::string mURL;
-            bool mFollowRedirect;
+      protected:
+        Method      mMethod;
+        std::string mURL;
+        bool        mFollowRedirect;
 
-            Progress mProgress;
+        Progress mProgress;
 
-            CURL *mCurlHandle;
-            struct curl_slist *mHeaders;
-            TransferManager *mTM;
+        CURL              *mCurlHandle;
+        struct curl_slist *mHeaders;
+        TransferManager   *mTM;
 
-            std::vector<unsigned char> mReq;
-            size_t mReqBufOffset;
+        std::vector<unsigned char> mReq;
+        size_t                     mReqBufOffset;
 
-            int mRespStatusCode;
-            std::string mRespContentType;
+        int         mRespStatusCode;
+        std::string mRespContentType;
 
-            std::vector<unsigned char> mResp;
+        std::vector<unsigned char> mResp;
 
-            char mCurlErrorBuffer[CURL_ERROR_SIZE];
+        char mCurlErrorBuffer[CURL_ERROR_SIZE];
 
-            int mDownloadTotal;
-            int mDownloadProgress;
+        int mDownloadTotal;
+        int mDownloadProgress;
 
-            int mUploadTotal;
-            int mUploadProgress;
+        int mUploadTotal;
+        int mUploadProgress;
 
-            std::function<void(Request *, bool)> mCompletionCallback;
+        std::function<void(Request *, bool)> mCompletionCallback;
 
-            virtual bool setupHandle();
+        virtual bool setupHandle();
 
-        public:
-            Request(const std::string &url, Method method);
-            /* no copy constructor - Request must not be copied as it would break the internal states. */
-            Request(const Request &cpysrc) = delete;
+      public:
+        Request(const std::string &url, Method method);
+        /* no copy constructor - Request must not be copied as it would break the internal states. */
+        Request(const Request &cpysrc) = delete;
 
-            virtual ~Request();
+        virtual ~Request();
 
-            /** resets the Request state back to that before a request has been
-             * performed.
-             */
-            virtual void reset();
+        /** resets the Request state back to that
+         * before a request has been performed.
+         */
+        virtual void reset();
 
-            void setHeader(const std::string &header, const std::string &value);
+        void setHeader(const std::string &header, const std::string &value);
 
-            /** sets the Request Body to the data provided at buf of size len.
-             *
-             * @param buf pointer to the data
-             * @param len length of the data in octets.
-             */
-            void setRequestBody(const unsigned char *buf, size_t len);
+        /** sets the Request Body to the data provided at buf of size len.
+         *
+         * @param buf pointer to the data
+         * @param len length of the data in octets.
+         */
+        void setRequestBody(const unsigned char *buf, size_t len);
 
-            /** sets the Request body to the provided string
-             *
-             * @param body string containing the body to send.
-             */
-            void setRequestBody(const std::string &body);
+        /** sets the Request body to the provided string
+         *
+         * @param body string containing the body to send.
+         */
+        void setRequestBody(const std::string &body);
 
-            /** sets the Request body to the provided serialised json value
-             *
-             * @param j the json value to send
-             * @throws nlohmann::json_exception if a casting/typing error occured whilst
-             *  serialising the json object.
-             */
-            void setRequestBody(const nlohmann::json &j);
+        /** sets the Request body to the provided serialised json value
+         *
+         * @param j the json value to send
+         * @throws nlohmann::json_exception if a casting/typing error occured whilst
+         *  serialising the json object.
+         */
+        void setRequestBody(const nlohmann::json &j);
 
-            void setCompletionCallback(std::function<void(Request *, bool)> cb);
+        void setCompletionCallback(std::function<void(Request *, bool)> cb);
 
-            void setFollowRedirect(bool follow);
+        void setFollowRedirect(bool follow);
 
-            void shareState(TransferManager &transferManager);
+        void shareState(TransferManager &transferManager);
 
-            /** doSync() performs the request synchronously.
-             *
-             * @return true if the request completed successfully, false otherwise.
-             *
-             * @note if an error occured (false return), you can check the error
-             *      reported via getError()
-             */
-            virtual bool doSync();
+        /** doSync() performs the request synchronously.
+         *
+         * @return true if the request completed successfully, false otherwise.
+         *
+         * @note if an error occured (false return), you can check the error
+         *      reported via getError()
+         */
+        virtual bool doSync();
 
-            /** doAsync() schedules the request to be performed asynchronously.
-             *
-             * @param transferManager the TransferManager instance to use to
-             *      execute the request.
-             * @return true if the request was successfully scheduled for execution.
-             *    false if a configuration or other issue prevented it from being
-             *    scheduled.
-             */
-            virtual bool doAsync(TransferManager &transferManager);
+        /** doAsync() schedules the request to be performed asynchronously.
+         *
+         * @param transferManager the TransferManager instance to use to
+         *      execute the request.
+         * @return true if the request was successfully scheduled for execution.
+         *    false if a configuration or other issue prevented it from being
+         *    scheduled.
+         */
+        virtual bool doAsync(TransferManager &transferManager);
 
-            /** returns the last CURL error reported.
-             */
-            std::string getCurlError() const;
+        /** returns the last CURL error reported.
+         */
+        std::string getCurlError() const;
 
-            Progress getProgress() const;
+        Progress getProgress() const;
 
-            /** returns the HTTP status code received
-             *
-             * @return the HTTP status code.
-             */
-            int getStatusCode() const;
+        /** returns the HTTP status code received
+         *
+         * @return the HTTP status code.
+         */
+        int getStatusCode() const;
 
-            /** returns the Content-Type for the response received
-             *
-             * @return the Content Type header value.
-             */
-            std::string getContentType() const;
+        /** returns the Content-Type for the response received
+         *
+         * @return the Content Type header value.
+         */
+        std::string getContentType() const;
 
-            std::string getResponseBody() const;
+        std::string getResponseBody() const;
 
-            void clearRequestBody();
+        void clearRequestBody();
 
-            int getDownloadTotal() const;
+        int getDownloadTotal() const;
 
-            int getDownloadProgress() const;
+        int getDownloadProgress() const;
 
-            int getUploadTotal() const;
+        int getUploadTotal() const;
 
-            int getUploadProgress() const;
+        int getUploadProgress() const;
 
-            CURL *getCurlHandle() const;
+        CURL *getCurlHandle() const;
 
-            /** notifyTransferCompleted is invoked either by the synchronous method
-             * or by the asynchronous scheduler to indicate that the transfer for this
-             * request completed.
-             *
-             * Subclasses can extend this to generate notifications or to drive
-             * state machines as necessary.
-             */
-            virtual void notifyTransferCompleted();
+        /** notifyTransferCompleted is invoked either by the synchronous method
+         * or by the asynchronous scheduler to indicate that the transfer for this
+         * request completed.
+         *
+         * Subclasses can extend this to generate notifications or to drive
+         * state machines as necessary.
+         */
+        virtual void notifyTransferCompleted();
 
-            /** notifyTransferError is invoked either by the synchronous method
-             * or by the asynchronous scheduler to indicate that the transfer for this
-             * request failed.
-             *
-             * Subclasses can extend this to generate notifications or to drive
-             * state machines as necessary.
-             */
-            virtual void notifyTransferError();
+        /** notifyTransferError is invoked either by the synchronous method
+         * or by the asynchronous scheduler to indicate that the transfer for this
+         * request failed.
+         *
+         * Subclasses can extend this to generate notifications or to drive
+         * state machines as necessary.
+         */
+        virtual void notifyTransferError();
 
-            const std::string &getUrl() const;
-            void setUrl(const std::string &mUrl);
-        };
-    }
-}
+        const std::string &getUrl() const;
+        void setUrl(const std::string &mUrl);
+    };
+}} // namespace afv_native::http
 
-#endif //AFV_NATIVE_REQUEST_H
+#endif // AFV_NATIVE_REQUEST_H

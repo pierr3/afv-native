@@ -29,32 +29,28 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_SOURCEFRAMESIZEADJUSTER_H
 #define AFV_NATIVE_SOURCEFRAMESIZEADJUSTER_H
 
+#include "afv-native/audio/ISampleSource.h"
 #include <memory>
 
-#include "afv-native/audio/ISampleSource.h"
+namespace afv_native { namespace audio {
+    class SourceFrameSizeAdjuster: public ISampleSource {
+      protected:
+        std::shared_ptr<ISampleSource> mOriginSource;
+        const unsigned int mDestinationFrameSize;
 
-namespace afv_native {
-    namespace audio {
-        class SourceFrameSizeAdjuster: public ISampleSource {
-        protected:
-            std::shared_ptr<ISampleSource> mOriginSource;
-            const unsigned int mDestinationFrameSize;
+        size_t      mSourceBufferOffset;
+        SampleType *mSourceBuffer;
 
-            size_t mSourceBufferOffset;
-            SampleType *mSourceBuffer;
-        public:
-            SourceFrameSizeAdjuster(std::shared_ptr<ISampleSource> originSource, unsigned int outputFrameSize);
-            virtual ~SourceFrameSizeAdjuster();
-            SourceStatus getAudioFrame(SampleType *bufferOut) override;
+      public:
+        SourceFrameSizeAdjuster(std::shared_ptr<ISampleSource> originSource, unsigned int outputFrameSize);
+        virtual ~SourceFrameSizeAdjuster();
+        SourceStatus getAudioFrame(SampleType *bufferOut) override;
+    };
+}} // namespace afv_native::audio
 
-        };
-    }
-}
-
-
-#endif //AFV_NATIVE_SOURCEFRAMESIZEADJUSTER_H
+#endif // AFV_NATIVE_SOURCEFRAMESIZEADJUSTER_H

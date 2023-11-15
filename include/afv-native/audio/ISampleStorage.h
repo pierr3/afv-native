@@ -29,27 +29,23 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_ISAMPLESTORAGE_H
 #define AFV_NATIVE_ISAMPLESTORAGE_H
 
+#include "afv-native/audio/audio_params.h"
 #include <cstddef>
 
-#include "afv-native/audio/audio_params.h"
+namespace afv_native { namespace audio {
+    /** ISampleStorage is a recorded buffer that can have one or more
+     * StorageCursorSources attached to it.
+     */
+    class ISampleStorage {
+      public:
+        virtual SampleType *data() const = 0;
+        virtual size_t lengthInSamples() const = 0;
+    };
+}} // namespace afv_native::audio
 
-namespace afv_native {
-    namespace audio {
-        /** ISampleStorage is a recorded buffer that can have one or more
-         * StorageCursorSources attached to it.
-         */
-        class ISampleStorage {
-        public:
-            virtual SampleType *data() const = 0;
-            virtual size_t lengthInSamples() const = 0;
-        };
-    }
-}
-
-
-#endif //AFV_NATIVE_ISAMPLESTORAGE_H
+#endif // AFV_NATIVE_ISAMPLESTORAGE_H

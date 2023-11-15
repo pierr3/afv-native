@@ -29,30 +29,27 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_STATION_H
 #define AFV_NATIVE_STATION_H
 
-#include <string>
 #include <nlohmann/json.hpp>
+#include <string>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class Station {
-            public:
-                std::string ID;
-                std::string Name;
-                unsigned int Frequency;
-                unsigned int FrequencyAlias;
+namespace afv_native { namespace afv {
+    namespace dto {
+        class Station {
+          public:
+            std::string  ID;
+            std::string  Name;
+            unsigned int Frequency;
+            unsigned int FrequencyAlias;
 
-                Station();
-            };
-            void from_json(const nlohmann::json &j, Station &s);
-            void to_json(nlohmann::json &j, const Station &s);
-        }
-    }
-}
+            Station();
+        };
+        void from_json(const nlohmann::json &j, Station &s);
+        void to_json(nlohmann::json &j, const Station &s);
+}}} // namespace afv_native::afv::dto
 
-#endif //AFV_NATIVE_STATION_H
+#endif // AFV_NATIVE_STATION_H

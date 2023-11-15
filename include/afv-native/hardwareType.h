@@ -9,4 +9,4 @@ namespace afv_native {
     };
 }
 
-#endif //AFV_NATIVE_HARDWARE_H
+#endif // AFV_NATIVE_HARDWARE_H

@@ -29,36 +29,31 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_HEARTBEAT_H
 #define AFV_NATIVE_HEARTBEAT_H
 
-#include <string>
 #include <msgpack.hpp>
+#include <string>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class Heartbeat {
-            public:
-                Heartbeat() = default;
+namespace afv_native { namespace afv {
+    namespace dto {
+        class Heartbeat {
+          public:
+            Heartbeat() = default;
 
-                explicit Heartbeat(const std::string &callsign):
-                        Callsign(callsign)
-                {};
+            explicit Heartbeat(const std::string &callsign):
+                Callsign(callsign) {};
 
-                std::string Callsign;
+            std::string Callsign;
 
-                MSGPACK_DEFINE_ARRAY(Callsign);
+            MSGPACK_DEFINE_ARRAY(Callsign);
 
-                static std::string getName()
-                {
-                    return "H";
-                }
-            };
-        }
-    }
-}
+            static std::string getName() {
+                return "H";
+            }
+        };
+}}} // namespace afv_native::afv::dto
 
-#endif //AFV_NATIVE_HEARTBEAT_H
+#endif // AFV_NATIVE_HEARTBEAT_H

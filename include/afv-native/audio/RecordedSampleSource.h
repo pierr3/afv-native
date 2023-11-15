@@ -29,37 +29,33 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_RECORDEDSAMPLESOURCE_H
 #define AFV_NATIVE_RECORDEDSAMPLESOURCE_H
 
+#include "afv-native/audio/ISampleSource.h"
+#include "afv-native/audio/ISampleStorage.h"
 #include <memory>
 
-#include "afv-native/audio/ISampleStorage.h"
-#include "afv-native/audio/ISampleSource.h"
+namespace afv_native { namespace audio {
+    class RecordedSampleSource: public ISampleSource {
+      protected:
+        const std::shared_ptr<ISampleStorage> mSampleSource;
+        size_t mCurPosition;
+        bool   mLoop;
+        bool   mPlay;
+        bool   mFirstFrame;
 
-namespace afv_native {
-    namespace audio {
-        class RecordedSampleSource: public ISampleSource {
-        protected:
-            const std::shared_ptr<ISampleStorage> mSampleSource;
-            size_t mCurPosition;
-            bool mLoop;
-            bool mPlay;
-            bool mFirstFrame;
-        public:
-            RecordedSampleSource(std::shared_ptr<ISampleStorage> src, bool loop);
-            virtual ~RecordedSampleSource();
-            SourceStatus getAudioFrame(SampleType *bufferOut) override;
+      public:
+        RecordedSampleSource(std::shared_ptr<ISampleStorage> src, bool loop);
+        virtual ~RecordedSampleSource();
+        SourceStatus getAudioFrame(SampleType *bufferOut) override;
 
-            bool isPlaying() const;
-            void reset();
-            bool firstFrame();
+        bool isPlaying() const;
+        void reset();
+        bool firstFrame();
+    };
+}} // namespace afv_native::audio
 
-        };
-    }
-}
-
-
-#endif //AFV_NATIVE_RECORDEDSAMPLESOURCE_H
+#endif // AFV_NATIVE_RECORDEDSAMPLESOURCE_H

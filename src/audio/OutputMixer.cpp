@@ -29,87 +29,80 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/audio/OutputMixer.h"
-
 #include "afv-native/Log.h"
 #include "afv-native/audio/SourceStatus.h"
-
 #include <cstring>
 
 using namespace afv_native::audio;
 
-OutputMixer::OutputMixer()
-{
+OutputMixer::OutputMixer() {
 }
 
-OutputMixer::~OutputMixer()
-{
+OutputMixer::~OutputMixer() {
 }
 
-SourceStatus
-OutputMixer::getAudioFrame(SampleType* RESTRICT bufferOut)
-{
+SourceStatus OutputMixer::getAudioFrame(SampleType *RESTRICT bufferOut) {
     SourceStatus src_rv;
-    bool didMix = false;
-    int i = 0;
+    bool         didMix = false;
+    int          i      = 0;
 
     std::vector<SampleType> ibuf(frameSizeSamples, 0.0); // we must not touch ibuf directly. (due RESTICT in next line).
-    auto* intermediate_buffer = ibuf.data();
+    auto *intermediate_buffer = ibuf.data();
 
     ::memset(bufferOut, 0, sizeof(SampleType) * frameSizeSamples);
 
-    for (auto &src_iter: mSources) {
-        src_rv = src_iter.src->getAudioFrame(intermediate_buffer);
-        if (src_rv == SourceStatus::OK) {
-            didMix = true;
-            for (i = 0; i < frameSizeSamples; i++)
-            {
-                bufferOut[i] += (src_iter.gain * intermediate_buffer[i]);
-            }
-        } else {
-            if (src_rv == SourceStatus::Error) {
-                LOG("outputmixer", "Error reading from stream.  Removing from mixer.");
-            }
-            // otherwise the stream closed, and we can close it silently!
-            src_iter.src.reset();
+        for (auto &src_iter: mSources) {
+            src_rv = src_iter.src->getAudioFrame(intermediate_buffer);
+                if (src_rv == SourceStatus::OK) {
+                    didMix = true;
+                        for (i = 0; i < frameSizeSamples; i++) {
+                            bufferOut[i] +=
+                                (src_iter.gain * intermediate_buffer[i]);
+                        }
+                } else {
+                        if (src_rv == SourceStatus::Error) {
+                            LOG("outputmixer", "Error reading from stream.  Removing from mixer.");
+                    }
+                    // otherwise the stream closed, and we can close it silently!
+                    src_iter.src.reset();
+                }
         }
-    }
-    mSources.remove_if([](MixerSource ms) -> bool { return !ms.src; });
-    // apply final volume adjustment.
-    if (didMix) {
-        for (i = 0; i < frameSizeSamples; i++)
-        {
-            bufferOut[i] *= mGain;
-        }
+    mSources.remove_if([](MixerSource ms) -> bool {
+        return !ms.src;
+    });
+        // apply final volume adjustment.
+        if (didMix) {
+                for (i = 0; i < frameSizeSamples; i++) {
+                    bufferOut[i] *= mGain;
+                }
     }
     return SourceStatus::OK;
 }
 
-void OutputMixer::setSource(const std::shared_ptr<ISampleSource> &src, float gain)
-{
+void OutputMixer::setSource(const std::shared_ptr<ISampleSource> &src, float gain) {
     bool duplicate = false;
-    for (auto &src_iter: mSources) {
-        if (src_iter.src == src) {
-            duplicate = true;
-            src_iter.gain = gain;
-            break;
+        for (auto &src_iter: mSources) {
+                if (src_iter.src == src) {
+                    duplicate     = true;
+                    src_iter.gain = gain;
+                    break;
+            }
         }
+        if (duplicate) {
+            return;
     }
-    if (duplicate) {
-        return;
-    }
-    mSources.emplace_front(MixerSource{src, gain});
+    mSources.emplace_front(MixerSource {src, gain});
 }
 
-void OutputMixer::removeSource(const std::shared_ptr<ISampleSource> &src)
-{
-    mSources.remove_if([src](const MixerSource &thisSrc) -> bool { return thisSrc.src == src; });
+void OutputMixer::removeSource(const std::shared_ptr<ISampleSource> &src) {
+    mSources.remove_if([src](const MixerSource &thisSrc) -> bool {
+        return thisSrc.src == src;
+    });
 }
 
-void OutputMixer::setGain(float newGain)
-{
+void OutputMixer::setGain(float newGain) {
     mGain = newGain;
 }
-

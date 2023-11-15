@@ -8,40 +8,32 @@
 #ifndef atisClient_h
 #define atisClient_h
 
-//#include "afv-native/afv/RadioSimulation.h"
-//#include "afv-native/afv/ATCRadioStack.h"
+// #include "afv-native/afv/RadioSimulation.h"
+// #include "afv-native/afv/ATCRadioStack.h"
 
-#include <memory>
-#include <event2/event.h>
-
-#include "afv-native/event.h"
 #include "afv-native/afv/APISession.h"
 #include "afv-native/afv/EffectResources.h"
-#include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/VoiceCompressionSink.h"
+#include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
-#include "afv-native/audio/SpeexPreprocessor.h"
-#include "afv-native/audio/SourceToSinkAdapter.h"
 #include "afv-native/audio/ITick.h"
+#include "afv-native/audio/SourceToSinkAdapter.h"
+#include "afv-native/audio/SpeexPreprocessor.h"
+#include "afv-native/audio/WavSampleStorage.h"
+#include "afv-native/event.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/http/EventTransferManager.h"
 #include "afv-native/http/RESTRequest.h"
-#include "afv-native/audio/WavSampleStorage.h"
-
-
+#include <event2/event.h>
+#include <memory>
 
 namespace afv_native {
     /** ATCClient provides a fully functional ATC Client that can be integrated into
      * an application.
      */
-    class ATISClient :
-        public audio::ISampleSink,
-        public afv::ICompressedFrameSink,
-        public std::enable_shared_from_this<ATISClient>,
-        public audio::ITick
-    {
-    public:
+    class ATISClient: public audio::ISampleSink, public afv::ICompressedFrameSink, public std::enable_shared_from_this<ATISClient>, public audio::ITick {
+      public:
         /** Construct an AFV-native ATC Client.
          *
          * The pilot client will be in the disconnected state and ready to have
@@ -63,11 +55,7 @@ namespace afv_native {
          * @param clientName The name of this client to advertise to the
          *      audio-subsystem.
          */
-        ATISClient(
-            struct event_base* evBase,
-            std::string atisFile,
-            const std::string& clientName = "AFV-Native",
-            std::string baseUrl = "https://voice1.vatsim.uk");
+        ATISClient(struct event_base *evBase, std::string atisFile, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.uk");
 
         virtual ~ATISClient();
 
@@ -91,10 +79,8 @@ namespace afv_native {
 
         void setFrequency(unsigned int freq);
 
-
         /** sets the (linear) gain to be applied to radioNum */
         void setRadioGain(unsigned int radioNum, float gain);
-
 
         /** setCredentials sets the user Credentials for this client.
          *
@@ -103,7 +89,7 @@ namespace afv_native {
          * @param username The user's CID or username.
          * @param password The user's password
          */
-        void setCredentials(const std::string& username, const std::string& password);
+        void setCredentials(const std::string &username, const std::string &password);
 
         /** setCallsign sets the user's callsign for this client.
          *
@@ -112,7 +98,6 @@ namespace afv_native {
          * @param callsign the callsign to use.
          */
         void setCallsign(std::string callsign);
-
 
         /** isAPIConnected() indicates if the API Server connection is up.
          *
@@ -156,8 +141,7 @@ namespace afv_native {
          * The second argument is a pointer to data relevant to the callback.  The memory it points to is only
          * guaranteed to be available for the duration of the callback.
          */
-        util::ChainedCallback<void(ClientEventType, void*)>  ClientEventCallback;
-
+        util::ChainedCallback<void(ClientEventType, void *)> ClientEventCallback;
 
         std::map<std::string, std::vector<afv::dto::StationTransceiver>> getStationTransceivers() const;
 
@@ -166,26 +150,22 @@ namespace afv_native {
 
         bool isPlaying();
 
-        void putAudioFrame(const audio::SampleType* bufferIn);
+        void putAudioFrame(const audio::SampleType *bufferIn);
 
-
-    protected:
-
-        struct event_base* mEvBase;
-
+      protected:
+        struct event_base *mEvBase;
 
         http::EventTransferManager mTransferManager;
-        afv::APISession mAPISession;
+        afv::APISession   mAPISession;
         afv::VoiceSession mVoiceSession;
 
         void processCompressedFrame(std::vector<unsigned char> compressedData);
 
-        double mClientLatitude;
-        double mClientLongitude;
-        double mClientAltitudeMSLM;
-        double mClientAltitudeGLM;
+        double       mClientLatitude;
+        double       mClientLongitude;
+        double       mClientAltitudeMSLM;
+        double       mClientAltitudeGLM;
         unsigned int mFrequency;
-
 
         std::string mCallsign;
 
@@ -193,7 +173,6 @@ namespace afv_native {
         void voiceStateCallback(afv::VoiceSessionState state);
 
         void sendCachedFrame();
-
 
         std::vector<afv::dto::Transceiver> makeTransceiverDto();
         /* sendTransceiverUpdate sends the update now, in process.
@@ -205,25 +184,24 @@ namespace afv_native {
         void queueTransceiverUpdate();
         void stopTransceiverUpdate();
 
-
-
-    protected:
+      protected:
         event::EventCallbackTimer mTransceiverUpdateTimer;
-        cryptodto::UDPChannel* mChannel;
-        std::atomic<uint32_t> mTxSequence;
+        cryptodto::UDPChannel *mChannel;
+        std::atomic<uint32_t>  mTxSequence;
         std::shared_ptr<afv::VoiceCompressionSink> mVoiceSink;
         std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
         std::shared_ptr<audio::WavSampleStorage> mWavSampleStorage;
         std::shared_ptr<audio::RecordedSampleSource> mRecordedSampleSource;
         std::shared_ptr<audio::SourceToSinkAdapter> mAdapter;
         std::vector<std::vector<unsigned char>> mStoredData;
-        bool looped;
-        bool playCachedData;
+        bool         looped;
+        bool         playCachedData;
         unsigned int cacheNum;
-        std::string mClientName;
-        std::string mATISFileName;
-    public:
+        std::string  mClientName;
+        std::string  mATISFileName;
+
+      public:
     };
-}
+} // namespace afv_native
 
 #endif /* atisClient_h */

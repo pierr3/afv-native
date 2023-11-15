@@ -11,37 +11,26 @@
 #include "afv-native/audio/ISampleSink.h"
 #include <map>
 
+namespace afv_native { namespace afv {
 
-namespace afv_native {
-    namespace afv {
-    
     class ATCInputMixer;
-    
-    
+
     /** InputInPort - Routes Audio
      *
      *
      *
      */
-    
-    class InputInPort :
-    public audio::ISampleSink,
-    public std::enable_shared_from_this<InputInPort> {
-    public:
-        
-        InputInPort(std::weak_ptr<ATCInputMixer> inMixer, unsigned int inPort);
-        void putAudioFrame(const audio::SampleType *bufferIn, unsigned int inPort = 0 ) override;
 
-        
-    protected:
+    class InputInPort: public audio::ISampleSink, public std::enable_shared_from_this<InputInPort> {
+      public:
+        InputInPort(std::weak_ptr<ATCInputMixer> inMixer, unsigned int inPort);
+        void putAudioFrame(const audio::SampleType *bufferIn, unsigned int inPort = 0) override;
+
+      protected:
         std::weak_ptr<ATCInputMixer> mMixer;
-        unsigned int mLocalPort;
-        
+        unsigned int                 mLocalPort;
     };
-    
-    
-    
-    
+
     /**   ATCInputMixer - Microphone to Network
      *
      *    Routes Audio from the Microphone(s) and eventually out onto the network.. this can get complicated if G/G Calls/Monitoring/etc are in progress.
@@ -49,13 +38,9 @@ namespace afv_native {
      *      Note: Mixer ports are NOT self routing by default.. You need to connect a port to itself if you want it to be a bus.
      *
      */
-    
-    class ATCInputMixer :
-    public std::enable_shared_from_this<ATCInputMixer>{
-        
-    public:
-        
-        
+
+    class ATCInputMixer: public std::enable_shared_from_this<ATCInputMixer> {
+      public:
         ATCInputMixer();
         virtual ~ATCInputMixer();
 
@@ -65,18 +50,16 @@ namespace afv_native {
          *  @param port Mixer port to connect this input device to
          */
         std::shared_ptr<audio::ISampleSink> attachInputDevice(unsigned int port);
-        
-        
+
         /** attachOutput connects a port to the specified Sink
          *
          *  @param port Mixer Port to connect to
          *  @param sink Sink that will receive all audio flowing out this port
          *
          */
-        
+
         void attachOutput(unsigned int port, std::shared_ptr<audio::ISampleSink> sink, unsigned int remotePort);
-        
-        
+
         /** makeMixerConnection connect two ports
          *
          *  @param srcport Port where the audio originates
@@ -84,53 +67,31 @@ namespace afv_native {
          *  @param connect True to connect, False to Disconnect
          *
          *  */
-        
+
         void makeMixerConnection(unsigned int srcport, unsigned int dstport, bool connect);
-        
-        
-        
+
         bool hasMixerConnection(unsigned int srcport, unsigned int dstport);
-        
-        
-        
+
         void putAudioFrame(const audio::SampleType *bufferIn, unsigned int inPort);
-        
-    protected:
+
+      protected:
         //               Output Port    Connected
         typedef std::map<unsigned int, bool> MixerMap;
-        
+
         //                Input Port
-        typedef std::map<unsigned int, MixerMap>   MixerTable;
-        //                    Connection        Remote Port
+        typedef std::map<unsigned int, MixerMap> MixerTable;
+        //                    Connection Remote Port
         typedef std::pair<std::shared_ptr<audio::ISampleSink>, unsigned int> OutputSpec;
         //               Output Port
         typedef std::map<unsigned int, OutputSpec> OutputMap;
-        
-    
-        
-        
-        
-        MixerTable mMixer;
-        
-        //std::map<unsigned int,InputInPort> mInputs;
-        std::map<unsigned int,std::shared_ptr<InputInPort>> mInputs;
-        OutputMap mOutputs;
-        
-        
-        
-              
-        
-        
-        
-        
-        
-        
-        
-    };
-    
-    
-    }
-}
 
+        MixerTable mMixer;
+
+        // std::map<unsigned int,InputInPort> mInputs;
+        std::map<unsigned int, std::shared_ptr<InputInPort>> mInputs;
+        OutputMap mOutputs;
+    };
+
+}} // namespace afv_native::afv
 
 #endif /* ATCInputMixer_h */

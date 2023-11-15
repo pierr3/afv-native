@@ -29,68 +29,59 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
+#include "afv-native/audio/RecordedSampleSource.h"
 #include <algorithm>
 #include <cstring>
-#include "afv-native/audio/RecordedSampleSource.h"
 
 using namespace afv_native::audio;
 using namespace std;
 
-SourceStatus RecordedSampleSource::getAudioFrame(SampleType *bufferOut)
-{
+SourceStatus RecordedSampleSource::getAudioFrame(SampleType *bufferOut) {
     size_t bufOffset = 0;
-    if (!mPlay || !mSampleSource) {
-        return SourceStatus::Closed;
+        if (!mPlay || !mSampleSource) {
+            return SourceStatus::Closed;
     }
     const size_t sourceLength = mSampleSource->lengthInSamples();
-    do {
-        mFirstFrame=false;
-        if (mLoop && mCurPosition >= sourceLength) {
-            mCurPosition = 0;
-            mFirstFrame=true;
-        }
-        auto maxCopy = min<size_t>(frameSizeSamples - bufOffset, sourceLength - mCurPosition);
-        ::memcpy(bufferOut + bufOffset, mSampleSource->data() + mCurPosition, maxCopy * sizeof(SampleType));
-        mCurPosition += maxCopy;
-        bufOffset += maxCopy;
+        do {
+            mFirstFrame = false;
+                if (mLoop && mCurPosition >= sourceLength) {
+                    mCurPosition = 0;
+                    mFirstFrame  = true;
+            }
+            auto maxCopy = min<size_t>(frameSizeSamples - bufOffset, sourceLength - mCurPosition);
+            ::memcpy(bufferOut + bufOffset,
+                     mSampleSource->data() + mCurPosition, maxCopy * sizeof(SampleType));
+            mCurPosition += maxCopy;
+            bufOffset += maxCopy;
     } while (mLoop && bufOffset < frameSizeSamples);
-    if (bufOffset < frameSizeSamples) {
-        const size_t fillSize = frameSizeSamples - bufOffset;
-        ::memset(bufferOut + bufOffset, 0, sizeof(SampleType)*fillSize);
+        if (bufOffset < frameSizeSamples) {
+            const size_t fillSize = frameSizeSamples - bufOffset;
+            ::memset(bufferOut + bufOffset, 0, sizeof(SampleType) * fillSize);
     }
-    if (!mLoop && mCurPosition >= mSampleSource->lengthInSamples()) {
-        mPlay = false;
+        if (!mLoop &&
+            mCurPosition >= mSampleSource->lengthInSamples()) {
+            mPlay = false;
     }
     return SourceStatus::OK;
 }
 
 RecordedSampleSource::RecordedSampleSource(const std::shared_ptr<ISampleStorage> src, bool loop):
-    mSampleSource(src),
-    mLoop(loop),
-    mPlay(true),
-    mCurPosition(0),
-    mFirstFrame(false)
-{
+    mSampleSource(src), mLoop(loop), mPlay(true), mCurPosition(0), mFirstFrame(false) {
 }
 
-RecordedSampleSource::~RecordedSampleSource()
-{
+RecordedSampleSource::~RecordedSampleSource() {
 }
 
-bool RecordedSampleSource::isPlaying() const
-{
+bool RecordedSampleSource::isPlaying() const {
     return mPlay;
 }
 
 void RecordedSampleSource::reset() {
-    
-    mCurPosition=0;
-    
+    mCurPosition = 0;
 }
 
 bool RecordedSampleSource::firstFrame() {
-    
     return mFirstFrame;
 }

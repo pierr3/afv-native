@@ -29,53 +29,50 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_VHFFILTERSOURCE_H
 #define AFV_NATIVE_VHFFILTERSOURCE_H
 
-#include <memory>
-#include <vector>
-
 #include <afv-native/audio/BiQuadFilter.h>
 #include <afv-native/audio/ISampleSource.h>
 #include <afv-native/hardwareType.h>
+#include <memory>
+#include <vector>
 
 namespace chunkware_simple {
     class SimpleComp;
     class SimpleLimit;
-}
+} // namespace chunkware_simple
 
-namespace afv_native {
-    namespace audio {
-        /** VHFFilterSource implements the three filters we use to simulate the limited bandwidth of an airband VHF radio.
+namespace afv_native { namespace audio {
+    /** VHFFilterSource implements the three filters we use to simulate the limited bandwidth of an airband VHF radio.
+     *
+     * If you want a more generic filter wrapper, look at FilterSource.
+     *
+     * @note VHFFilterSource is defined inline and staticly to encourage the compiler to inline and unroll/vectorise as
+     *       much as possible.  Because we run these on every incoming sample, we actually want it to be fairly fast.
+     */
+    class VHFFilterSource {
+      public:
+        explicit VHFFilterSource(HardwareType hd = HardwareType::Schmid_ED_137B);
+        virtual ~VHFFilterSource();
+
+        /** transformFrame lets use apply this filter to a normal buffer, without following the sink/source flow.
          *
-         * If you want a more generic filter wrapper, look at FilterSource.
-         *
-         * @note VHFFilterSource is defined inline and staticly to encourage the compiler to inline and unroll/vectorise as
-         *       much as possible.  Because we run these on every incoming sample, we actually want it to be fairly fast.
+         * It always performs a copy of the data from In to Out at the very least.
          */
-        class VHFFilterSource {
-        public:
-            explicit VHFFilterSource(HardwareType hd = HardwareType::Schmid_ED_137B);
-            virtual ~VHFFilterSource();
+        void transformFrame(SampleType *bufferOut, SampleType const bufferIn[]);
 
-            /** transformFrame lets use apply this filter to a normal buffer, without following the sink/source flow.
-             *
-             * It always performs a copy of the data from In to Out at the very least.
-             */
-            void transformFrame(SampleType *bufferOut, SampleType const bufferIn[]);
+      protected:
+        void setupPresets();
 
-        protected:
-            void setupPresets();
-        
-            chunkware_simple::SimpleComp *compressor;
-            chunkware_simple::SimpleLimit *limiter;
-            float compressorPostGain;
-            std::vector<BiQuadFilter> mFilters;
-            HardwareType hardware = HardwareType::Schmid_ED_137B;
-        };
-    }
-}
+        chunkware_simple::SimpleComp  *compressor;
+        chunkware_simple::SimpleLimit *limiter;
+        float compressorPostGain;
+        std::vector<BiQuadFilter> mFilters;
+        HardwareType hardware = HardwareType::Schmid_ED_137B;
+    };
+}} // namespace afv_native::audio
 
-#endif //AFV_NATIVE_VHFFILTERSOURCE_H
+#endif // AFV_NATIVE_VHFFILTERSOURCE_H

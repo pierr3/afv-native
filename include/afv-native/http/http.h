@@ -29,32 +29,30 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_HTTP_H
 #define AFV_NATIVE_HTTP_H
 
 #include <cstddef>
 
-namespace afv_native {
-    namespace http {
-        enum class Method {
-            GET,
-            POST,
-            PUT,
-            DEL,
-        };
+namespace afv_native { namespace http {
+    enum class Method {
+        GET,
+        POST,
+        PUT,
+        DEL,
+    };
 
-        enum class Progress {
-            New,
-            Connecting,
-            Transferring,
-            Finished,
-            Error,
-        };
+    enum class Progress {
+        New,
+        Connecting,
+        Transferring,
+        Finished,
+        Error,
+    };
 
-        const size_t AllocChunkSize = 8192;
-    }
-}
+    const size_t AllocChunkSize = 8192;
+}} // namespace afv_native::http
 
-#endif //AFV_NATIVE_HTTP_H
+#endif // AFV_NATIVE_HTTP_H

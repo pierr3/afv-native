@@ -29,40 +29,36 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_CHANNELCONFIG_H
 #define AFV_NATIVE_CHANNELCONFIG_H
 
-#include <string>
-#include <vector>
+#include "afv-native/cryptodto/params.h"
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <vector>
 
-#include "afv-native/cryptodto/params.h"
+namespace afv_native { namespace cryptodto {
+    namespace dto {
+        class ChannelConfig {
+          public:
+            ChannelConfig();
+            ChannelConfig(const ChannelConfig &cpysrc);
+            ChannelConfig(ChannelConfig &&movesrc) noexcept;
 
-namespace afv_native {
-    namespace cryptodto {
-        namespace dto {
-            class ChannelConfig {
-            public:
-                ChannelConfig();
-                ChannelConfig(const ChannelConfig &cpysrc);
-                ChannelConfig(ChannelConfig &&movesrc) noexcept;
+            std::string ChannelTag;
+            unsigned char AeadReceiveKey[cryptodto::aeadModeKeySize];
+            unsigned char AeadTransmitKey[cryptodto::aeadModeKeySize];
 
-                std::string ChannelTag;
-                unsigned char AeadReceiveKey[cryptodto::aeadModeKeySize];
-                unsigned char AeadTransmitKey[cryptodto::aeadModeKeySize];
+            // hmacKey is not used anywhere, but we still need to be able to unmarshal it.
+            std::string HmacKey;
 
-                // hmacKey is not used anywhere, but we still need to be able to unmarshal it.
-                std::string HmacKey;
+            MSGPACK_DEFINE_ARRAY(ChannelTag, AeadReceiveKey, AeadTransmitKey, HmacKey);
+        };
 
-                MSGPACK_DEFINE_ARRAY(ChannelTag, AeadReceiveKey, AeadTransmitKey, HmacKey);
-            };
-
-            void to_json(nlohmann::json &j, const ChannelConfig &cc);
-            void from_json(const nlohmann::json &j, ChannelConfig &cc);
-        }
-    }
-}
-#endif //AFV_NATIVE_CHANNELCONFIG_H
+        void to_json(nlohmann::json &j, const ChannelConfig &cc);
+        void from_json(const nlohmann::json &j, ChannelConfig &cc);
+}}}    // namespace afv_native::cryptodto::dto
+#endif // AFV_NATIVE_CHANNELCONFIG_H
