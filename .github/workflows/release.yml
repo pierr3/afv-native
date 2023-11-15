@@ -6,12 +6,12 @@ on:
       - v*
   workflow_dispatch:
 
-env:
-  BUILD_TYPE: Release
-
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -22,16 +22,19 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
       - name: Configure cmake
         run: |
-          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
       - name: Build cmake
         run: |
-          cmake --build build/ --config Release
+          cmake --build build/ --config ${{ matrix.build_type }}
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           files: build/*.so
-  build-osx-intel:
+  build-macos-universal:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -42,25 +45,33 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
       - name: Configure cmake (intel)
         run: |
-          cmake -S . -B build_intel/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          cmake -S . -B build_intel/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
       - name: Build cmake (intel)
         run: |
-          cmake --build build_intel/ --config Release
+          cmake --build build_intel/ --config ${{ matrix.build_type }}
       - name: Configure cmake (arm64)
         run: |
-          cmake -S . -B build_arm/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
+          cmake -S . -B build_arm/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
       - name: Build cmake (arm64)
         run: |
-          cmake --build build_arm/ --config Release
-      - name: Create Universal Binary
+          cmake --build build_arm/ --config ${{ matrix.build_type }}
+      - name: Create Universal Binary (Rel)
+        if: matrix.build_type == 'Release'
         run: |
           lipo -create build_arm/libafv_native.dylib build_intel/libafv_native.dylib -output ./libafv_native.dylib
+      - name: Create Universal Binary (Deb)
+        if: matrix.build_type == 'Debug'
+        run: |
+          lipo -create build_arm/libafv_natived.dylib build_intel/libafv_natived.dylib -output ./libafv_natived.dylib
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: libafv_native.dylib
+          files: ./*.dylib
   build-windows:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -71,13 +82,35 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.bat -disableMetrics
       - name: Configure cmake
         run: |
-          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
       - name: Build cmake
         run: |
-          cmake --build build/ --config Release
+          cmake --build build/ --config ${{ matrix.build_type }}
+      - uses: vimtor/action-zip@v1.1
+        with:
+          files: |
+            build/${{ matrix.build_type }}/*.dll
+            build/${{ matrix.build_type }}/*.lib
+          dest: win64-${{ matrix.build_type }}.zip
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
+          files: win64-${{ matrix.build_type }}.zip
+  upload-headers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: atc-client
+          submodules: recursive
+      - uses: vimtor/action-zip@v1.1
+        with:
           files: |
-            build/Release/*.dll
-            build/Release/*.lib
+            afv_native_export.h
+            include/afv-native/event.h
+            include/afv-native/hardwareType.h
+          dest: afv_native_headers.zip
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: afv_native_headers.zip
