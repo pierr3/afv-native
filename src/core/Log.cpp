@@ -62,7 +62,7 @@ static void defaultLogger(std::string subsystem, std::string file, int line,
   }
   if (nullptr != gLoggerFh) {
 #ifdef NDEBUG
-    fprintf(gLoggerFh, "%s: %s: %s\n", dateTimeBuf, subsystem, outputLine);
+    fprintf(gLoggerFh, "%s: %s: %s\n", dateTimeBuf, subsystem.c_str(), outputLine.c_str());
 #else
     fprintf(gLoggerFh, "%s: %s: %s(%d): %s\n", dateTimeBuf, subsystem.c_str(),
             file.c_str(), line, outputLine.c_str());
@@ -133,7 +133,7 @@ void afv_native::__Dumphex(const char *file, int line, const char *subsystem,
     {
       std::lock_guard<std::mutex> logLock(gLoggerLock);
 
-      gLogger(subsystem, file, line, lineout.str().c_str());
+      gLogger(subsystem, file, line, lineout.str());
     }
   }
 }
