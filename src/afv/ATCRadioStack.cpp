@@ -192,35 +192,7 @@ bool ATCRadioStack::_process_radio(
       }
     }
 
-    /*for (const afv::dto::RxTransceiver &tx: srcPair.second.transceivers) {
-        if (tx.Frequency == mRadioState[rxIter].Frequency) {
-            mUseStream = true;
-
-            float crackleFactor = 0.0f;
-            if (!mRadioState[rxIter].mBypassEffects) {
-                crackleFactor = static_cast<float>((exp(tx.DistanceRatio) *
-    pow(tx.DistanceRatio, -4.0) / 350.0) - 0.00776652); crackleFactor =
-    fmax(0.0f, crackleFactor); crackleFactor = fmin(0.20f, crackleFactor);
-
-                if (crackleGain == 0.f) {
-                    crackleGain = crackleFactor * 2;
-                    voiceGain = 1.0 - crackleFactor * 3.7;
-                } else {
-                    crackleGain = fmin(crackleGain, crackleFactor * 2);
-                    voiceGain = fmax(voiceGain, 1.0 - crackleFactor * 3.7);
-                }
-            } else {
-                break;
-            }
-
-            // Previously we did break, which caused issued with crackle being
-    calculated on far away transceiver
-            //break; // matched once.  dont' bother anymore.
-        }
-    }*/
-
     if (mUseStream) {
-      // then include this stream.
       try {
         mix_buffers(state->mChannelBuffer,
                     sampleCache.at(srcPair.second.source.get()),
@@ -441,7 +413,7 @@ std::vector<afv::dto::Transceiver> ATCRadioStack::makeTransceiverDto() {
       retSet.emplace_back(i, state.first, mClientLatitude, mClientLongitude,
                           mClientAltitudeMSLM, mClientAltitudeGLM);
       // Update the radioStack with the added transponder
-      state.second.transceivers = { retSet.back() };
+      state.second.transceivers = {retSet.back()};
       i++;
     } else {
       for (auto &trans : state.second.transceivers) {
@@ -462,11 +434,12 @@ ATCRadioStack::makeCrossCoupleGroupDto() {
 
   for (auto &state : mRadioState) {
     // There are transceivers and they need to be coupled
-    if (state.second.transceivers.size() != 0 && state.second.xc &&
-        state.second.tx) {
-      for (auto &trans : state.second.transceivers) {
-        group.TransceiverIDs.push_back(trans.ID);
-      }
+    if (!state.second.xc || !state.second.tx) {
+      continue;
+    }
+    
+    for (auto &trans : state.second.transceivers) {
+      group.TransceiverIDs.push_back(trans.ID);
     }
   }
 
@@ -622,8 +595,8 @@ void ATCRadioStack::sendCachedAtisFrame() {
           continue;
         }
         for (auto &trans : radio.second.transceivers) {
-          
-            audioOutDto.Transceivers.emplace_back(trans.ID);
+
+          audioOutDto.Transceivers.emplace_back(trans.ID);
         }
       }
     }
