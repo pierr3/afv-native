@@ -86,12 +86,10 @@ jobs:
       - name: Build cmake
         run: |
           cmake --build build/ --config ${{ matrix.build_type }}
-      - uses: vimtor/action-zip@v1.1
-        with:
-          files: |
-            build/${{ matrix.build_type }}/*.dll
-            build/${{ matrix.build_type }}/*.lib
-          dest: win64-${{ matrix.build_type }}.zip
+      - name: Zip build
+        run: |
+          Compress-Archive -Path build/${{ matrix.build_type }}/*.dll -Destination win64-${{ matrix.build_type }}.zip
+          Compress-Archive -Path build/${{ matrix.build_type }}/*.lib -Update -Destination win64-${{ matrix.build_type }}.zip
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -103,13 +101,9 @@ jobs:
         with:
           ref: atc-client
           submodules: recursive
-      - uses: vimtor/action-zip@v1.1
-        with:
-          files: |
-            afv_native_export.h
-            include/afv-native/event.h
-            include/afv-native/hardwareType.h
-          dest: afv_native_headers.zip
+      - name: Zip headers
+        run: |
+          zip afv_native_headers afv_native_export.h include/afv-native/event.h include/afv-native/hardwareType.h
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
