@@ -83,6 +83,7 @@ namespace afv_native { namespace afv {
         std::shared_ptr<audio::SineToneSource>       BlockTone;
         audio::VHFFilterSource                      *vhfFilter;
         std::string                                  lastTransmitCallsign;
+        std::vector<std::string>                     liveTransmittingCallsigns;
         int                                          mLastRxCount;
         bool                                         mBypassEffects;
         bool            onHeadset       = true; // If we're not on the headset, we're on the Speaker
@@ -200,9 +201,6 @@ namespace afv_native { namespace afv {
         std::shared_ptr<OutputDeviceState>    mHeadsetState;
         std::shared_ptr<OutputDeviceState>    mSpeakerState;
         std::shared_ptr<EffectResources>      mResources;
-
-        std::unordered_map<std::string, struct CallsignMeta> mHeadsetIncomingStreams;
-        std::unordered_map<std::string, struct CallsignMeta> mSpeakerIncomingStreams;
 
         event::EventCallbackTimer mMaintenanceTimer;
         RollingAverage<double>    mVuMeter;

@@ -206,10 +206,10 @@ void Client::radioStateCallback(afv::RadioSimulationState state) {
 
     switch (state) {
         case afv::RadioSimulationState::RxStarted:
-            ClientEventCallback.invokeAll(ClientEventType::RxStarted, &lastReceivedRadio);
+            ClientEventCallback.invokeAll(ClientEventType::RxOpen, &lastReceivedRadio);
             break;
         case afv::RadioSimulationState::RxStopped:
-            ClientEventCallback.invokeAll(ClientEventType::RxStopped, &lastReceivedRadio);
+            ClientEventCallback.invokeAll(ClientEventType::RxClosed, &lastReceivedRadio);
             break;
     }
 }

@@ -11,7 +11,9 @@
 #include "afv-native/afv/dto/voice_server/AudioTxOnTransceivers.h"
 #include "afv-native/audio/PinkNoiseGenerator.h"
 #include "afv-native/audio/VHFFilterSource.h"
+#include "afv-native/event.h"
 #include "afv-native/hardwareType.h"
+#include "afv-native/util/other.h"
 #include <atomic>
 #include <cmath>
 
@@ -131,6 +133,14 @@ bool ATCRadioStack::_process_radio(const std::map<void *, audio::SampleType[audi
     for (auto &srcPair: mIncomingStreams) {
         if (!srcPair.second.source || !srcPair.second.source->isActive() ||
             (sampleCache.find(srcPair.second.source.get()) == sampleCache.end())) {
+            // Check if we have a live transmitting callsign still registered here
+            bool hasBeenDeleted =
+                afv_native::util::removeIfExists(srcPair.first, mRadioState[rxIter].liveTransmittingCallsigns);
+            if (hasBeenDeleted) {
+                ClientEventCallback->invokeAll(ClientEventType::PilotRxClosed, &rxIter,
+                                               static_cast<void *>(new std::string {srcPair.first}));
+            }
+
             continue;
         }
         bool  mUseStream = false;
@@ -176,6 +186,7 @@ bool ATCRadioStack::_process_radio(const std::map<void *, audio::SampleType[audi
         if (mRadioState[rxIter].mLastRxCount == 0) {
             // Post Begin Voice Receiving Notfication
             unsigned int freq = rxIter;
+            mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting yet
             ClientEventCallback->invokeAll(ClientEventType::RxOpen, &freq, nullptr);
         }
         if (!mRadioState[rxIter].mBypassEffects) {
@@ -210,6 +221,12 @@ bool ATCRadioStack::_process_radio(const std::map<void *, audio::SampleType[audi
             mRadioState[rxIter].Click = std::make_shared<audio::RecordedSampleSource>(mResources->mClick, false);
             // Post End Voice Receiving Notification
             unsigned int freq = rxIter;
+            for (auto callsign: mRadioState[rxIter].liveTransmittingCallsigns) {
+                // Emit the remaining callsigns event since the frequency is about to close
+                ClientEventCallback->invokeAll(ClientEventType::PilotRxClosed, &rxIter, static_cast<void *>(new std::string {callsign}));
+            }
+
+            mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting anymore
             ClientEventCallback->invokeAll(ClientEventType::RxClosed, &freq, nullptr);
         }
     }
@@ -307,11 +324,17 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
 }
 
 bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt) {
-    // std::lock_guard<std::mutex> radioStateLock(mRadioStateLock);
+    std::lock_guard<std::mutex> radioStateLock(mRadioStateLock);
     for (auto trans: pkt.Transceivers) {
         if (mRadioState[trans.Frequency].rx) {
-            // todo: fix multiple callsigns transmitting
             mRadioState[trans.Frequency].lastTransmitCallsign = pkt.Callsign;
+            bool isNew =
+                afv_native::util::pushbackIfUnique(pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
+            if (isNew) {
+                // Need to emit that we have a new pilot that started transmitting
+                //FIXME: Does not emit if the pilot is transmitting on more than one frequency
+                ClientEventCallback->invokeAll(ClientEventType::PilotRxOpen, &trans.Frequency, static_cast<void *>(new std::string {pkt.Callsign}));
+            }
             return true;
         }
     }
@@ -322,7 +345,7 @@ bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt)
 void ATCRadioStack::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt) {
     std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
 
-    // FIXME:  Deal with the case of a single-callsign transmitting multiple
+    // FIXME: Deal with the case of a single-callsign transmitting multiple
     // different voicestreams simultaneously.
 
     if (_packetListening(pkt)) {
