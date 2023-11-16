@@ -1,46 +1,10 @@
-# AFV-native
+# AFV Native
 
-AFV-Native is a portable-(ish) implementation of the Audio for VATSIM client
-protocol.
+AFV Native is a portable-(ish) implementation of the Audio for VATSIM client protocol, written by Chris Collins.
 
-If you are not a client developer, this is not of interest to you and you should
-refer to the 
-[approved software list](https://www.vatsim.net/documents/approved-software) to
-find a client for your needs.
+For additional information, please see the [original repository](https://github.com/xsquawkbox/AFV-Native).
 
-
-# Goals
-
-AFV-Native has the following goals:
-
-* Licensing must remain compatible with XSquawkBox (which is effectively
-  proprietary and requires static linking for distribution/support reasons, so 
-  GPL-like licenses are not acceptable).  The BSD 3-Clause has been chosen for 
-  AFV-Native itself.
-
-* Must work on the big three: Windows, Linux and MacOS.
-
-* Must work fairly uniformly on the big three.
-
-* Only needs to work on architectures where there's a meaningful piece of 
-  software to integrate with - that is, a pilot or ATC simulator and client.
-
-* Must have a reasonably straight-forward API for client developers.
-
-## Using AFV-Native
-
-It's recommended to use the [Conan](https://conan.io) package for AFV-Native 
-whenever possible rather than any other integration as it's the primary 
-integration method used in XSB and the most tested.
-
-Simply add the xsquawkbox-public & bincrafters repos to your conan workspace, 
-and require `AFV-Native/<version>@xsquawkbox/<release-type>`, then use the 
-correct method for your generators & build system to include the AFV-Native 
-library and headers.
- 
-## Building AFV-native
-
-### Prerequisites
+## Building
 
 To build AFV-native, you will require an up-to-date copy of cmake and vcpkg.
 * [CMake](https://cmake.org)
@@ -103,7 +67,6 @@ incorporated fairly easily)
 
 ## Licensing
 
-AFV-Native is made available under the 3-Clause BSD License.  See `COPYING.md`
-for the precise licensing text.
+AFV-Native is made available under the 3-Clause BSD License.  See `COPYING.md` for the precise licensing text.
 
 More information about this is in the `docs` directory.

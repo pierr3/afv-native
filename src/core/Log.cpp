@@ -88,7 +88,9 @@ void afv_native::__Log(const char *file, int line, const char *subsystem, const 
     {
         std::lock_guard<std::mutex> logLock(gLoggerLock);
 
-        gLogger(subsystem, file, line, outBuffer.data());
+        if(reference) {
+            gLogger(subsystem, file, line, outBuffer.data(), reference);
+        }
     }
     va_end(ap2);
     va_end(ap);

@@ -29,30 +29,32 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
+*/
 
 #ifndef AFV_NATIVE_CLIENT_H
 #define AFV_NATIVE_CLIENT_H
 
+#include "afv-native/afv/RadioSimulation.h"
+
+#include <memory>
+#include <event2/event.h>
+
+#include "afv-native/event.h"
 #include "afv-native/afv/APISession.h"
 #include "afv-native/afv/EffectResources.h"
-#include "afv-native/afv/RadioSimulation.h"
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
-#include "afv-native/event.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/http/EventTransferManager.h"
 #include "afv-native/http/RESTRequest.h"
-#include <event2/event.h>
-#include <memory>
 
 namespace afv_native {
     /** Client provides a fully functional PilotClient that can be integrated into
      * an application.
      */
     class Client {
-      public:
+    public:
         /** Construct an AFV-native Pilot Client.
          *
          * The pilot client will be in the disconnected state and ready to have
@@ -76,7 +78,11 @@ namespace afv_native {
          * @param clientName The name of this client to advertise to the
          *      audio-subsystem.
          */
-        Client(struct event_base *evBase, const std::string &resourceBasePath, unsigned int numRadios = 2, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.uk");
+        Client(
+                struct event_base *evBase,
+                unsigned int numRadios = 2,
+                const std::string &clientName = "AFV-Native",
+                std::string baseUrl = "https://voice1.vatsim.uk");
 
         virtual ~Client();
 
@@ -153,7 +159,8 @@ namespace afv_native {
         void setAudioApi(audio::AudioDevice::Api api);
 
         void setAudioInputDevice(std::string inputDevice);
-        void setAudioOutputDevice(std::string outputDevice);
+        void setSpeakerDevice(std::string speakerDevice);
+        void setHeadsetDevice(std::string headsetDevice);
 
         /** isAPIConnected() indicates if the API Server connection is up.
          *
@@ -187,6 +194,9 @@ namespace afv_native {
         void setEnableOutputEffects(bool enableEffects);
         void setEnableHfSquelch(bool enableSquelch);
 
+        void setOnHeadset(unsigned int radio, bool onHeadset);
+        void setSplitAudioChannels(bool split);
+
         /** ClientEventCallback provides notifications when certain client events occur.  These can be used to
          * provide feedback within the client itself without needing to poll Client's methods.
          *
@@ -196,7 +206,7 @@ namespace afv_native {
          * The second argument is a pointer to data relevant to the callback.  The memory it points to is only
          * guaranteed to be available for the duration of the callback.
          */
-        util::ChainedCallback<void(ClientEventType, void *)> ClientEventCallback;
+        util::ChainedCallback<void(ClientEventType, void*, void*)>  ClientEventCallback;
 
         /** getStationAliases returns a vector of all the known station aliases.
          *
@@ -210,16 +220,12 @@ namespace afv_native {
         void startAudio();
         void stopAudio();
 
-        /** logAudioStatistics dumps the internal data about over/underflow totals to the AFV log.
-         *
-         */
-        void logAudioStatistics();
-
         std::shared_ptr<const afv::RadioSimulation> getRadioSimulation() const;
-        std::shared_ptr<const audio::AudioDevice>   getAudioDevice() const;
+        std::shared_ptr<const audio::AudioDevice> getHeadsetDevice() const;
+        std::shared_ptr<const audio::AudioDevice> getSpeakerDevice() const;
 
-        /** getRxActive returns if the nominated radio is currently Receiving voice, irrespective as
-         * to if it's audiable or not.
+        /** getRxActive returns if the nominated radio is currently Receiving voice, irrespective as to if it's audiable
+         * or not.
          *
          * @param radioNumber the number (starting from 0) of the radio to probe
          * @return true if the radio would have voice to play, false otherwise.
@@ -233,38 +239,39 @@ namespace afv_native {
          */
         bool getTxActive(unsigned int radioNumber);
 
-      protected:
+    protected:
         struct ClientRadioState {
             int mCurrentFreq;
             int mNextFreq;
         };
 
-        struct event_base                    *mEvBase;
+        struct event_base *mEvBase;
         std::shared_ptr<afv::EffectResources> mFxRes;
 
-        http::EventTransferManager            mTransferManager;
-        afv::APISession                       mAPISession;
-        afv::VoiceSession                     mVoiceSession;
+        http::EventTransferManager mTransferManager;
+        afv::APISession mAPISession;
+        afv::VoiceSession mVoiceSession;
         std::shared_ptr<afv::RadioSimulation> mRadioSim;
-        std::shared_ptr<audio::AudioDevice>   mAudioDevice;
 
-        double                               mClientLatitude;
-        double                               mClientLongitude;
-        double                               mClientAltitudeMSLM;
-        double                               mClientAltitudeGLM;
+        std::shared_ptr<audio::AudioDevice> mHeadsetDevice;
+        std::shared_ptr<audio::AudioDevice> mSpeakerDevice;
+
+        double mClientLatitude;
+        double mClientLongitude;
+        double mClientAltitudeMSLM;
+        double mClientAltitudeGLM;
         std::vector<struct ClientRadioState> mRadioState;
 
         std::string mCallsign;
 
         void sessionStateCallback(afv::APISessionState state);
         void voiceStateCallback(afv::VoiceSessionState state);
-        void radioStateCallback(afv::RadioSimulationState state);
 
         bool mTxUpdatePending;
         bool mWantPtt;
         bool mPtt;
 
-        bool                               areTransceiversSynced() const;
+        bool areTransceiversSynced() const;
         std::vector<afv::dto::Transceiver> makeTransceiverDto();
         /* sendTransceiverUpdate sends the update now, in process.
          * queueTransceiverUpdate schedules it for the next eventloop.  This is a
@@ -276,20 +283,20 @@ namespace afv_native {
         void stopTransceiverUpdate();
 
         void aliasUpdateCallback();
-
-      private:
+    private:
         void unguardPtt();
-
-      protected:
+    protected:
         event::EventCallbackTimer mTransceiverUpdateTimer;
 
-        std::string             mClientName;
+        std::string mClientName;
         audio::AudioDevice::Api mAudioApi;
-        std::string             mAudioInputDeviceName;
-        std::string             mAudioOutputDeviceName;
-
-      public:
+        std::string mAudioInputDeviceName;
+        std::string mHeadsetDeviceName;
+        std::string mSpeakerDeviceName;
+        bool mSplitAudioChannels;
+        bool mInvalidDeviceConfig = false;
+    public:
     };
-} // namespace afv_native
+}
 
-#endif // AFV_NATIVE_CLIENT_H
+#endif //AFV_NATIVE_CLIENT_H

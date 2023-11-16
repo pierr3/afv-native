@@ -213,6 +213,8 @@ void VoiceSession::postTransceiverUpdate(const std::vector<dto::Transceiver> &tx
     auto &transferManager = mSession.getTransferManager();
     mTransceiverUpdateRequest.shareState(transferManager);
     mTransceiverUpdateRequest.doAsync(transferManager);
+
+    LOG("VoiceSession", "postTransceiverUpdate");
 }
 
 void VoiceSession::postCrossCoupleGroupUpdate(const std::vector<dto::CrossCoupleGroup> &ccDto, std::function<void(http::Request *, bool)> callback) {
