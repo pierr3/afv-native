@@ -6,7 +6,7 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/
 project(
     afv_native
     VERSION 1.19.0
-    LANGUAGES CXX)
+    LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -67,18 +67,19 @@ target_sources(${PROJECT_NAME} PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/CrossCoupleGroup.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/StationTransceiver.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SourceToSinkAdapter.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/OutputDeviceState.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/VHFFilterSource.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SimpleCompressorEffect.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atcClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atisClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientWrapper.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleComp.h
-			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleEnvelope.h
-			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleGate.h
-			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleLimit.h
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleComp.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleEnvelope.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleGate.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleLimit.cpp)
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleLimit.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/compressor/compressor.c
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/compressor/mem.c
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/compressor/snd.c)
 
 
 if(MSVC)

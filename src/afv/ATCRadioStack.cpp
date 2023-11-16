@@ -28,28 +28,12 @@ const float fxWhiteNoiseGain = 0.01f;
 
 const float fxBlockToneFreq = 180.0f;
 
-OutputAudioDevice::OutputAudioDevice(std::weak_ptr<ATCRadioStack> stack, bool isHeadset):
+AtcOutputAudioDevice::AtcOutputAudioDevice(std::weak_ptr<ATCRadioStack> stack, bool isHeadset):
     mStack(stack), isHeadset(isHeadset) {
 }
 
-audio::SourceStatus OutputAudioDevice::getAudioFrame(audio::SampleType *bufferOut) {
+audio::SourceStatus AtcOutputAudioDevice::getAudioFrame(audio::SampleType *bufferOut) {
     return mStack.lock()->getAudioFrame(bufferOut, isHeadset);
-}
-
-OutputDeviceState::OutputDeviceState() {
-    mChannelBuffer     = new audio::SampleType[audio::frameSizeSamples];
-    mMixingBuffer      = new audio::SampleType[audio::frameSizeSamples];
-    mFetchBuffer       = new audio::SampleType[audio::frameSizeSamples];
-    mLeftMixingBuffer  = new audio::SampleType[audio::frameSizeSamples];
-    mRightMixingBuffer = new audio::SampleType[audio::frameSizeSamples];
-}
-
-OutputDeviceState::~OutputDeviceState() {
-    delete[] mFetchBuffer;
-    delete[] mMixingBuffer;
-    delete[] mLeftMixingBuffer;
-    delete[] mRightMixingBuffer;
-    delete[] mChannelBuffer;
 }
 
 ATCRadioStack::ATCRadioStack(struct event_base *evBase, std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel):
@@ -65,8 +49,8 @@ ATCRadioStack::~ATCRadioStack() {
 }
 
 void ATCRadioStack::setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback) {
-    mHeadsetDevice      = std::make_shared<OutputAudioDevice>(shared_from_this(), true);
-    mSpeakerDevice      = std::make_shared<OutputAudioDevice>(shared_from_this(), false);
+    mHeadsetDevice      = std::make_shared<AtcOutputAudioDevice>(shared_from_this(), true);
+    mSpeakerDevice      = std::make_shared<AtcOutputAudioDevice>(shared_from_this(), false);
     mHeadsetState       = std::make_shared<OutputDeviceState>();
     mSpeakerState       = std::make_shared<OutputDeviceState>();
     ClientEventCallback = eventCallback;

@@ -53,6 +53,7 @@
 #include "afv-native/cryptodto/UDPChannel.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/util/ChainedCallback.h"
+#include "afv-native/audio/OutputDeviceState.h"
 
 namespace afv_native {
     namespace afv {
@@ -66,17 +67,6 @@ namespace afv_native {
         private:
             std::weak_ptr<RadioSimulation> mRadio;
             bool onHeadset = false;
-        };
-
-        class OutputDeviceState {
-        public:
-            audio::SampleType *mChannelBuffer;
-            audio::SampleType *mMixingBuffer; // for single channel mode
-            audio::SampleType *mLeftMixingBuffer;
-            audio::SampleType *mRightMixingBuffer;
-            audio::SampleType *mFetchBuffer;
-            OutputDeviceState();
-            virtual ~OutputDeviceState();
         };
 
         /** RadioState is the internal state object for each radio within a RadioSimulation.

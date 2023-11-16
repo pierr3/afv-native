@@ -21,10 +21,8 @@
 #include <memory>
 #include <mutex>
 #include <vector>
-// #include "afv-native/audio/ISampleSink.h"
 #include "afv-native/audio/ISampleSource.h"
 #include "afv-native/audio/ITick.h"
-// #include "afv-native/audio/OutputMixer.h"
 #include "afv-native/afv/dto/CrossCoupleGroup.h"
 #include "afv-native/audio/PinkNoiseGenerator.h"
 #include "afv-native/audio/SineToneSource.h"
@@ -34,39 +32,20 @@
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/hardwareType.h"
 #include "afv-native/util/ChainedCallback.h"
+#include "afv-native/audio/OutputDeviceState.h"
 
 namespace afv_native { namespace afv {
 
     class ATCRadioStack;
 
-    class OutputAudioDevice: public audio::ISampleSource {
+    class AtcOutputAudioDevice: public audio::ISampleSource {
       public:
         std::weak_ptr<ATCRadioStack> mStack;
         bool                         isHeadset;
 
-        OutputAudioDevice(std::weak_ptr<ATCRadioStack> stack, bool isHeadset);
+        AtcOutputAudioDevice(std::weak_ptr<ATCRadioStack> stack, bool isHeadset);
 
         audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut) override;
-    };
-
-    class OutputDeviceState {
-      public:
-        /** mChannelBuffer is our single-radio/channel workbuffer - we do our per-channel fx mixing
-         * in here before we mix into the mMixingBuffer
-         */
-        audio::SampleType *mChannelBuffer;
-
-        /** mMixingBuffer is our aggregated mixing buffer for all radios/channels - when we're
-         * finished mixing and the final effects pass, we copy this to the output/target buffer.
-         */
-
-        audio::SampleType *mMixingBuffer; // for single channel mode
-        audio::SampleType *mLeftMixingBuffer;
-        audio::SampleType *mRightMixingBuffer;
-        audio::SampleType *mFetchBuffer;
-
-        OutputDeviceState();
-        virtual ~OutputDeviceState();
     };
 
     /** RadioState is the internal state object for each radio within a RadioSimulation.
@@ -191,8 +170,8 @@ namespace afv_native { namespace afv {
         std::vector<std::vector<unsigned char>> mStoredAtisData;
 
         std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
-        std::shared_ptr<OutputAudioDevice>        mHeadsetDevice;
-        std::shared_ptr<OutputAudioDevice>        mSpeakerDevice;
+        std::shared_ptr<AtcOutputAudioDevice>        mHeadsetDevice;
+        std::shared_ptr<AtcOutputAudioDevice>        mSpeakerDevice;
 
         PlaybackChannel mDefaultPlaybackChannel = PlaybackChannel::Both;
 

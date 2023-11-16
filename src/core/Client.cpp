@@ -44,10 +44,11 @@ using namespace afv_native;
 
 Client::Client(
         struct event_base *evBase,
+        std::string resourceBasePath,
         unsigned int numRadios,
         const std::string &clientName,
         std::string baseUrl):
-        mFxRes(std::make_shared<afv::EffectResources>()),
+        mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)),
         mEvBase(evBase),
         mTransferManager(mEvBase),
         mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName),
@@ -373,7 +374,7 @@ void Client::sendTransceiverUpdate()
                     this->unguardPtt();
                 }
             });
-    mTransceiverUpdateTimer.enable(afv::afvTransciverUpdateIntervalMs);
+    mTransceiverUpdateTimer.enable(afv::afvTransceiverUpdateIntervalMs);
 }
 
 void Client::queueTransceiverUpdate()
