@@ -29,18 +29,17 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/audio/SourceFrameSizeAdjuster.h"
-#include <memory>
 #include <algorithm>
 #include <cstring>
+#include <memory>
 
 using namespace afv_native::audio;
 using namespace std;
 
-SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut)
-{
+SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut) {
     if (!mOriginSource) {
         return SourceStatus::Closed;
     }
@@ -60,8 +59,8 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut)
             // shortcut by writing straight into the buffer.
             sourceRes = mOriginSource->getAudioFrame(bufferOut + destOffset);
             if (sourceRes != SourceStatus::OK) {
-                // something broke.  silencefill the buffer, and return OK, but kill our source handle.
-                ::memset(bufferOut+destOffset, 0, sizeof(SampleType) * samplesRemaining);
+                // something broke. silencefill the buffer, and return OK, but kill our source handle.
+                ::memset(bufferOut + destOffset, 0, sizeof(SampleType) * samplesRemaining);
                 mOriginSource.reset();
                 return SourceStatus::OK;
             }
@@ -69,10 +68,10 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut)
         } else {
             // the remaining samples to copy must be less than a frame.
             // fill our holding buffer.
-            sourceRes = mOriginSource->getAudioFrame(mSourceBuffer);
+            sourceRes           = mOriginSource->getAudioFrame(mSourceBuffer);
             mSourceBufferOffset = 0;
             if (sourceRes != SourceStatus::OK) {
-                // something broke.  silencefill the buffer, and return OK, but kill our source handle.
+                // something broke. silencefill the buffer, and return OK, but kill our source handle.
                 ::memset(bufferOut + destOffset, 0, sizeof(SampleType) * samplesRemaining);
                 mOriginSource.reset();
                 return SourceStatus::OK;
@@ -86,16 +85,13 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut)
     return SourceStatus::OK;
 }
 
-SourceFrameSizeAdjuster::SourceFrameSizeAdjuster(
-        std::shared_ptr<ISampleSource> originSource, unsigned int outputFrameSize):
-        mOriginSource(std::move(originSource)), mDestinationFrameSize(outputFrameSize), mSourceBufferOffset(0)
-{
+SourceFrameSizeAdjuster::SourceFrameSizeAdjuster(std::shared_ptr<ISampleSource> originSource, unsigned int outputFrameSize):
+    mOriginSource(std::move(originSource)), mDestinationFrameSize(outputFrameSize), mSourceBufferOffset(0) {
     const size_t bufferSize = frameSizeSamples * sizeof(SampleType);
-    mSourceBuffer = new SampleType[bufferSize];
+    mSourceBuffer           = new SampleType[bufferSize];
     ::memset(mSourceBuffer, 0, bufferSize);
 }
 
-SourceFrameSizeAdjuster::~SourceFrameSizeAdjuster()
-{
+SourceFrameSizeAdjuster::~SourceFrameSizeAdjuster() {
     delete[] mSourceBuffer;
 }

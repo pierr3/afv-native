@@ -32,28 +32,22 @@
  */
 
 #include "afv-native/audio/WavFile.h"
-
-#include <cstdio>
+#include <algorithm>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
-#include <algorithm>
-
-#include <QTemporaryDir>
-#include <QFile>
-#include <QString>
-#include <QtDebug>
 
 using namespace std;
 using namespace afv_native::audio;
 /*
  * There is a HUGE assumption in here right now that everything is
- * Little Endian - this is now true for X-Plane.  It will need to be fixed
+ * Little Endian - this is now true for X-Plane. It will need to be fixed
  * if this ever changes.
  *
  * - CC.
-*/
+ */
 
 /** minimumBlockAlignment calculates the minimum permissible block size for the
  * specified sampleSize & channel count.
@@ -71,45 +65,32 @@ using namespace afv_native::audio;
  *
  * @param sampleSize size of each sample in bits.
  * @param numChannels total number of channels per sample
-*/
-inline int 
-minimumBlockAlignment(int sampleSize, int numChannels)
-{
+ */
+inline int minimumBlockAlignment(int sampleSize, int numChannels) {
     return ((sampleSize + 7) / 8) * numChannels;
 }
 
-
-AudioSampleData::AudioSampleData(int numChannels, int bitsPerSample, int sampleRate, bool isFloat) :
-    mNumChannels(numChannels),
-    mBitsPerSample(bitsPerSample),
-    mSampleRate(sampleRate),
-    mIsFloat(isFloat)
-{
+AudioSampleData::AudioSampleData(int numChannels, int bitsPerSample, int sampleRate, bool isFloat):
+    mNumChannels(numChannels), mBitsPerSample(bitsPerSample), mSampleRate(sampleRate), mIsFloat(isFloat) {
     mSampleAlignment = minimumBlockAlignment(mBitsPerSample, mNumChannels);
-    mSampleCount = 0;
-    mSampleData = nullptr;
+    mSampleCount     = 0;
+    mSampleData      = nullptr;
 }
 
 AudioSampleData::AudioSampleData(AudioSampleData &&move_src) noexcept:
-    mNumChannels(move_src.mNumChannels),
-    mBitsPerSample(move_src.mBitsPerSample),
-    mSampleAlignment(move_src.mSampleAlignment),
-    mSampleRate(move_src.mBitsPerSample)
-{
-    mSampleData = move_src.mSampleData;
-    mSampleCount = move_src.mSampleCount;
-    move_src.mSampleData = nullptr;
+    mNumChannels(move_src.mNumChannels), mBitsPerSample(move_src.mBitsPerSample),
+    mSampleAlignment(move_src.mSampleAlignment), mSampleRate(move_src.mBitsPerSample) {
+    mSampleData           = move_src.mSampleData;
+    mSampleCount          = move_src.mSampleCount;
+    move_src.mSampleData  = nullptr;
     move_src.mSampleCount = 0;
 }
 
-AudioSampleData::AudioSampleData(const AudioSampleData &cpy_src) :
-    mNumChannels(cpy_src.mNumChannels),
-    mBitsPerSample(cpy_src.mBitsPerSample),
-    mSampleAlignment(cpy_src.mSampleAlignment),
-    mSampleRate(cpy_src.mBitsPerSample)
-{
+AudioSampleData::AudioSampleData(const AudioSampleData &cpy_src):
+    mNumChannels(cpy_src.mNumChannels), mBitsPerSample(cpy_src.mBitsPerSample),
+    mSampleAlignment(cpy_src.mSampleAlignment), mSampleRate(cpy_src.mBitsPerSample) {
     mSampleCount = cpy_src.mSampleCount;
-    mSampleData = malloc(cpy_src.mSampleCount * cpy_src.mSampleAlignment);
+    mSampleData  = malloc(cpy_src.mSampleCount * cpy_src.mSampleAlignment);
     if (mSampleData == nullptr) {
         mSampleCount = 0;
     } else {
@@ -117,20 +98,17 @@ AudioSampleData::AudioSampleData(const AudioSampleData &cpy_src) :
     }
 }
 
-AudioSampleData::~AudioSampleData()
-{
+AudioSampleData::~AudioSampleData() {
     if (mSampleData != nullptr) {
         free(mSampleData);
-        mSampleData = nullptr;
+        mSampleData  = nullptr;
         mSampleCount = 0;
     }
 }
 
-void
-AudioSampleData::AppendSamples(uint8_t blockSize, unsigned count, void *data)
-{
+void AudioSampleData::AppendSamples(uint8_t blockSize, unsigned count, void *data) {
     const unsigned newCount = mSampleCount + count;
-    mSampleData = realloc(mSampleData, newCount*mSampleAlignment);
+    mSampleData             = realloc(mSampleData, newCount * mSampleAlignment);
     if (mSampleData == nullptr) {
         mSampleCount = 0;
         return;
@@ -138,7 +116,7 @@ AudioSampleData::AppendSamples(uint8_t blockSize, unsigned count, void *data)
     auto *dptr = reinterpret_cast<uint8_t *>(mSampleData);
     dptr += mSampleCount * mSampleAlignment;
     if (blockSize == mSampleAlignment) {
-        memcpy(dptr, data, count*blockSize);
+        memcpy(dptr, data, count * blockSize);
     } else {
         auto *sptr = reinterpret_cast<uint8_t *>(data);
         for (unsigned c = 0; c < count; c++) {
@@ -152,97 +130,80 @@ AudioSampleData::AppendSamples(uint8_t blockSize, unsigned count, void *data)
 
 /* ==== Getters ==== */
 
-int8_t
-AudioSampleData::getNumChannels() const
-{
+int8_t AudioSampleData::getNumChannels() const {
     return mNumChannels;
-
 }
 
-int8_t
-AudioSampleData::getBitsPerSample() const
-{
+int8_t AudioSampleData::getBitsPerSample() const {
     return mBitsPerSample;
 }
 
-uint8_t
-AudioSampleData::getSampleAlignment() const
-{
+uint8_t AudioSampleData::getSampleAlignment() const {
     return mSampleAlignment;
 }
 
-int
-AudioSampleData::getSampleRate() const
-{
+int AudioSampleData::getSampleRate() const {
     return mSampleRate;
 }
 
-size_t
-AudioSampleData::getSampleCount() const
-{
+size_t AudioSampleData::getSampleCount() const {
     return mSampleCount;
 }
 
-const void *
-AudioSampleData::getSampleData() const
-{
+const void *AudioSampleData::getSampleData() const {
     return mSampleData;
 }
 
-bool
-AudioSampleData::isFloat() const
-{
+bool AudioSampleData::isFloat() const {
     return mIsFloat;
 }
 
 /* ==== WAVE Loading Logic Below ==== */
 
-static const char *	WavTopChunkID = "RIFF";
-static const char *	WavFormatChunkID = "fmt ";
-static const char *	WavDataChunkID = "data";
+static const char *WavTopChunkID    = "RIFF";
+static const char *WavFormatChunkID = "fmt ";
+static const char *WavDataChunkID   = "data";
 
-#pragma pack(push,1)
+#pragma pack(push, 1)
 struct ChunkHeader {
-    char		chunkID[4];
-    uint32_t	chunkSize;
+    char     chunkID[4];
+    uint32_t chunkSize;
 };
 
 /* names below from the Microsoft headers/documentation for consistency.
-*/
+ */
 struct WavFormatChunk {
-    uint16_t	wFormatTag;
-    uint16_t	nChannels;
-    uint32_t	nSamplesPerSec;
-    uint32_t	nAvgBytesPerSec;
-    uint16_t	nBlockAlign;
-    uint16_t	wBitsPerSample;
+    uint16_t wFormatTag;
+    uint16_t nChannels;
+    uint32_t nSamplesPerSec;
+    uint32_t nAvgBytesPerSec;
+    uint16_t nBlockAlign;
+    uint16_t wBitsPerSample;
     /* 18 byte body... */
-    uint16_t	cbSize;
+    uint16_t cbSize;
     /* 40 byte body */
-    uint16_t	wValidBitsPerSample;
-    uint32_t	dwChannelMask;
-    char 		SubFormat[16];
+    uint16_t wValidBitsPerSample;
+    uint32_t dwChannelMask;
+    char     SubFormat[16];
 };
 #pragma pack(pop)
 
-const uint16_t	WAV_FORMAT_PCM = 1;
-const uint16_t	WAV_FORMAT_IEEE_FLOAT = 3;
+const uint16_t WAV_FORMAT_PCM        = 1;
+const uint16_t WAV_FORMAT_IEEE_FLOAT = 3;
 
 typedef struct WavTOCEntry {
-    struct ChunkHeader	ch;
-    uint32_t			offset;
+    struct ChunkHeader ch;
+    uint32_t           offset;
 } WavTOCEntry;
 
-static vector<WavTOCEntry>::const_iterator
-FindTOCFor(const vector<WavTOCEntry> &toc, const char *chunk_id)
-{
-    return std::find_if(toc.cbegin(), toc.cend(), [chunk_id](const WavTOCEntry &x) -> bool {return !memcmp(x.ch.chunkID, chunk_id, 4); });
+static vector<WavTOCEntry>::const_iterator FindTOCFor(const vector<WavTOCEntry> &toc, const char *chunk_id) {
+    return std::find_if(toc.cbegin(), toc.cend(), [chunk_id](const WavTOCEntry &x) -> bool {
+        return !memcmp(x.ch.chunkID, chunk_id, 4);
+    });
 }
 
-static bool
-readHeader(FILE *srcFile, const struct ChunkHeader &ch, vector<WavTOCEntry> &o_HeaderItems)
-{
-    uint32_t	expectedBytesLeft = ch.chunkSize - 4;
+static bool readHeader(FILE *srcFile, const struct ChunkHeader &ch, vector<WavTOCEntry> &o_HeaderItems) {
+    uint32_t expectedBytesLeft = ch.chunkSize - 4;
 
     while (expectedBytesLeft > 0) {
         /* if there's less than a chunkheader less, there's a problem. */
@@ -275,12 +236,10 @@ readHeader(FILE *srcFile, const struct ChunkHeader &ch, vector<WavTOCEntry> &o_H
     return true;
 }
 
-static 
-AudioSampleData *extractData(FILE* fh, const vector<WavTOCEntry> &toc)
-{
-    uint8_t *dbuf = nullptr;
-    AudioSampleData *asd = nullptr;
-    size_t samplesRead = 0;
+static AudioSampleData *extractData(FILE *fh, const vector<WavTOCEntry> &toc) {
+    uint8_t         *dbuf        = nullptr;
+    AudioSampleData *asd         = nullptr;
+    size_t           samplesRead = 0;
 
     /* if we get here without an error, it means the file was well formed and
      * we now have a ToC for the file chunks
@@ -304,7 +263,7 @@ AudioSampleData *extractData(FILE* fh, const vector<WavTOCEntry> &toc)
         chunkSize = sizeof(WavFormatChunk);
     }
 
-    struct WavFormatChunk	fc;
+    struct WavFormatChunk fc;
     if (1 != fread(&fc, chunkSize, 1, fh)) {
         return nullptr;
     }
@@ -347,25 +306,12 @@ fail2:
     return nullptr;
 }
 
-AudioSampleData *
-afv_native::audio::LoadWav(const char *fileName)
-{
-    QTemporaryDir tempDir;
-    QFile resourcePath(fileName);
-    QFileInfo fileInfo(resourcePath);
-    QString tempFile;
+AudioSampleData *afv_native::audio::LoadWav(const char *fileName) {
+    FILE               *fh = nullptr;
+    vector<WavTOCEntry> toc;
+    AudioSampleData    *asd = nullptr;
 
-    if(tempDir.isValid() && resourcePath.exists())
-    {
-        tempFile = tempDir.path() + "/" + fileInfo.fileName();
-        resourcePath.copy(tempFile);
-    }
-
-    FILE *fh = nullptr;
-    vector<WavTOCEntry>	toc;
-    AudioSampleData* asd = nullptr;
-
-    fh = fopen(tempFile.toStdString().c_str(), "rb");
+    fh = fopen(fileName, "rb");
     if (fh == nullptr) {
         return nullptr;
     }
@@ -384,7 +330,7 @@ afv_native::audio::LoadWav(const char *fileName)
     /* minimum sensible size is the WAVE identifier, 2 chunk headers
      * and the minimum legal WAVFormatChunk body
      */
-    if (ch.chunkSize < (4+16+8+8)) {
+    if (ch.chunkSize < (4 + 16 + 8 + 8)) {
         goto fail;
     }
     /* check the WAVE magic */
@@ -405,11 +351,6 @@ afv_native::audio::LoadWav(const char *fileName)
     asd = extractData(fh, toc);
     if (asd == nullptr) {
         goto fail;
-    }
-
-    if (fh != nullptr) {
-        fclose(fh);
-        fh = nullptr;
     }
 
     return asd;

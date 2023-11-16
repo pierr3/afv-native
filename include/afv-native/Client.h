@@ -47,7 +47,6 @@
 #include "afv-native/audio/AudioDevice.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/http/EventTransferManager.h"
-#include "afv-native/http/RESTRequest.h"
 
 namespace afv_native {
     /** Client provides a fully functional PilotClient that can be integrated into
@@ -80,6 +79,7 @@ namespace afv_native {
          */
         Client(
                 struct event_base *evBase,
+                std::string resourceBasePath,
                 unsigned int numRadios = 2,
                 const std::string &clientName = "AFV-Native",
                 std::string baseUrl = "https://voice1.vatsim.uk");

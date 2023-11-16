@@ -29,28 +29,25 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_ISAMPLESOURCE_H
 #define AFV_NATIVE_ISAMPLESOURCE_H
 
-#include "afv-native/audio/audio_params.h"
 #include "afv-native/audio/SourceStatus.h"
+#include "afv-native/audio/audio_params.h"
 
-namespace afv_native {
-    namespace audio {
-        class ISampleSource {
-        public:
-            /** fetch a single audioframe of frameSize samples from the source.
-             *
-             * @param bufferOut The buffer to write frameSize samples into.
-             * @return The SourceStatus enum corresponding to the current state of
-             *  the stream.
-             */
-            virtual SourceStatus getAudioFrame(SampleType *bufferOut) = 0;
-        };
-    }
-}
+namespace afv_native { namespace audio {
+    class ISampleSource {
+      public:
+        /** fetch a single audioframe of frameSize samples from the source.
+         *
+         * @param bufferOut The buffer to write frameSize samples into.
+         * @return The SourceStatus enum corresponding to the current state of
+         *  the stream.
+         */
+        virtual SourceStatus getAudioFrame(SampleType *bufferOut) = 0;
+    };
+}} // namespace afv_native::audio
 
-
-#endif //AFV_NATIVE_ISAMPLESOURCE_H
+#endif // AFV_NATIVE_ISAMPLESOURCE_H

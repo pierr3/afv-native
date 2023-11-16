@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_IAUDIO_H
 #define AFV_NATIVE_IAUDIO_H
@@ -37,19 +37,14 @@
 #include <string>
 #include <vector>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class IAudio {
-            public:
-                std::string Callsign;
-                uint32_t SequenceCounter;
-                std::vector<unsigned char> Audio;
-                bool LastPacket;
-            };
-        }
-    }
-}
+namespace afv_native { namespace afv { namespace dto {
+    class IAudio {
+      public:
+        std::string                Callsign;
+        uint32_t                   SequenceCounter;
+        std::vector<unsigned char> Audio;
+        bool                       LastPacket;
+    };
+}}} // namespace afv_native::afv::dto
 
-
-#endif //AFV_NATIVE_IAUDIO_H
+#endif // AFV_NATIVE_IAUDIO_H

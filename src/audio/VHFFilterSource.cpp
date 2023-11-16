@@ -29,37 +29,90 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/audio/VHFFilterSource.h"
+#include <simpleSource/SimpleComp.h>
+#include <simpleSource/SimpleLimit.h>
 
 using namespace afv_native::audio;
 
-VHFFilterSource::VHFFilterSource()
-{
+VHFFilterSource::VHFFilterSource(HardwareType hd):
+    compressor(new chunkware_simple::SimpleComp()), limiter(new chunkware_simple::SimpleLimit()) {
+    compressor->setSampleRate(sampleRateHz);
+    compressor->setAttack(0.1);
+    compressor->setRelease(80.0);
+    compressor->setThresh(-8.0);
+    compressor->setRatio(6);
+    compressor->initRuntime();
+
+    compressorPostGain = pow(10.0f, (-5.5 / 20.0));
+
+    limiter->setAttack(0.1);
+    limiter->setSampleRate(sampleRateHz);
+    limiter->setRelease(80.0);
+    limiter->setThresh(8.0);
+    limiter->initRuntime();
+
+    this->hardware = hd;
+
     setupPresets();
 }
 
-/** transformFrame lets use apply this filter to a normal buffer, without following the sink/source flow.
- *
- * It always performs a copy of the data from In to Out at the very least.
- */
-void VHFFilterSource::transformFrame(SampleType *bufferOut, SampleType const bufferIn[])
-{
-    for(unsigned int i = 0; i < frameSizeSamples; i++)
-    {
-        for(unsigned int band = 0; band < m_filters.size(); band++)
-        {
-            bufferOut[i] = m_filters[band].TransformOne(bufferIn[i]);
-        }
+VHFFilterSource::~VHFFilterSource() {
+    delete compressor;
+};
+
+void VHFFilterSource::setupPresets() {
+    if (hardware == HardwareType::Schmid_ED_137B) {
+        mFilters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 310, 0.25));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 450, 0.75, 12.0));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 1450, 1.0, 20.0));
+        mFilters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 2000, 1.0, 20.0));
+        mFilters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 2500, 0.25));
+    }
+
+    if (hardware == HardwareType::Garex_220) {
+        mFilters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 300, 0.25));
+        mFilters.push_back(BiQuadFilter::highShelfFilter(sampleRateHz, 400, 1.0, 8.0));
+        mFilters.push_back(BiQuadFilter::highShelfFilter(sampleRateHz, 600, 1.0, 4.0));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 2000, 1.0, 1.0));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 2400, 1.0, 3.0));
+        mFilters.push_back(BiQuadFilter::lowShelfFilter(sampleRateHz, 3000, 1.0, 10.0));
+        mFilters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 3400, 0.25));
+    }
+
+    if (hardware == HardwareType::Rockwell_Collins_2100) {
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, 0.0, 0.0, -0.01, 0.0, 0.0));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.7152995098277, 0.761385315196423, 0.0, 1.0, 0.753162969638192));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.71626681678914, 0.762433947105989, 1.0, -2.29278115712509, 1.000336632935775));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.79384214686345, 0.909678364879526, 1.0, -2.05042803669041, 1.05048374237779));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.79409285259567, 0.909822671281377, 1.0, -1.95188929743297, 0.951942325888074));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.9390093095185, 0.9411847259142, 1.0, -1.82547932903698, 1.09157529229851));
+        mFilters.push_back(BiQuadFilter::customBuild(1.0, -1.94022767750807, 0.942630574503006, 1.0, -1.67241244173042, 0.916184578658119));
     }
 }
 
-void VHFFilterSource::setupPresets()
-{
-    m_filters.push_back(BiQuadFilter::highPassFilter(sampleRateHz, 310, 0.25));
-    m_filters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 450, 0.75, 17.0));
-    m_filters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 1450, 1.0, 25.0));
-    m_filters.push_back(BiQuadFilter::peakingEQ(sampleRateHz, 2000, 1.0, 25.0));
-    m_filters.push_back(BiQuadFilter::lowPassFilter(sampleRateHz, 2500, 0.25));
+/** transformFrame lets use apply this filter to a normal buffer, without
+ * following the sink/source flow.
+ *
+ * It always performs a copy of the data from In to Out at the very least.
+ *
+ */
+void VHFFilterSource::transformFrame(SampleType *bufferOut, SampleType const bufferIn[]) {
+    double sl, sr;
+    for (unsigned i = 0; i < frameSizeSamples; i++) {
+        sl = bufferIn[i];
+        sr = sl;
+
+        compressor->process(sl, sr); // We use the compressor in reverse to boost quiet audio
+        for (int band = 0; band < mFilters.size(); band++) {
+            sl = mFilters[band].TransformOne(sl);
+        }
+        limiter->process(sl, sr); // This limits the total output
+
+        sl *= static_cast<float>(compressorPostGain);
+
+        bufferOut[i] = sl;
+    }
 }

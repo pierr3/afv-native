@@ -29,51 +29,39 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/afv/VoiceSession.h"
-
-#include <nlohmann/json.hpp>
-
 #include "afv-native/Log.h"
 #include "afv-native/afv/APISession.h"
-#include "afv-native/afv/params.h"
+#include "afv-native/afv/dto/CrossCoupleGroup.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/afv/dto/voice_server/Heartbeat.h"
-#include "afv-native/http/Request.h"
+#include "afv-native/afv/params.h"
 #include "afv-native/cryptodto/UDPChannel.h"
+#include "afv-native/http/Request.h"
+#include <nlohmann/json.hpp>
 
 using namespace afv_native::afv;
 using namespace afv_native;
 using json = nlohmann::json;
 
 VoiceSession::VoiceSession(APISession &session, const std::string &callsign):
-        mSession(session),
-        mCallsign(callsign),
-        mBaseUrl(""),
-        mVoiceSessionSetupRequest("", http::Method::POST, json()),
-        mVoiceSessionTeardownRequest("", http::Method::DEL, json()),
-        mTransceiverUpdateRequest("", http::Method::POST, json()),
-        mChannel(session.getEventBase()),
-        mHeartbeatTimer(mSession.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)),
-        mLastHeartbeatReceived(0),
-        mHeartbeatTimeout(mSession.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)),
-        mLastError(VoiceSessionError::NoError)
-{
+    mSession(session), mCallsign(callsign), mBaseUrl(""), mVoiceSessionSetupRequest("", http::Method::POST, json()), mVoiceSessionTeardownRequest("", http::Method::DEL, json()), mTransceiverUpdateRequest("", http::Method::POST, json()), mCrossCoupleGroupUpdateRequest("", http::Method::POST, json()),
+    mChannel(session.getEventBase()), mHeartbeatTimer(mSession.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)), mLastHeartbeatReceived(0),
+    mHeartbeatTimeout(mSession.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)), mLastError(VoiceSessionError::NoError) {
+    mSessionType = VoiceSessionType::Pilot;
     updateBaseUrl();
 }
 
-VoiceSession::~VoiceSession()
-{
+VoiceSession::~VoiceSession() {
     mHeartbeatTimer.disable();
     mHeartbeatTimeout.disable();
     mChannel.close();
     mVoiceSessionSetupRequest.reset();
 }
 
-bool
-VoiceSession::Connect()
-{
+bool VoiceSession::Connect() {
     // we cannot start the voice session if the API session is in any state OTHER than running...
     if (mSession.getState() != APISessionState::Running) {
         return false;
@@ -95,7 +83,7 @@ void VoiceSession::voiceSessionSetupRequestCallback(http::Request *req, bool suc
             auto *restreq = dynamic_cast<http::RESTRequest *>(req);
             assert(restreq != nullptr);
             try {
-                auto j = restreq->getResponse();
+                auto                      j = restreq->getResponse();
                 dto::PostCallsignResponse cresp;
                 j.get_to(cresp);
                 if (!setupSession(cresp)) {
@@ -107,23 +95,19 @@ void VoiceSession::voiceSessionSetupRequestCallback(http::Request *req, bool suc
                 failSession();
             }
         } else {
-            LOG("voicesession",
-                "request for voice session failed: got status %d",
-                req->getStatusCode());
+            LOG("voicesession", "request for voice session failed: got status %d", req->getStatusCode());
             mLastError = VoiceSessionError::BadResponseFromAPIServer;
             failSession();
         }
     } else {
-        LOG("voicesession",
-            "request for voice session failed: got internal error %s",
+        LOG("voicesession", "request for voice session failed: got internal error %s",
             req->getCurlError().c_str());
         mLastError = VoiceSessionError::BadResponseFromAPIServer;
         failSession();
     }
 }
 
-bool VoiceSession::setupSession(const dto::PostCallsignResponse &cresp)
-{
+bool VoiceSession::setupSession(const dto::PostCallsignResponse &cresp) {
     mChannel.close();
     mChannel.setAddress(cresp.VoiceServer.AddressIpV4);
     mChannel.setChannelConfig(cresp.VoiceServer.ChannelConfig);
@@ -137,10 +121,9 @@ bool VoiceSession::setupSession(const dto::PostCallsignResponse &cresp)
     mLastHeartbeatReceived = util::monotime_get();
     mHeartbeatTimer.enable(afvHeartbeatIntervalMs);
     mHeartbeatTimeout.enable(afvHeartbeatTimeoutMs);
-    mChannel.registerDtoHandler(
-            "HA", [this](const unsigned char *data, size_t len) {
-                this->receivedHeartbeat();
-            });
+    mChannel.registerDtoHandler("HA", [this](const unsigned char *data, size_t len) {
+        this->receivedHeartbeat();
+    });
     mLastError = VoiceSessionError::NoError;
     StateCallback.invokeAll(VoiceSessionState::Connected);
 
@@ -149,8 +132,7 @@ bool VoiceSession::setupSession(const dto::PostCallsignResponse &cresp)
     return true;
 }
 
-void VoiceSession::failSession()
-{
+void VoiceSession::failSession() {
     mHeartbeatTimer.disable();
     mHeartbeatTimeout.disable();
     mChannel.close();
@@ -164,8 +146,7 @@ void VoiceSession::failSession()
     }
 }
 
-void VoiceSession::sendHeartbeatCallback()
-{
+void VoiceSession::sendHeartbeatCallback() {
     dto::Heartbeat hbDto(mCallsign);
     if (mChannel.isOpen()) {
         mChannel.sendDto(hbDto);
@@ -173,23 +154,20 @@ void VoiceSession::sendHeartbeatCallback()
     }
 }
 
-void VoiceSession::receivedHeartbeat()
-{
+void VoiceSession::receivedHeartbeat() {
     mLastHeartbeatReceived = util::monotime_get();
     mHeartbeatTimeout.disable();
     mHeartbeatTimeout.enable(afvHeartbeatTimeoutMs);
 }
 
-void VoiceSession::heartbeatTimedOut()
-{
+void VoiceSession::heartbeatTimedOut() {
     util::monotime_t now = util::monotime_get();
     LOG("voicesession", "heartbeat timeout - %d ms elapsed - disconnecting", now - mLastHeartbeatReceived);
     mLastError = VoiceSessionError::Timeout;
     Disconnect(true, true);
 }
 
-void VoiceSession::Disconnect(bool do_close, bool reconnect)
-{
+void VoiceSession::Disconnect(bool do_close, bool reconnect) {
     if (do_close) {
         mVoiceSessionTeardownRequest.reset();
         mVoiceSessionTeardownRequest.setUrl(mBaseUrl);
@@ -197,40 +175,39 @@ void VoiceSession::Disconnect(bool do_close, bool reconnect)
         // because we're likely going to get discarded by our owner when this function returns, we
         // need to hold onto a shared_ptr reference to prevent cleanup until *AFTER* this callback completes.
         auto &transferManager = mSession.getTransferManager();
-        mVoiceSessionTeardownRequest.setCompletionCallback(
-                [](http::Request *req, bool success) mutable {
-                    if (success) {
-                        if (req->getStatusCode() != 200) {
-                            LOG("VoiceSession:Disconnect", "Callsign Dereg Failed.  Status Code: %d", req->getStatusCode());
-                        }
-                    } else {
-                        LOG("VoiceSession:Disconnect", "Callsign Dereg Failed.  Internal Error: %s", req->getCurlError().c_str());
-                    }
-                });
+        mVoiceSessionTeardownRequest.setCompletionCallback([](http::Request *req, bool success) mutable {
+            if (success) {
+                if (req->getStatusCode() != 200) {
+                    LOG("VoiceSession:Disconnect", "Callsign Dereg Failed.  Status Code: %d", req->getStatusCode());
+                }
+            } else {
+                LOG("VoiceSession:Disconnect", "Callsign Dereg Failed.  Internal Error: %s",
+                    req->getCurlError().c_str());
+            }
+        });
         // and now schedule this request to be performed.
         mVoiceSessionTeardownRequest.shareState(transferManager);
         mVoiceSessionTeardownRequest.doAsync(transferManager);
     }
     failSession();
 
-    if(reconnect) {
+    if (reconnect) {
         mSession.Connect();
     }
 }
 
-void VoiceSession::postTransceiverUpdate(
-        const std::vector<dto::Transceiver> &txDto,
-        std::function<void(http::Request *, bool)> callback)
-{
-	updateBaseUrl();
-	mTransceiverUpdateRequest.reset();
+void VoiceSession::postTransceiverUpdate(const std::vector<dto::Transceiver> &txDto, std::function<void(http::Request *, bool)> callback) {
+    updateBaseUrl();
+    mTransceiverUpdateRequest.reset();
     mSession.setAuthenticationFor(mTransceiverUpdateRequest);
 
     // only send the transceivers that have a valid frequency (read: not zero)
     std::vector<dto::Transceiver> filteredDto;
-    std::copy_if(txDto.begin(), txDto.end(), std::back_inserter(filteredDto), [](dto::Transceiver t){ return t.Frequency > 0; });
+    std::copy_if(txDto.begin(), txDto.end(), std::back_inserter(filteredDto), [](dto::Transceiver t) {
+        return t.Frequency > 0;
+    });
 
-	mTransceiverUpdateRequest.setRequestBody(filteredDto);
+    mTransceiverUpdateRequest.setRequestBody(filteredDto);
     mTransceiverUpdateRequest.setCompletionCallback(callback);
     // and now schedule this request to be performed.
     auto &transferManager = mSession.getTransferManager();
@@ -240,46 +217,62 @@ void VoiceSession::postTransceiverUpdate(
     LOG("VoiceSession", "postTransceiverUpdate");
 }
 
-bool VoiceSession::isConnected() const
-{
+void VoiceSession::postCrossCoupleGroupUpdate(const std::vector<dto::CrossCoupleGroup> &ccDto, std::function<void(http::Request *, bool)> callback) {
+    // if(mSessionType!=VoiceSessionType::ATC) return;
+    updateBaseUrl();
+    mCrossCoupleGroupUpdateRequest.reset();
+    mSession.setAuthenticationFor(mCrossCoupleGroupUpdateRequest);
+    mCrossCoupleGroupUpdateRequest.setRequestBody(ccDto);
+    mCrossCoupleGroupUpdateRequest.setCompletionCallback(callback);
+    // and now schedule this request to be performed.
+    auto &transferManager = mSession.getTransferManager();
+    mCrossCoupleGroupUpdateRequest.shareState(transferManager);
+    mCrossCoupleGroupUpdateRequest.doAsync(transferManager);
+}
+
+bool VoiceSession::isConnected() const {
     return mChannel.isOpen();
 }
 
-void VoiceSession::setCallsign(const std::string &newCallsign)
-{
+VoiceSessionType VoiceSession::type() const {
+    return mSessionType;
+}
+
+void VoiceSession::setType(VoiceSessionType inType) {
+    mSessionType = inType;
+}
+
+void VoiceSession::setCallsign(const std::string &newCallsign) {
     if (!mChannel.isOpen()) {
         mCallsign = newCallsign;
     }
 }
 
-afv_native::cryptodto::UDPChannel &VoiceSession::getUDPChannel()
-{
+afv_native::cryptodto::UDPChannel &VoiceSession::getUDPChannel() {
     return mChannel;
 }
 
-void VoiceSession::updateBaseUrl()
-{
+void VoiceSession::updateBaseUrl() {
     mBaseUrl = mSession.getBaseUrl() + "/api/v1/users/" + mSession.getUsername() + "/callsigns/" + mCallsign;
     mVoiceSessionSetupRequest.setUrl(mBaseUrl);
     mVoiceSessionTeardownRequest.setUrl(mBaseUrl);
     mTransceiverUpdateRequest.setUrl(mBaseUrl + "/transceivers");
+    mCrossCoupleGroupUpdateRequest.setUrl(mBaseUrl + "/crossCoupleGroups");
 }
 
-VoiceSessionError VoiceSession::getLastError() const
-{
+VoiceSessionError VoiceSession::getLastError() const {
     return mLastError;
 }
 
 void VoiceSession::sessionStateCallback(APISessionState state) {
     switch (state) {
-    case afv::APISessionState::Disconnected:
-    case afv::APISessionState::Error:
-        if (isConnected()) {
-            failSession();
-        }
-        break;
-    default:
-        break;
+        case afv::APISessionState::Disconnected:
+        case afv::APISessionState::Error:
+            if (isConnected()) {
+                failSession();
+            }
+            break;
+        default:
+            break;
     }
 }
-

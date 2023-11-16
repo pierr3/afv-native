@@ -1,0 +1,15 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "name": "afv-native",
+    "version": "1.19.0",
+    "dependencies": [
+        "opus",
+        "speexdsp",
+        "cpp-jwt",
+        "msgpack",
+        "curl",
+        "nlohmann-json",
+        "openssl",
+        "libevent"
+    ]
+  }

@@ -1,0 +1,111 @@
+name: Release afv-native
+
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: atc-client
+          submodules: recursive
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - name: Configure cmake
+        run: |
+          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      - name: Build cmake
+        run: |
+          cmake --build build/ --config ${{ matrix.build_type }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*.so
+  build-macos-universal:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: atc-client
+          submodules: recursive
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - name: Configure cmake (intel)
+        run: |
+          cmake -S . -B build_intel/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      - name: Build cmake (intel)
+        run: |
+          cmake --build build_intel/ --config ${{ matrix.build_type }}
+      - name: Configure cmake (arm64)
+        run: |
+          cmake -S . -B build_arm/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
+      - name: Build cmake (arm64)
+        run: |
+          cmake --build build_arm/ --config ${{ matrix.build_type }}
+      - name: Create Universal Binary (Rel)
+        if: matrix.build_type == 'Release'
+        run: |
+          lipo -create build_arm/libafv_native.dylib build_intel/libafv_native.dylib -output ./libafv_native.dylib
+      - name: Create Universal Binary (Deb)
+        if: matrix.build_type == 'Debug'
+        run: |
+          lipo -create build_arm/libafv_natived.dylib build_intel/libafv_natived.dylib -output ./libafv_natived.dylib
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./*.dylib
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: atc-client
+          submodules: recursive
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.bat -disableMetrics
+      - name: Configure cmake
+        run: |
+          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      - name: Build cmake
+        run: |
+          cmake --build build/ --config ${{ matrix.build_type }}
+      - name: Zip build
+        run: |
+          Compress-Archive -Path build/${{ matrix.build_type }}/*.dll -Destination win64-${{ matrix.build_type }}.zip
+          Compress-Archive -Path build/${{ matrix.build_type }}/*.lib -Update -Destination win64-${{ matrix.build_type }}.zip
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: win64-${{ matrix.build_type }}.zip
+  upload-headers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: atc-client
+          submodules: recursive
+      - name: Zip headers
+        run: |
+          cp afv_native_export.h include/afv-native/afv_native_export.h
+          zip afv_native_headers include/afv-native/afv_native_export.h include/afv-native/atcClientWrapper.h include/afv-native/event.h include/afv-native/hardwareType.h
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: afv_native_headers.zip

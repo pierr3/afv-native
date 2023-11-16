@@ -29,25 +29,23 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_EVENTCALLBACKTIMER_H
 #define AFV_NATIVE_EVENTCALLBACKTIMER_H
 
+#include "afv-native/event/EventTimer.h"
 #include <functional>
 
-#include "afv-native/event/EventTimer.h"
+namespace afv_native { namespace event {
+    class EventCallbackTimer: public EventTimer {
+      protected:
+        std::function<void()> mCallback;
+        void triggered() override;
 
-namespace afv_native {
-    namespace event {
-        class EventCallbackTimer: public EventTimer {
-        protected:
-            std::function<void()> mCallback;
-            void triggered() override;
-        public:
-            EventCallbackTimer(struct event_base *evBase, std::function<void()> callback);
-        };
-    }
-}
+      public:
+        EventCallbackTimer(struct event_base *evBase, std::function<void()> callback);
+    };
+}} // namespace afv_native::event
 
-#endif //AFV_NATIVE_EVENTCALLBACKTIMER_H
+#endif // AFV_NATIVE_EVENTCALLBACKTIMER_H

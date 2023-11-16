@@ -29,33 +29,29 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_AUTHREQUEST_H
 #define AFV_NATIVE_AUTHREQUEST_H
 
-#include <string>
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
+#include <string>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class AuthRequest {
-            public:
-                AuthRequest();
-                AuthRequest(std::string username, std::string password, std::string client = "AFV-Native");
-                AuthRequest(const AuthRequest &cpysrc);
-                AuthRequest(AuthRequest &&movesrc) noexcept;
+namespace afv_native { namespace afv { namespace dto {
+    class AuthRequest {
+      public:
+        AuthRequest();
+        AuthRequest(std::string username, std::string password, std::string client = "AFV-Native");
+        AuthRequest(const AuthRequest &cpysrc);
+        AuthRequest(AuthRequest &&movesrc) noexcept;
 
-                std::string Username;
-                std::string Password;
-                std::string Client;
-            };
+        std::string Username;
+        std::string Password;
+        std::string Client;
+    };
 
-            void from_json(const nlohmann::json &j, AuthRequest &ar);
-            void to_json(nlohmann::json &j, const AuthRequest &ar);
-        }
-    }
-}
-#endif //AFV_NATIVE_AUTHREQUEST_H
+    void from_json(const nlohmann::json &j, AuthRequest &ar);
+    void to_json(nlohmann::json &j, const AuthRequest &ar);
+}}}    // namespace afv_native::afv::dto
+#endif // AFV_NATIVE_AUTHREQUEST_H

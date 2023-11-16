@@ -29,36 +29,30 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_VOICESERVERCONNECTIONDATA_H
 #define AFV_NATIVE_VOICESERVERCONNECTIONDATA_H
 
-#include <string>
+#include "afv-native/cryptodto/dto/ChannelConfig.h"
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
-#include "afv-native/cryptodto/dto/ChannelConfig.h"
+#include <string>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class VoiceServerConnectionData {
-            public:
-                VoiceServerConnectionData();
-                VoiceServerConnectionData(const VoiceServerConnectionData &cpysrc);
-                VoiceServerConnectionData(VoiceServerConnectionData &&movesrc) noexcept;
+namespace afv_native { namespace afv { namespace dto {
+    class VoiceServerConnectionData {
+      public:
+        VoiceServerConnectionData();
+        VoiceServerConnectionData(const VoiceServerConnectionData &cpysrc);
+        VoiceServerConnectionData(VoiceServerConnectionData &&movesrc) noexcept;
 
-                std::string AddressIpV4;
-                std::string AddressIpV6;
-                cryptodto::dto::ChannelConfig ChannelConfig;
-            };
+        std::string                   AddressIpV4;
+        std::string                   AddressIpV6;
+        cryptodto::dto::ChannelConfig ChannelConfig;
+    };
 
-            void
-            to_json(nlohmann::json &j, const VoiceServerConnectionData &vsd);
+    void to_json(nlohmann::json &j, const VoiceServerConnectionData &vsd);
 
-            void
-            from_json(const nlohmann::json &j, VoiceServerConnectionData &vsd);
-        }
-    }
-}
-#endif //AFV_NATIVE_VOICESERVERCONNECTIONDATA_H
+    void from_json(const nlohmann::json &j, VoiceServerConnectionData &vsd);
+}}}    // namespace afv_native::afv::dto
+#endif // AFV_NATIVE_VOICESERVERCONNECTIONDATA_H

@@ -29,47 +29,48 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_BIQUADFILTER_H
 #define AFV_NATIVE_BIQUADFILTER_H
 
+#include "afv-native/audio/IFilter.h"
 #include <cmath>
 #include <memory>
 
-#include "afv-native/audio/IFilter.h"
+namespace afv_native { namespace audio {
+    class BiQuadFilter: public IFilter {
+      public:
+        BiQuadFilter() = default;
 
-namespace afv_native {
-    namespace audio {
-        class BiQuadFilter : public IFilter {
-        public:
-           BiQuadFilter() = default;
+        SampleType TransformOne(SampleType sampleIn);
 
-            SampleType TransformOne(SampleType sampleIn);
+        void setCoefficients(double aa0, double aa1, double aa2, double b0, double b1, double b2);
+        void setLowPassFilter(float sampleRate, float cutoffFrequency, float q);
+        void setPeakingEq(float sampleRate, float centreFrequency, float q, float dbGain);
+        void setHighPassFilter(float sampleRate, float cutoffFrequency, float q);
+        void setLowShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain);
+        void setHighShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain);
 
-            void setCoefficients(double aa0, double aa1, double aa2, double b0, double b1, double b2);
-            void setLowPassFilter(float sampleRate, float cutoffFrequency, float q);
-            void setPeakingEq(float sampleRate, float centreFrequency, float q, float dbGain);
-            void setHighPassFilter(float sampleRate, float cutoffFrequency, float q);
+        static BiQuadFilter customBuild(double aa0, double aa1, double aa2, double b0, double b1, double b2);
+        static BiQuadFilter lowPassFilter(float sampleRate, float cutoffFrequency, float q);
+        static BiQuadFilter highPassFilter(float sampleRate, float cutoffFrequency, float q);
+        static BiQuadFilter lowShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain);
+        static BiQuadFilter highShelfFilter(float sampleRate, float cutoffFrequency, float q, float dbGain);
+        static BiQuadFilter peakingEQ(float sampleRate, float centreFrequency, float q, float dbGain);
 
-            static BiQuadFilter lowPassFilter(float sampleRate, float cutoffFrequency, float q);
-            static BiQuadFilter highPassFilter(float sampleRate, float cutoffFrequency, float q);
-            static BiQuadFilter peakingEQ(float sampleRate, float centreFrequency, float q, float dbGain);
-            static BiQuadFilter build(double a0, double a1, double a2, double b0, double b1, double b2);
-        private:
-            double m_a0 = 0.0;
-            double m_a1 = 0.0;
-            double m_a2 = 0.0;
-            double m_a3 = 0.0;
-            double m_a4 = 0.0;
+      private:
+        double m_a0 = 0.0;
+        double m_a1 = 0.0;
+        double m_a2 = 0.0;
+        double m_a3 = 0.0;
+        double m_a4 = 0.0;
 
-            float m_x1 = 0.0;
-            float m_x2 = 0.0;
-            float m_y1 = 0.0;
-            float m_y2 = 0.0;
-        };
-    }
-}
+        float m_x1 = 0.0;
+        float m_x2 = 0.0;
+        float m_y1 = 0.0;
+        float m_y2 = 0.0;
+    };
+}} // namespace afv_native::audio
 
-
-#endif //AFV_NATIVE_BIQUADFILTER_H
+#endif // AFV_NATIVE_BIQUADFILTER_H

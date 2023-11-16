@@ -1,212 +1,86 @@
-cmake_minimum_required(VERSION 3.10)
-project(afv_native LANGUAGES CXX)
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup(TARGETS)
+cmake_minimum_required(VERSION 3.15)
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+# Setup vcpkg
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
-if(MSVC)
-	if(NOT DEFINED CONAN_LINK_RUNTIME AND DEFINED CONAN_SETTINGS_COMPILER_RUNTIME)
-		message(WARNING "Forcing MSVC runtime based on conan profile")
-		# this means Conan is not running the build, so we need to fix our linker flags ourself.... although we can probably cheat...
-		set(CONAN_LINK_RUNTIME "/${CONAN_SETTINGS_COMPILER_RUNTIME}")
-		conan_set_vs_runtime()
-	endif()
-endif(MSVC)
+project(
+    afv_native
+    VERSION 1.19.0
+    LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
-set(AFV_NATIVE_HEADERS
-		include/afv-native/Client.h
-		include/afv-native/event.h
-		include/afv-native/Log.h
-		include/afv-native/afv/APISession.h
-		include/afv-native/afv/EffectResources.h
-		include/afv-native/afv/params.h
-		include/afv-native/afv/RadioSimulation.h
-		include/afv-native/afv/RemoteVoiceSource.h
-		include/afv-native/afv/RollingAverage.h
-		include/afv-native/afv/VoiceCompressionSink.h
-		include/afv-native/afv/VoiceSession.h
-		include/afv-native/afv/dto/AuthRequest.h
-		include/afv-native/afv/dto/PostCallsignResponse.h
-		include/afv-native/afv/dto/Station.h
-		include/afv-native/afv/dto/Transceiver.h
-		include/afv-native/afv/dto/VoiceServerConnectionData.h
-		include/afv-native/afv/dto/interfaces/IAudio.h
-		include/afv-native/afv/dto/interfaces/IAudioDirect.h
-		include/afv-native/afv/dto/interfaces/IAudioVoiceRoom.h
-		include/afv-native/afv/dto/domain/RxTransceiver.h
-		include/afv-native/afv/dto/domain/TxTransceiver.h
-		include/afv-native/afv/dto/voice_server/AudioOnDirect.h
-		include/afv-native/afv/dto/voice_server/AudioRxOnTransceivers.h
-		include/afv-native/afv/dto/voice_server/AudioTxOnTransceivers.h
-		include/afv-native/afv/dto/voice_server/Heartbeat.h
-		include/afv-native/audio/audio_params.h
-		include/afv-native/audio/AudioDevice.h
-		include/afv-native/audio/BiQuadFilter.h
-		include/afv-native/audio/FilterSource.h
-		include/afv-native/audio/IFilter.h
-		include/afv-native/audio/ISampleSink.h
-		include/afv-native/audio/ISampleSource.h
-		include/afv-native/audio/ISampleStorage.h
-		include/afv-native/audio/OutputMixer.h
-		include/afv-native/audio/PinkNoiseGenerator.h
-		include/afv-native/audio/RecordedSampleSource.h
-		include/afv-native/audio/SineToneSource.h
-		include/afv-native/audio/SinkFrameSizeAdjuster.h
-		include/afv-native/audio/SourceFrameSizeAdjuster.h
-		include/afv-native/audio/SpeexPreprocessor.h
-		include/afv-native/audio/VHFFilterSource.h
-		include/afv-native/audio/WavFile.h
-		include/afv-native/audio/WavSampleStorage.h
-		include/afv-native/audio/WhiteNoiseGenerator.h
-		include/afv-native/cryptodto/Channel.h
-		include/afv-native/cryptodto/dto/ICryptoDTO.h
-		include/afv-native/cryptodto/params.h
-		include/afv-native/cryptodto/SequenceTest.h
-		include/afv-native/cryptodto/UDPChannel.h
-		include/afv-native/cryptodto/dto/ChannelConfig.h
-		include/afv-native/cryptodto/dto/Header.h
-		include/afv-native/event/EventTimer.h
-		include/afv-native/event/EventCallbackTimer.h
-		include/afv-native/http/EventTransferManager.h
-		include/afv-native/http/http.h
-		include/afv-native/http/Request.h
-		include/afv-native/http/RESTRequest.h
-		include/afv-native/http/TransferManager.h
-		include/afv-native/util/base64.h
-		include/afv-native/util/ChainedCallback.h
-		include/afv-native/util/monotime.h
-		include/afv-native/utility.h
-		)
-add_library(afv_native SHARED
-		${AFV_NATIVE_HEADERS}
-		src/afv/APISession.cpp
-		src/afv/EffectResources.cpp
-		src/afv/RadioSimulation.cpp
-		src/afv/RemoteVoiceSource.cpp
-		src/afv/VoiceCompressionSink.cpp
-		src/afv/VoiceSession.cpp
-		src/afv/dto/AuthRequest.cpp
-		src/afv/dto/PostCallsignResponse.cpp
-		src/afv/dto/Station.cpp
-		src/afv/dto/Transceiver.cpp
-		src/afv/dto/VoiceServerConnectionData.cpp
-		src/audio/AudioDevice.cpp
-		src/audio/FilterSource.cpp
-		src/audio/BiQuadFilter.cpp
-		src/audio/OutputMixer.cpp
-		src/audio/RecordedSampleSource.cpp
-		src/audio/SineToneSource.cpp
-		src/audio/SinkFrameSizeAdjuster.cpp
-		src/audio/SourceFrameSizeAdjuster.cpp
-		src/audio/SpeexPreprocessor.cpp
-		src/audio/WavFile.cpp
-		src/audio/WavSampleStorage.cpp
-		src/core/Client.cpp
-		src/core/Log.cpp
-		src/cryptodto/Channel.cpp
-		src/cryptodto/SequenceTest.cpp
-		src/cryptodto/UDPChannel.cpp
-		src/cryptodto/dto/ChannelConfig.cpp
-		src/cryptodto/dto/Header.cpp
-		src/event/EventCallbackTimer.cpp
-		src/event/EventTimer.cpp
-		src/http/EventTransferManager.cpp
-		src/http/TransferManager.cpp
-		src/http/Request.cpp
-		src/http/RESTRequest.cpp
-		src/util/base64.cpp
-		src/util/monotime.cpp
-		src/audio/PortAudioAudioDevice.cpp
-		src/audio/PortAudioAudioDevice.h
-		extern/simpleSource/SimpleComp.cpp
-		extern/simpleSource/SimpleComp.h
-		extern/simpleSource/SimpleEnvelope.cpp
-		extern/simpleSource/SimpleEnvelope.h
-		extern/simpleSource/SimpleGain.h
-		extern/simpleSource/SimpleGate.cpp
-		extern/simpleSource/SimpleGate.h
-		extern/simpleSource/SimpleHeader.h
-		extern/simpleSource/SimpleLimit.cpp
-		extern/simpleSource/SimpleLimit.h
-		src/audio/VHFFilterSource.cpp
-		src/NativeWrapper.cpp)
-		
-# organise sources in generated projects.
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source" FILES ${AFV_NATIVE_SOURCES})
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include/afv-native PREFIX "Headers" FILES ${AFV_NATIVE_HEADERS})
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/extern PREFIX "Third Party" FILES ${AFV_NATIVE_THIRDPARTY_SOURCES})
-
-if(WIN32)
-	set(OPUS_URL https://github.com/xpilot-project/opus/releases/download/xpilot/windows-opus.lib)
-	set(OPUS_LIBARY_PATH ${CMAKE_BINARY_DIR}/import/windows-opus.lib)
-	
-	set(PORTAUDIO_URL https://github.com/xpilot-project/portaudio/releases/download/xpilot/windows-portaudio_static_x64.lib)
-	set(PORTAUDIO_LIBRARY_PATH ${CMAKE_BINARY_DIR}/import/windows-portaudio_static_x64.lib)
-		
-	set(SPEEXDSP_URL https://github.com/xpilot-project/speexdsp/releases/download/xpilot/windows-speexdsp.lib)
-	set(SPEEXDSP_LIBRARY_PATH ${CMAKE_BINARY_DIR}/import/windows-speexdsp.lib)
+if (APPLE)
+	#disable runtime linking to prevent issues with backends that are not actually implemented
+	add_definitions(-DMA_NO_RUNTIME_LINKING)
+endif()
+if (WIN32)
+	add_definitions(-DMA_NO_JACK)
+	add_definitions(-DMA_NO_WINMM)
 endif()
 
-if(APPLE)
-	set(OPUS_URL https://github.com/xpilot-project/opus/releases/download/xpilot/macos-libopus.a)
-	set(OPUS_LIBARY_PATH ${CMAKE_BINARY_DIR}/import/macos-libopus.a)
+add_library(${PROJECT_NAME} SHARED)
 
-	set(PORTAUDIO_URL https://github.com/xpilot-project/portaudio/releases/download/xpilot/macos-libportaudio.a)
-	set(PORTAUDIO_LIBRARY_PATH ${CMAKE_BINARY_DIR}/import/macos-libportaudio.a)
-		
-	set(SPEEXDSP_URL https://github.com/xpilot-project/speexdsp/releases/download/xpilot/macos-libspeexdsp.a)
-	set(SPEEXDSP_LIBRARY_PATH ${CMAKE_BINARY_DIR}/import/macos-libspeexdsp.a)
-endif()
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 
-file(DOWNLOAD ${OPUS_URL} ${OPUS_LIBARY_PATH})
-file(DOWNLOAD ${PORTAUDIO_URL} ${PORTAUDIO_LIBRARY_PATH})
-file(DOWNLOAD ${SPEEXDSP_URL} ${SPEEXDSP_LIBRARY_PATH})
+target_sources(${PROJECT_NAME} PRIVATE 
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/APISession.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/EffectResources.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/RadioSimulation.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/RemoteVoiceSource.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/VoiceCompressionSink.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/VoiceSession.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/AuthRequest.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/PostCallsignResponse.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/Station.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/Transceiver.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/VoiceServerConnectionData.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/AudioDevice.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/FilterSource.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/BiQuadFilter.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/OutputMixer.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/RecordedSampleSource.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SineToneSource.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SinkFrameSizeAdjuster.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SourceFrameSizeAdjuster.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SpeexPreprocessor.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/WavFile.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/WavSampleStorage.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/MiniAudioDevice.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/core/Client.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/core/Log.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/Channel.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/SequenceTest.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/UDPChannel.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/dto/ChannelConfig.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/dto/Header.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/event/EventCallbackTimer.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/event/EventTimer.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/http/EventTransferManager.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/http/TransferManager.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/http/Request.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/http/RESTRequest.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/util/base64.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/util/monotime.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/VHFFilterSource.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/ATCRadioStack.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/CrossCoupleGroup.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/StationTransceiver.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SourceToSinkAdapter.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/OutputDeviceState.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/VHFFilterSource.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SimpleCompressorEffect.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atcClient.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atisClient.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientWrapper.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleComp.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleEnvelope.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleGate.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleLimit.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/compressor/compressor.c
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/compressor/mem.c
+			${CMAKE_CURRENT_SOURCE_DIR}/extern/compressor/snd.c)
 
-if(APPLE)
-find_library(CORE_AUDIO CoreAudio)
-find_library(AUDIO_TOOLBOX AudioToolbox)
-find_library(AUDIO_UNIT AudioUnit)
-find_library(CORE_FOUNDATION CoreFoundation)
-find_library(CORE_SERVICES CoreServices)
-
-target_link_libraries(afv_native
-	PUBLIC
-	CONAN_PKG::openssl
-	CONAN_PKG::msgpack
-	CONAN_PKG::nlohmann_json
-	CONAN_PKG::libcurl
-	CONAN_PKG::libevent
-	${OPUS_LIBARY_PATH}
-	${PORTAUDIO_LIBRARY_PATH}
-	${SPEEXDSP_LIBRARY_PATH}
-	${CORE_AUDIO}
-	${AUDIO_TOOLBOX}
-	${AUDIO_UNIT}
-	${CORE_FOUNDATION}
-	${CORE_SERVICES})
-else()
-target_link_libraries(afv_native
-	PUBLIC
-	CONAN_PKG::openssl
-	CONAN_PKG::msgpack
-	CONAN_PKG::nlohmann_json
-	CONAN_PKG::libcurl
-	CONAN_PKG::libevent
-	${OPUS_LIBARY_PATH}
-	${PORTAUDIO_LIBRARY_PATH}
-	${SPEEXDSP_LIBRARY_PATH})
-endif()
-
-target_include_directories(afv_native
-		PRIVATE
-		${CMAKE_SOURCE_DIR}/extern/cpp-jwt/include
-		${CMAKE_SOURCE_DIR}/extern/simpleSource
-		PUBLIC
-		${CMAKE_SOURCE_DIR}/include
-		${CMAKE_SOURCE_DIR}/extern)
 
 if(MSVC)
 	# I hate to do this this way, but we must force MSVC to define the standard math macros whereever the afv headers
@@ -214,16 +88,99 @@ if(MSVC)
 	target_compile_definitions(afv_native PUBLIC _USE_MATH_DEFINES)
 endif()
 
-install(TARGETS afv_native
-		RUNTIME DESTINATION bin
-		LIBRARY DESTINATION lib
-		ARCHIVE DESTINATION lib
-		)
+# Finding all the VCPKG packages
+find_package(OpenSSL REQUIRED)
+find_package(cpp-jwt CONFIG REQUIRED)
+find_package(CURL CONFIG REQUIRED)
+find_package(Libevent CONFIG REQUIRED)
+find_package(msgpack-cxx CONFIG REQUIRED)
+find_package(Opus CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(Threads REQUIRED)
 
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/include" # source directory
-		DESTINATION "." # target directory
-		FILES_MATCHING # install only matched files
-		PATTERN "*.h" # select header files
-		)
+# Speexdsp does not have find_package
+if (UNIX)
+	find_library(SPEEXDSP_LIBRARY libspeexdsp.a)
+	target_link_libraries(afv_native PRIVATE libevent::pthreads)
+endif()
 
-set_target_properties(afv_native PROPERTIES OUTPUT_NAME "afv")
+if (WIN32)
+	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
+endif()
+
+target_link_libraries(afv_native
+		PRIVATE
+		OpenSSL::SSL OpenSSL::Crypto
+		cpp-jwt::cpp-jwt
+		CURL::libcurl
+		libevent::core libevent::extra
+		msgpack-cxx
+		Opus::opus
+		nlohmann_json::nlohmann_json
+		Threads::Threads
+		${SPEEXDSP_LIBRARY})
+
+if(APPLE)
+	find_library(CORE_AUDIO CoreAudio)
+	find_library(AUDIO_TOOLBOX AudioToolbox)
+	find_library(AUDIO_UNIT AudioUnit)
+	find_library(CORE_FOUNDATION CoreFoundation)
+	find_library(CORE_SERVICES CoreServices)
+
+	target_link_libraries(afv_native
+		PRIVATE
+		${CORE_AUDIO}
+		${AUDIO_TOOLBOX}
+		${AUDIO_UNIT}
+		${CORE_FOUNDATION}
+		${CORE_SERVICES})
+endif()
+
+include(GNUInstallDirs)
+
+# BUILD_INTERFACE specifies where to find includes during build time
+# here we set the include directory to be our src include directory
+# as well as CMAKE_CURRENT_BINARY_DIR, which is where the generated
+# calc_exported.h file is located.
+# the command must be included in double quotes so the two directories,
+# separated by a ';' can both be used (cmake needs it to be a string)
+target_include_directories(
+    ${PROJECT_NAME}
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/;${CMAKE_CURRENT_BINARY_DIR}/include>"
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "d")
+
+# generates header to provide export macros for library
+include(GenerateExportHeader)
+generate_export_header(${PROJECT_NAME} 
+						EXPORT_MACRO_NAME AFV_NATIVE_API
+						EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}_export.h)
+
+# specify the target to install (calculator library defined above)
+# set the export name <name>-config (does not need to match target name)
+# also specify where the .dylib/.so/.dll+.lib file should be installed
+install(
+    TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}-config
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(
+    EXPORT ${PROJECT_NAME}-config
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/${PROJECT_NAME}/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+
+# copy the generated export file to the include install location
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}_export.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+
+if (WIN32)
+	file(COPY ${SPEEXDSP_LIBRARY}
+	DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endif()

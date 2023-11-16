@@ -29,19 +29,15 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/http/TransferManager.h"
-
-#include <curl/curl.h>
-
 #include "afv-native/http/Request.h"
+#include <curl/curl.h>
 
 using namespace afv_native::http;
 
-TransferManager::TransferManager():
-    mPendingTransfers()
-{
+TransferManager::TransferManager(): mPendingTransfers() {
     mCurlMultiHandle = curl_multi_init();
     mCurlShareHandle = curl_share_init();
     // share everything.
@@ -52,15 +48,12 @@ TransferManager::TransferManager():
     curl_share_setopt(mCurlShareHandle, CURLSHOPT_SHARE, CURL_LOCK_DATA_PSL);
 }
 
-TransferManager::~TransferManager()
-{
+TransferManager::~TransferManager() {
     curl_multi_cleanup(mCurlMultiHandle);
     curl_share_cleanup(mCurlShareHandle);
 }
 
-void
-TransferManager::process()
-{
+void TransferManager::process() {
     int running = 0;
 
     curl_multi_perform(mCurlMultiHandle, &running);
@@ -68,71 +61,61 @@ TransferManager::process()
     processPendingMultiEvents();
 }
 
-void
-TransferManager::processPendingMultiEvents()
-{
+void TransferManager::processPendingMultiEvents() {
     struct CURLMsg *cMsg = nullptr;
-    Request * req;
-    int msgs_queued = 0;
+    Request        *req;
+    int             msgs_queued = 0;
 
     while (nullptr != (cMsg = curl_multi_info_read(mCurlMultiHandle, &msgs_queued))) {
-        //GAH.  STUPID STUPID CURL.  Never return pointers from stack or other transient memory.
+        // GAH.  STUPID STUPID CURL.  Never return pointers from stack or other transient memory.
         auto msgCopy = *cMsg;
 
         req = mPendingTransfers[msgCopy.easy_handle];
         switch (msgCopy.msg) {
-        case CURLMSG_DONE:
-            // remove the easy handle from our management
-            curl_multi_remove_handle(mCurlMultiHandle, msgCopy.easy_handle);
-            // remove the shared_ptr hold we've got on the request itself.
-            mPendingTransfers.erase(msgCopy.easy_handle);
-            // and notify the request object.
-            if (msgCopy.data.result == CURLE_OK) {
-                req->notifyTransferCompleted();
-            } else {
-                req->notifyTransferError();
-            }
-            break;
-        default:
-            break;
+            case CURLMSG_DONE:
+                // remove the easy handle from our management
+                curl_multi_remove_handle(mCurlMultiHandle, msgCopy.easy_handle);
+                // remove the shared_ptr hold we've got on the request itself.
+                mPendingTransfers.erase(msgCopy.easy_handle);
+                // and notify the request object.
+                if (msgCopy.data.result == CURLE_OK) {
+                    req->notifyTransferCompleted();
+                } else {
+                    req->notifyTransferError();
+                }
+                break;
+            default:
+                break;
         }
     }
 }
 
-void
-TransferManager::AddToSession(Request *req) const
-{
+void TransferManager::AddToSession(Request *req) const {
     if (req) {
         curl_easy_setopt(req->getCurlHandle(), CURLOPT_SHARE, mCurlShareHandle);
     }
 }
 
-void
-TransferManager::HandleRequest(Request *req)
-{
+void TransferManager::HandleRequest(Request *req) {
     if (req) {
-        auto curlHandle = req->getCurlHandle();
+        auto curlHandle               = req->getCurlHandle();
         mPendingTransfers[curlHandle] = req;
         curl_multi_add_handle(mCurlMultiHandle, curlHandle);
     }
 }
 
-CURLM *
-TransferManager::getCurlMultiHandle() const
-{
+CURLM *TransferManager::getCurlMultiHandle() const {
     return mCurlMultiHandle;
 }
 
-void TransferManager::registerForAsyncCallback(Request &req)
-{
+void TransferManager::registerForAsyncCallback(Request &req) {
     auto curlHandle = req.getCurlHandle();
     if (curlHandle != nullptr) {
         mPendingTransfers[curlHandle] = &req;
     }
 }
 
-void TransferManager::removeAsyncCallback(Request &req)
-{
+void TransferManager::removeAsyncCallback(Request &req) {
     auto curlHandle = req.getCurlHandle();
     if (curlHandle != nullptr) {
         mPendingTransfers.erase(curlHandle);

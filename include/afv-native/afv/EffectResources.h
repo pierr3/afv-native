@@ -29,30 +29,26 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_EFFECTRESOURCES_H
 #define AFV_NATIVE_EFFECTRESOURCES_H
 
+#include "afv-native/audio/RecordedSampleSource.h"
 #include <memory>
 #include <string>
 
-#include "afv-native/audio/RecordedSampleSource.h"
+namespace afv_native { namespace afv {
+    class EffectResources {
+      public:
+        std::shared_ptr<audio::ISampleStorage> mCrackle;
+        std::shared_ptr<audio::ISampleStorage> mClick;
+        std::shared_ptr<audio::ISampleStorage> mAcBus;
+        std::shared_ptr<audio::ISampleStorage> mVhfWhiteNoise;
+        std::shared_ptr<audio::ISampleStorage> mHfWhiteNoise;
 
-namespace afv_native {
-    namespace afv {
-        class EffectResources {
-        public:
-            std::shared_ptr<audio::ISampleStorage> mCrackle;
-            std::shared_ptr<audio::ISampleStorage> mClick;
-            std::shared_ptr<audio::ISampleStorage> mAcBus;
-            std::shared_ptr<audio::ISampleStorage> mVhfWhiteNoise;
-            std::shared_ptr<audio::ISampleStorage> mHfWhiteNoise;
+        explicit EffectResources(const std::string &basePath);
+    };
+}} // namespace afv_native::afv
 
-            explicit EffectResources();
-        };
-    }
-}
-
-
-#endif //AFV_NATIVE_EFFECTRESOURCES_H
+#endif // AFV_NATIVE_EFFECTRESOURCES_H

@@ -29,16 +29,14 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/util/monotime.h"
-
 #include <chrono>
 
 using namespace std;
 
-afv_native::util::monotime_t afv_native::util::monotime_get()
-{
+afv_native::util::monotime_t afv_native::util::monotime_get() {
     const auto monoTime = chrono::steady_clock::now();
     const auto msTime = chrono::duration_cast<chrono::milliseconds>(monoTime.time_since_epoch()).count();
 

@@ -2,7 +2,7 @@
 #define SIMPLECOMPRESSOREFFECT_H
 
 #include <afv-native/audio/ISampleSource.h>
-#include <afv-native/extern/compressor/compressor.h>
+#include <compressor/compressor.h>
 
 namespace afv_native::audio
 {

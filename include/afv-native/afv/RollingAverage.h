@@ -29,70 +29,60 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_ROLLINGAVERAGE_H
 #define AFV_NATIVE_ROLLINGAVERAGE_H
 
-#include <vector>
 #include <cstddef>
+#include <vector>
 
-namespace afv_native {
-    namespace afv {
-        template<class T>
-        class RollingAverage {
-        protected:
-            size_t mAverageWindow;
-            std::vector<T> mData;
-            size_t mDOffset;
-            T mRollingAverage;
-        public:
-            explicit RollingAverage(size_t length):
-                    mAverageWindow(length),
-                    mData(length),
-                    mDOffset(0),
-                    mRollingAverage()
-            {
+namespace afv_native { namespace afv {
+    template <class T>
+    class RollingAverage {
+      protected:
+        size_t         mAverageWindow;
+        std::vector<T> mData;
+        size_t         mDOffset;
+        T              mRollingAverage;
+
+      public:
+        explicit RollingAverage(size_t length):
+            mAverageWindow(length), mData(length), mDOffset(0), mRollingAverage() {
+        }
+
+        T addDatum(T next) {
+            mRollingAverage += (next - mData[mDOffset]) / mAverageWindow;
+            mData[mDOffset] = next;
+            mDOffset        = (mDOffset + 1) % mAverageWindow;
+
+            return mRollingAverage;
+        }
+
+        T getAverage() const {
+            return mRollingAverage;
+        }
+
+        T getLast() const {
+            return mData[(mDOffset + mAverageWindow - 1) % mAverageWindow];
+        }
+
+        T getMax() const {
+            T lMax = mData[0];
+            for (size_t i = 1; i < mAverageWindow; i++) {
+                lMax = std::max<T>(lMax, mData[i]);
             }
+            return lMax;
+        }
 
-            T addDatum(T next)
-            {
-                mRollingAverage += (next - mData[mDOffset]) / mAverageWindow;
-                mData[mDOffset] = next;
-                mDOffset = (mDOffset + 1) % mAverageWindow;
-
-                return mRollingAverage;
+        T getMin() const {
+            T lMin = mData[0];
+            for (size_t i = 1; i < mAverageWindow; i++) {
+                lMin = std::min<T>(lMin, mData[i]);
             }
+            return lMin;
+        }
+    };
+}} // namespace afv_native::afv
 
-            T getAverage() const
-            {
-                return mRollingAverage;
-            }
-
-            T getLast() const
-            {
-                return mData[(mDOffset + mAverageWindow - 1) % mAverageWindow];
-            }
-
-            T getMax() const
-            {
-                T lMax = mData[0];
-                for (size_t i = 1; i < mAverageWindow; i++) {
-                    lMax = std::max<T>(lMax, mData[i]);
-                }
-                return lMax;
-            }
-
-            T getMin() const
-            {
-                T lMin = mData[0];
-                for (size_t i = 1; i < mAverageWindow; i++) {
-                    lMin = std::min<T>(lMin, mData[i]);
-                }
-                return lMin;
-            }
-        };
-    }
-}
-
-#endif //AFV_NATIVE_ROLLINGAVERAGE_H
+#endif // AFV_NATIVE_ROLLINGAVERAGE_H

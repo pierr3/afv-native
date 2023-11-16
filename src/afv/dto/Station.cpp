@@ -29,37 +29,35 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
-#include <nlohmann/json.hpp>
 #include "afv-native/afv/dto/Station.h"
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 using namespace afv_native::afv::dto;
 
-Station::Station() :
-    ID(""),
-    Name(""),
-    Frequency(0),
-    FrequencyAlias(0)
-{
+Station::Station(): ID(""), Name(""), Frequency(0), FrequencyAlias(0) {
 }
 
 void afv_native::afv::dto::from_json(const json &j, Station &s) {
     j.at("id").get_to(s.ID);
     j.at("name").get_to(s.Name);
+
     try {
-        j.at("frequency").get_to(s.Frequency);
-    } catch (const json::out_of_range&) {}
-    try {
-        j.at("frequencyAlias").get_to(s.FrequencyAlias);
-    } catch (const json::out_of_range&) {}
+        auto freq = j.at("frequency").is_number_integer() ? j.at("frequency").get<int>() : 0;
+        auto freqAlias = j.at("frequencyAlias").is_number_integer() ? j.at("frequencyAlias").get<int>() : 0;
+
+        s.Frequency      = std::move(freq);
+        s.FrequencyAlias = std::move(freqAlias);
+    } catch (const json::out_of_range &) {
+    }
 }
 
 void afv_native::afv::dto::to_json(json &j, const Station &s) {
-    j = json{
-            {"id", s.ID},
-            {"name", s.Name},
+    j = json {
+        {"id", s.ID},
+        {"name", s.Name},
     };
     if (s.Frequency != 0) {
         j["frequency"] = s.Frequency;

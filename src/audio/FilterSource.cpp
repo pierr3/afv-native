@@ -29,26 +29,18 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/audio/FilterSource.h"
-
-#include <memory>
-#include <cstring>
 #include "afv-native/audio/IFilter.h"
+#include <cstring>
+#include <memory>
 
 using namespace ::afv_native::audio;
 using namespace ::std;
 
 FilterSource::FilterSource(std::shared_ptr<ISampleSource> srcSource):
-    mBypass(false),
-    mUpstream(std::move(srcSource)),
-    mFilters()
-{
-}
-
-FilterSource::~FilterSource()
-{
+    mBypass(false), mUpstream(std::move(srcSource)), mFilters() {
 }
 
 void FilterSource::addFilter(std::unique_ptr<IFilter> filter) {
@@ -59,7 +51,7 @@ SourceStatus FilterSource::getAudioFrame(SampleType *bufferOut) {
     if (mBypass) {
         return mUpstream->getAudioFrame(bufferOut);
     }
-    SampleType thisFrame[frameSizeSamples];
+    SampleType   thisFrame[frameSizeSamples];
     SourceStatus upstreamStatus = mUpstream->getAudioFrame(thisFrame);
     if (upstreamStatus != SourceStatus::OK) {
         memset(bufferOut, 0, frameSizeBytes);

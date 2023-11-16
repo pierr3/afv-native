@@ -29,37 +29,35 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_CRYPTODTO_PARAMS_H
 #define AFV_NATIVE_CRYPTODTO_PARAMS_H
 
 #include <cstdint>
 
-namespace afv_native {
-    namespace cryptodto {
-        typedef uint64_t sequence_t;
+namespace afv_native { namespace cryptodto {
+    typedef uint64_t sequence_t;
 
-        typedef uint64_t sequence_bitfield_t;
+    typedef uint64_t sequence_bitfield_t;
 
-        // sizes are all in bytes (octets)
-        const int aeadModeKeySize = 32;
+    // sizes are all in bytes (octets)
+    const int aeadModeKeySize = 32;
 
-        const int aeadModeIVSize = 12;
+    const int aeadModeIVSize = 12;
 
-        const int aeadModeTagSize = 16;
+    const int aeadModeTagSize = 16;
 
-        // maximum size we permit for an on-wire DTO.
-        // this sets the upper limit and buffering size requirements for our receive
-        // handler.
-        const int maxPermittedDatagramSize = 65536;
+    // maximum size we permit for an on-wire DTO.
+    // this sets the upper limit and buffering
+    // size requirements for our receive handler.
+    const int maxPermittedDatagramSize = 65536;
 
-        enum CryptoDtoMode {
-            CryptoModeUndefined = 0,
-            CryptoModeNone = 1,
-            CryptoModeChaCha20Poly1305 = 2,
-            CryptoModeLast
-        };
-    }
-}
-#endif //AFV_NATIVE_CRYPTODTO_PARAMS_H
+    enum CryptoDtoMode {
+        CryptoModeUndefined        = 0,
+        CryptoModeNone             = 1,
+        CryptoModeChaCha20Poly1305 = 2,
+        CryptoModeLast
+    };
+}}     // namespace afv_native::cryptodto
+#endif // AFV_NATIVE_CRYPTODTO_PARAMS_H

@@ -29,21 +29,18 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include <afv-native/event/EventCallbackTimer.h>
 
 using namespace afv_native::event;
 
-void EventCallbackTimer::triggered()
-{
+void EventCallbackTimer::triggered() {
     if (mCallback) {
         mCallback();
     }
 }
 
 EventCallbackTimer::EventCallbackTimer(struct event_base *evBase, std::function<void()> callback):
-        EventTimer(evBase),
-        mCallback(std::move(callback))
-{
+    EventTimer(evBase), mCallback(std::move(callback)) {
 }

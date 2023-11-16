@@ -29,32 +29,28 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_HEADER_H
 #define AFV_NATIVE_HEADER_H
 
-#include <string>
+#include "afv-native/cryptodto/params.h"
 #include <cstdint>
 #include <msgpack.hpp>
+#include <string>
 
-#include "afv-native/cryptodto/params.h"
+namespace afv_native { namespace cryptodto {
+    namespace dto {
+        class Header {
+          public:
+            Header();
+            Header(std::string channelTag, uint64_t sequence, CryptoDtoMode mode);
 
-namespace afv_native {
-    namespace cryptodto {
-        namespace dto {
-            class Header {
-            public:
-                Header();
-                Header(std::string channelTag, uint64_t sequence, CryptoDtoMode mode);
+            std::string ChannelTag;
+            uint64_t    Sequence;
+            int         Mode;
 
-                std::string ChannelTag;
-                uint64_t Sequence;
-                int Mode;
-
-                MSGPACK_DEFINE_ARRAY(ChannelTag, Sequence, Mode);
-            };
-        }
-    }
-}
-#endif //AFV_NATIVE_HEADER_H
+            MSGPACK_DEFINE_ARRAY(ChannelTag, Sequence, Mode);
+        };
+}}}    // namespace afv_native::cryptodto::dto
+#endif // AFV_NATIVE_HEADER_H

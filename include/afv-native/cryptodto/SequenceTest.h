@@ -29,52 +29,50 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_SEQUENCETEST_H
 #define AFV_NATIVE_SEQUENCETEST_H
 
-#include <cstdint>
-#include <cassert>
-
 #include "afv-native/cryptodto/params.h"
+#include <cassert>
+#include <cstdint>
 
-namespace afv_native {
-    namespace cryptodto {
-        enum class ReceiveOutcome {
-            /// OK indicates that the packet was within the window and if possible, it advanced normally.
-                    OK = 0,
-            /// Before indicates that the packet arrived after the window had already rolled forward and should be discarded, or has been previously seen within the current window
-                    Before,
-            /// Overflow indicates that the packet is in window, but forced a forward window movement to skip-over unreceived packets.
-                    Overflow,
-        };
+namespace afv_native { namespace cryptodto {
+    enum class ReceiveOutcome {
+        /// OK indicates that the packet was within the window and if possible, it advanced normally.
+        OK = 0,
+        /// Before indicates that the packet arrived after the window had already rolled forward and should be discarded, or has been previously seen within the current window
+        Before,
+        /// Overflow indicates that the packet is in window, but forced a forward window movement to skip-over unreceived packets.
+        Overflow,
+    };
 
-        class SequenceTest {
-        private:
-            sequence_bitfield_t _bitfield;
-            sequence_t _min;
-            unsigned _window;
+    class SequenceTest {
+      private:
+        sequence_bitfield_t _bitfield;
+        sequence_t          _min;
+        unsigned            _window;
 
-            void advanceWindow();
-        public:
-            SequenceTest(sequence_t start_sequence, unsigned window);
+        void advanceWindow();
 
-            /**
-             * Received() indicates that the nominated sequence number was received, and advances the sliding window
-             * appropriately.
-             *
-             * @param newSequence
-             * @return ReceiveOutcome indicating where it appeared in the sequence.
-             *
-             */
-            ReceiveOutcome Received(sequence_t newSequence);
+      public:
+        SequenceTest(sequence_t start_sequence, unsigned window);
 
-            sequence_t GetNext() const;
+        /**
+         * Received() indicates that the nominated sequence number was received, and advances the sliding window
+         * appropriately.
+         *
+         * @param newSequence
+         * @return ReceiveOutcome indicating where it appeared in the sequence.
+         *
+         */
+        ReceiveOutcome Received(sequence_t newSequence);
 
-            void reset();
-        };
-    }
-}
+        sequence_t GetNext() const;
 
-#endif //AFV_NATIVE_SEQUENCETEST_H
+        void reset();
+    };
+}} // namespace afv_native::cryptodto
+
+#endif // AFV_NATIVE_SEQUENCETEST_H

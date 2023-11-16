@@ -29,68 +29,67 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_REMOTEVOICESOURCE_H
 #define AFV_NATIVE_REMOTEVOICESOURCE_H
 
-#include <mutex>
-#include <speexdsp/include/speex/speex_jitter.h>
-#include <opus/include/opus.h>
-
 #include "afv-native/afv/dto/interfaces/IAudio.h"
-#include "afv-native/audio/audio_params.h"
 #include "afv-native/audio/ISampleSource.h"
 #include "afv-native/audio/SourceStatus.h"
+#include "afv-native/audio/audio_params.h"
 #include "afv-native/util/monotime.h"
+#include <mutex>
+#include <opus/opus.h>
+#include <speex/speex_jitter.h>
 
-namespace afv_native {
-    namespace afv {
+namespace afv_native { namespace afv {
 
-        /** frameTimeOut is the maximum number of frames we will receive without audio data before we declare the
-         * stream dead.
+    /** frameTimeOut is the maximum number of frames we will receive without audio data before we
+     * declare the stream dead.
+     */
+    const int frameTimeOut = 10;
+
+    /** RemoveVoiceSource takes a stream of IAudio DTOs and stores them in an appropriately tuned jitterbuffer.
+     *
+     * These can then be demand polled by a consumer which will pull the packets from the jitterBuffer and run them
+     * through the decoder.
+     *
+     * @note this is analogous to the GeoVR CallsignSampleProvider, but without the effects pass which is handled
+     * elsewhere.
+     */
+    class RemoteVoiceSource: public audio::ISampleSource {
+      protected:
+        JitterBuffer *mJitterBuffer;
+        OpusDecoder  *mDecoder;
+
+        std::mutex       mJitterBufferMutex;
+        bool             mIsActive;
+        util::monotime_t mLastActive;
+
+      protected:
+        int mSilentFrames;
+
+        int  mCurrentFrame;
+        bool mEnding;
+        int  mEndingSequence;
+
+      public:
+        RemoteVoiceSource();
+        virtual ~RemoteVoiceSource();
+        RemoteVoiceSource(const RemoteVoiceSource &copySrc) = delete;
+
+        void                appendAudioDTO(const dto::IAudio &audio);
+        audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut) override;
+
+        util::monotime_t getLastActivityTime() const;
+
+        /** flush resets the stream, preserving any jitter adjustments, but otherwise clearing the
+         * codec state and jitter buffered packets.
          */
-        const int frameTimeOut = 10;
+        void flush();
+        bool isActive() const;
+    };
+}} // namespace afv_native::afv
 
-        /** RemoveVoiceSource takes a stream of IAudio DTOs and stores them in an appropriately tuned jitterbuffer.
-         *
-         * These can then be demand polled by a consumer which will pull the packets from the jitterBuffer and run them
-         * through the decoder.
-         *
-         * @note this is analogous to the GeoVR CallsignSampleProvider, but without the effects pass which is handled
-         * elsewhere.
-         */
-        class RemoteVoiceSource: public audio::ISampleSource {
-        protected:
-            JitterBuffer *mJitterBuffer;
-            OpusDecoder *mDecoder;
-
-            std::mutex mJitterBufferMutex;
-            bool mIsActive;
-            util::monotime_t mLastActive;
-        protected:
-            int mSilentFrames;
-
-            int mCurrentFrame;
-            bool mEnding;
-            int mEndingSequence;
-        public:
-            RemoteVoiceSource();
-            virtual ~RemoteVoiceSource();
-            RemoteVoiceSource(const RemoteVoiceSource& copySrc) = delete;
-
-            void appendAudioDTO(const dto::IAudio &audio);
-            audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut) override;
-
-            util::monotime_t getLastActivityTime() const;
-
-            /** flush resets the stream, preserving any jitter adjustments, but otherwise clearing the codec state and
-             * jitter buffered packets.
-             */
-            void flush();
-            bool isActive() const;
-        };
-    }
-}
-
-#endif //AFV_NATIVE_REMOTEVOICESOURCE_H
+#endif // AFV_NATIVE_REMOTEVOICESOURCE_H

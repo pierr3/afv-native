@@ -29,64 +29,61 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_EVENTTRANSFERMANAGER_H
 #define AFV_NATIVE_EVENTTRANSFERMANAGER_H
 
-#include <unordered_set>
+#include "afv-native/http/TransferManager.h"
 #include <curl/curl.h>
 #include <event2/event.h>
+#include <unordered_set>
 
-#include "afv-native/http/TransferManager.h"
+namespace afv_native { namespace http {
+    /**
+     * EventTransferManager is a TransferManager that relies on libevent to
+     * notify it of elapsed events.
+     */
+    class EventTransferManager: public http::TransferManager {
+      private:
+        struct SocketInfo {
+            struct event *ev;
 
-namespace afv_native {
-    namespace http {
-        /**
-         * EventTransferManager is a TransferManager that relies on libevent to
-         * notify it of elapsed events.
-         */
-        class EventTransferManager: public http::TransferManager {
-        private:
-            struct SocketInfo {
-                struct event *ev;
-
-                SocketInfo(): ev(nullptr)
-                {}
-            };
-
-            struct event *mTimerEvent;
-
-            static void evSocketCallback(evutil_socket_t fd, short events, void *arg);
-
-            static void evTimerCallback(evutil_socket_t fd, short events, void *arg);
-
-            int socketCallback(CURL *easy, curl_socket_t s, int what, void *socketp);
-
-            static int curlSocketCallback(CURL *easy, curl_socket_t s, int what, void *userp, void *socketp);
-
-            int timerCallback(CURLM *multi, long timeout_ms);
-
-            static int curlTimerCallback(CURLM *multi, long timeout_ms, void *userp);
-
-            std::unordered_set<SocketInfo *> mWatchedSockets;
-
-        protected:
-            struct event_base *mEvBase;
-
-        public:
-            explicit EventTransferManager(struct event_base *evBase);
-
-            ~EventTransferManager() override;
-
-            /** Process any outstanding events without blocking.
-             *
-             * This is actually a no-op with ETM as all the processing is driven
-             * by libevent instead.
-             */
-            void process() override;
+            SocketInfo(): ev(nullptr) {
+            }
         };
-    }
-}
 
-#endif //AFV_NATIVE_EVENTTRANSFERMANAGER_H
+        struct event *mTimerEvent;
+
+        static void evSocketCallback(evutil_socket_t fd, short events, void *arg);
+
+        static void evTimerCallback(evutil_socket_t fd, short events, void *arg);
+
+        int socketCallback(CURL *easy, curl_socket_t s, int what, void *socketp);
+
+        static int curlSocketCallback(CURL *easy, curl_socket_t s, int what, void *userp, void *socketp);
+
+        int timerCallback(CURLM *multi, long timeout_ms);
+
+        static int curlTimerCallback(CURLM *multi, long timeout_ms, void *userp);
+
+        std::unordered_set<SocketInfo *> mWatchedSockets;
+
+      protected:
+        struct event_base *mEvBase;
+
+      public:
+        explicit EventTransferManager(struct event_base *evBase);
+
+        ~EventTransferManager() override;
+
+        /** Process any outstanding events without blocking.
+         *
+         * This is actually a no-op with ETM as all the processing is driven
+         * by libevent instead.
+         */
+        void process() override;
+    };
+}} // namespace afv_native::http
+
+#endif // AFV_NATIVE_EVENTTRANSFERMANAGER_H

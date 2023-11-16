@@ -29,41 +29,39 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_OUTPUTMIXER_H
 #define AFV_NATIVE_OUTPUTMIXER_H
 
+#include "afv-native/audio/ISampleSource.h"
+#include "afv-native/audio/SourceStatus.h"
+#include "afv-native/utility.h"
 #include <forward_list>
 #include <memory>
 
-#include "afv-native/utility.h"
-#include "afv-native/audio/ISampleSource.h"
-#include "afv-native/audio/SourceStatus.h"
+namespace afv_native { namespace audio {
+    struct MixerSource {
+        std::shared_ptr<ISampleSource> src;
+        float                          gain;
+    };
 
-namespace afv_native {
-    namespace audio {
-        struct MixerSource {
-            std::shared_ptr<ISampleSource> src;
-            float gain;
-        };
+    class OutputMixer: public ISampleSource {
+      protected:
+        std::forward_list<MixerSource> mSources;
+        float                          mGain;
 
-        class OutputMixer: public ISampleSource {
-        protected:
-            std::forward_list<MixerSource> mSources;
-            float mGain;
-        public:
-            OutputMixer();
-            virtual ~OutputMixer();
+      public:
+        OutputMixer();
+        virtual ~OutputMixer();
 
-            void setSource(const std::shared_ptr<ISampleSource> &src, float gain);
-            void removeSource(const std::shared_ptr<ISampleSource> &src);
+        void setSource(const std::shared_ptr<ISampleSource> &src, float gain);
+        void removeSource(const std::shared_ptr<ISampleSource> &src);
 
-            void setGain(float newGain);
+        void setGain(float newGain);
 
-            SourceStatus getAudioFrame(SampleType* RESTRICT bufferOut) override;
-        };
-    }
-}
+        SourceStatus getAudioFrame(SampleType *RESTRICT bufferOut) override;
+    };
+}} // namespace afv_native::audio
 
-#endif //AFV_NATIVE_OUTPUTMIXER_H
+#endif // AFV_NATIVE_OUTPUTMIXER_H

@@ -29,34 +29,27 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_AUDIORXONTRANSCEIVERS_H
 #define AFV_NATIVE_AUDIORXONTRANSCEIVERS_H
 
-#include <vector>
-#include <msgpack.hpp>
-
 #include "afv-native/afv/dto/domain/RxTransceiver.h"
 #include "afv-native/afv/dto/interfaces/IAudio.h"
+#include <msgpack.hpp>
+#include <vector>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class AudioRxOnTransceivers: public IAudio {
-            public:
-                std::vector<RxTransceiver> Transceivers;
+namespace afv_native { namespace afv { namespace dto {
+    class AudioRxOnTransceivers: public IAudio {
+      public:
+        std::vector<RxTransceiver> Transceivers;
 
-                MSGPACK_DEFINE_ARRAY(Callsign, SequenceCounter, Audio, LastPacket, Transceivers);
+        MSGPACK_DEFINE_ARRAY(Callsign, SequenceCounter, Audio, LastPacket, Transceivers);
 
-                static std::string getName()
-                {
-                    return "AR";
-                }
-            };
+        static std::string getName() {
+            return "AR";
         }
-    }
-}
+    };
+}}} // namespace afv_native::afv::dto
 
-
-#endif //AFV_NATIVE_AUDIORXONTRANSCEIVERS_H
+#endif // AFV_NATIVE_AUDIORXONTRANSCEIVERS_H

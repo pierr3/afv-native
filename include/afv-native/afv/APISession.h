@@ -29,112 +29,103 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_APISESSION_H
 #define AFV_NATIVE_APISESSION_H
 
-#include <string>
-#include <memory>
-#include <event2/event.h>
-
 #include "afv-native/afv/dto/Station.h"
-#include "afv-native/http/TransferManager.h"
-#include "afv-native/http/Request.h"
-#include "afv-native/http/RESTRequest.h"
-#include "afv-native/util/ChainedCallback.h"
+#include "afv-native/afv/dto/StationTransceiver.h"
+#include "afv-native/event.h"
 #include "afv-native/event/EventCallbackTimer.h"
+#include "afv-native/http/RESTRequest.h"
+#include "afv-native/http/Request.h"
+#include "afv-native/http/TransferManager.h"
+#include "afv-native/util/ChainedCallback.h"
+#include <event2/event.h>
+#include <map>
+#include <memory>
+#include <string>
 
-namespace afv_native
-{
-    namespace afv
-    {
-        class VoiceSession;
+namespace afv_native { namespace afv {
+    class VoiceSession;
 
-        enum class APISessionState
-        {
-            Disconnected, /// Disconnected state is not authenticated, nor trying to authenticate.
-            Connecting, /// Connecting means we've started our attempt to authenticate and may be waiting for a response from the API Server
-            Running, /// Running means we have a valid authentication token and can send updates to the API server
-            Reconnecting, /// Reconnecting means our token has expired and we're still trying to renew it.
-            Error /// Error is only used in the state callback, and is used to inform the callback user that an error that resulted in a disconnect occured.
-        };
+    class APISession {
+      public:
+        APISession(event_base *evBase, http::TransferManager &tm, std::string baseUrl, std::string clientName);
 
-        enum class APISessionError
-        {
-            NoError = 0,
-            ConnectionError, // local socket or curl error - see data returned.
-            BadRequestOrClientIncompatible, // APIServer 400
-            RejectedCredentials, // APIServer 403
-            BadPassword, // APIServer 401
-            OtherRequestError,
-            InvalidAuthToken,  // local parse error
-            AuthTokenExpiryTimeInPast, // local parse error
+        const std::string &getUsername() const;
 
-        };
+        void setUsername(const std::string &username);
 
-        class APISession
-        {
-        public:
-            APISession(event_base* evBase, http::TransferManager& tm, std::string baseUrl, std::string clientName);
+        void setPassword(const std::string &password);
 
-            const std::string& getUsername() const;
+        void setAuthenticationFor(http::Request &r);
 
-            void setUsername(const std::string& username);
+        http::TransferManager &getTransferManager() const;
 
-            void setPassword(const std::string& password);
+        struct event_base *getEventBase() const;
 
-            void setAuthenticationFor(http::Request& r);
+        APISessionState getState() const;
 
-            http::TransferManager& getTransferManager() const;
+        const std::string &getBaseUrl() const;
+        void               setBaseUrl(std::string newUrl);
 
-            struct event_base* getEventBase() const;
+        void Connect();
+        void Disconnect();
 
-            APISessionState getState() const;
+        APISessionError getLastError() const;
 
-            const std::string& getBaseUrl() const;
-            void setBaseUrl(std::string newUrl);
+        void                      updateStationAliases();
+        void                      requestStationTransceivers(std::string stationName);
+        void                      requestStationVccs(std::string stationName);
+        void                      getStation(std::string stationName);
+        std::vector<dto::Station> getStationAliases() const;
+        std::map<std::string, std::vector<dto::StationTransceiver>> getStationTransceivers() const;
 
-            void Connect();
-            void Disconnect();
+        /** Callbacks registered against StateCallback will be called whenever
+         * the APISession changes state.
+         */
+        util::ChainedCallback<void(APISessionState)> StateCallback;
+        util::ChainedCallback<void(void)>            AliasUpdateCallback;
+        util::ChainedCallback<void(std::string)>     StationTransceiversUpdateCallback;
+        util::ChainedCallback<void(std::string, std::map<std::string, unsigned int>)> StationVccsCallback;
+        util::ChainedCallback<void(bool, std::pair<std::string, unsigned int>)> StationSearchCallback;
 
-            APISessionError getLastError() const;
+      protected:
+        void _authenticationCallback(http::RESTRequest *req, bool success);
+        void _stationsCallback(http::RESTRequest *req, bool success);
+        void _stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName);
+        void _stationVccsCallback(http::RESTRequest *req, bool success, std::string stationName);
+        void _getStationCallback(http::RESTRequest *req, bool success, std::string stationName);
+        void setState(APISessionState newState);
+        void raiseError(APISessionError error);
 
-            void updateStationAliases();
-            std::vector<dto::Station> getStationAliases() const;
+        struct event_base     *mEvBase;
+        http::TransferManager &mTransferManager;
+        std::string            mBaseURL;
+        std::string            mUsername;
+        std::string            mPassword;
+        std::string            mClientName;
 
-            /** Callbacks registered against StateCallback will be called whenever
-             * the APISession changes state.
-            */
-            util::ChainedCallback<void(APISessionState)> StateCallback;
-            util::ChainedCallback<void(void)> AliasUpdateCallback;
-        protected:
-            void _authenticationCallback(http::RESTRequest* req, bool success);
-            void _stationsCallback(http::RESTRequest* req, bool success);
-            void setState(APISessionState newState);
-            void raiseError(APISessionError error);
+        std::string mBearerToken;
 
-            struct event_base* mEvBase;
-            http::TransferManager& mTransferManager;
-            std::string mBaseURL;
-            std::string mUsername;
-            std::string mPassword;
-            std::string mClientName;
+        http::RESTRequest mAuthenticationRequest;
 
-            std::string mBearerToken;
+        event::EventCallbackTimer mRefreshTokenTimer;
 
-            http::RESTRequest mAuthenticationRequest;
+        APISessionError mLastError;
 
-            event::EventCallbackTimer mRefreshTokenTimer;
+        http::RESTRequest                                           mStationAliasRequest;
+        http::RESTRequest                                           mStationTransceiversRequest;
+        http::RESTRequest                                           mGetStationRequest;
+        http::RESTRequest                                           mVccsRequest;
+        std::vector<dto::Station>                                   mAliasedStations;
+        std::map<std::string, std::vector<dto::StationTransceiver>> mStationTransceivers;
 
-            APISessionError mLastError;
+      private:
+        APISessionState mState;
+    };
+}} // namespace afv_native::afv
 
-            http::RESTRequest mStationAliasRequest;
-            std::vector<dto::Station> mAliasedStations;
-        private:
-            APISessionState mState;
-        };
-    }
-}
-
-#endif //AFV_NATIVE_APISESSION_H
+#endif // AFV_NATIVE_APISESSION_H

@@ -29,29 +29,26 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_MONOTIME_H
 #define AFV_NATIVE_MONOTIME_H
 
 #include <cstdint>
 
-namespace afv_native {
-    namespace util {
-        typedef int64_t monotime_t;
+namespace afv_native { namespace util {
+    typedef int64_t monotime_t;
 
-        /** monotime_get() returns a millisecond period monotonic clock.
-         *
-         * It is important that this function is NOT sensitive to system clock adjustments.
-         *
-         * It is used for controlling packet delays and other world-time independent
-         * features.
-         *
-         * @return monotonic time in ms precision.
-         */
-        monotime_t monotime_get();
-    }
-}
+    /** monotime_get() returns a millisecond period monotonic clock.
+     *
+     * It is important that this function is NOT sensitive to system clock adjustments.
+     *
+     * It is used for controlling packet delays and other world-time independent
+     * features.
+     *
+     * @return monotonic time in ms precision.
+     */
+    monotime_t monotime_get();
+}} // namespace afv_native::util
 
-#endif //AFV_NATIVE_MONOTIME_H
-
+#endif // AFV_NATIVE_MONOTIME_H

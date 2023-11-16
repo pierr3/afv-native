@@ -29,31 +29,22 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/audio/AudioDevice.h"
-
-#include <memory>
-#include <cstring>
-#include <algorithm>
-
 #include "afv-native/Log.h"
+#include <algorithm>
+#include <cstring>
+#include <memory>
 
 using namespace afv_native::audio;
 using namespace std;
 
 AudioDevice::AudioDevice():
-    mSink(),
-    mSinkPtrLock(),
-    mSource(),
-    mSourcePtrLock(),
-    OutputUnderflows(0),
-    InputOverflows(0)
-{
+    mSink(), mSinkPtrLock(), mSource(), mSourcePtrLock(), OutputUnderflows(0), InputOverflows(0) {
 }
 
-AudioDevice::~AudioDevice()
-{
+AudioDevice::~AudioDevice() {
 }
 
 void AudioDevice::setSource(std::shared_ptr<ISampleSource> newSrc) {
@@ -68,11 +59,15 @@ void AudioDevice::setSink(std::shared_ptr<ISampleSink> newSink) {
     mSink = std::move(newSink);
 }
 
-AudioDevice::DeviceInfo::DeviceInfo(std::string newName, std::string newId) :
-        name(std::move(newName)),
-        id(std::move(newId))
-{
+AudioDevice::DeviceInfo::DeviceInfo(std::string newName, bool newIsDefault, std::string newId):
+    name(std::move(newName)), isDefault(std::move(newIsDefault)), id(std::move(newId)) {
     if (id.empty()) {
         id = name;
     }
 }
+
+void afv_native::audio::AudioDevice::setNotificationFunc(std::function<void(std::string, int)> newFunc) {
+    std::lock_guard<std::mutex> funcGuard(mNotificationFuncLock);
+
+    mNotificationFunc = std::move(newFunc);
+};

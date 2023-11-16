@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/afv/dto/Transceiver.h"
 #include <nlohmann/json.hpp>
@@ -38,17 +38,10 @@ using namespace afv_native::afv::dto;
 using json = nlohmann::json;
 
 Transceiver::Transceiver(uint16_t id, uint32_t freq, double lat, double lon, double msl, double agl):
-        ID(id),
-        Frequency(freq),
-        LatDeg(lat),
-        LonDeg(lon),
-        HeightMslM(msl),
-        HeightAglM(agl)
-{
+    ID(id), Frequency(freq), LatDeg(lat), LonDeg(lon), HeightMslM(msl), HeightAglM(agl) {
 }
 
-void afv_native::afv::dto::from_json(const json &j, Transceiver &ar)
-{
+void afv_native::afv::dto::from_json(const json &j, Transceiver &ar) {
     j.at("ID").get_to(ar.ID);
     j.at("Frequency").get_to(ar.Frequency);
     j.at("LatDeg").get_to(ar.LatDeg);
@@ -57,14 +50,9 @@ void afv_native::afv::dto::from_json(const json &j, Transceiver &ar)
     j.at("HeightAglM").get_to(ar.HeightAglM);
 };
 
-void afv_native::afv::dto::to_json(json &j, const Transceiver &ar)
-{
-    j = nlohmann::json{
-            {"ID",         ar.ID},
-            {"Frequency",  ar.Frequency},
-            {"LatDeg",     ar.LatDeg},
-            {"LonDeg",     ar.LonDeg},
-            {"HeightMslM", ar.HeightMslM},
-            {"HeightAglM", ar.HeightAglM},
+void afv_native::afv::dto::to_json(json &j, const Transceiver &ar) {
+    j = nlohmann::json {
+        {"ID", ar.ID},         {"Frequency", ar.Frequency},   {"LatDeg", ar.LatDeg},
+        {"LonDeg", ar.LonDeg}, {"HeightMslM", ar.HeightMslM}, {"HeightAglM", ar.HeightAglM},
     };
 }

@@ -29,34 +29,31 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_SPEEXPREPROCESSOR_H
 #define AFV_NATIVE_SPEEXPREPROCESSOR_H
 
-#include <memory>
-#include <speexdsp/include/speex/speex_preprocess.h>
-
 #include "afv-native/audio/ISampleSink.h"
-#include "afv-native/Log.h"
+#include <math.h>
+#include <memory>
+#include <speex/speex_preprocess.h>
 
-namespace afv_native {
-    namespace audio {
-        class SpeexPreprocessor: public ISampleSink {
-        protected:
-            std::shared_ptr<ISampleSink> mUpstreamSink;
-            SpeexPreprocessState *mPreprocessorState;
+namespace afv_native { namespace audio {
+    class SpeexPreprocessor: public ISampleSink {
+      protected:
+        std::shared_ptr<ISampleSink> mUpstreamSink;
+        SpeexPreprocessState *mPreprocessorState;
 
-            spx_int16_t mSpeexFrame[frameSizeSamples];
-            SampleType mOutputFrame[frameSizeSamples];
-        public:
-            explicit SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream);
-            virtual ~SpeexPreprocessor();
-            void putAudioFrame(const SampleType *bufferIn) override;
-            void transformFrame(SampleType *bufferOut, SampleType const bufferIn[]);
-        };
-    }
-}
+        spx_int16_t mSpeexFrame[frameSizeSamples];
+        SampleType mOutputFrame[frameSizeSamples];
 
+      public:
+        explicit SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream);
+        virtual ~SpeexPreprocessor();
+        void putAudioFrame(const SampleType *bufferIn) override;
+        void transformFrame(SampleType *bufferOut, SampleType const bufferIn[]);
+    };
+}} // namespace afv_native::audio
 
-#endif //AFV_NATIVE_SPEEXPREPROCESSOR_H
+#endif // AFV_NATIVE_SPEEXPREPROCESSOR_H

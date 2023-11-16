@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_EVENT_H
 #define AFV_NATIVE_EVENT_H
@@ -42,14 +42,45 @@ namespace afv_native {
         VoiceServerConnected,
         VoiceServerDisconnected,
         VoiceServerChannelError, // data is a pointer to an int containing the errno
-        VoiceServerError, // data is a pointer to the VoiceSessionError
+        VoiceServerError,        // data is a pointer to the VoiceSessionError
         PttOpen,
         PttClosed,
         StationAliasesUpdated,
+        StationTransceiversUpdated,
+        RxOpen,      // data is a pointer to an unsigned int containing the frequency
+        RxClosed,    // data is a pointer to an unsigned int containing the frequency
+        PilotRxOpen, // data is a pointer to an unsigned int containing the frequency, data2 is pointer to char* containing callsign
+        PilotRxClosed, // data is a pointer to an unsigned int containing the frequency, data2 is pointer to char* containing callsign
         AudioError,
+        VccsReceived,
+        StationDataReceived,
+        InputDeviceError,
+        AudioDisabled,
+        AudioDeviceStoppedError, // data is a pointer to a std::string of the relevant device name
         RxStarted,
         RxStopped,
     };
-}
 
-#endif //AFV_NATIVE_EVENT_H
+    namespace afv {
+        enum class APISessionState {
+            Disconnected, /// Disconnected state is not authenticated, nor trying to authenticate.
+            Connecting, /// Connecting means we've started our attempt to authenticate and may be waiting for a response from the API Server
+            Running, /// Running means we have a valid authentication token and can send updates to the API server
+            Reconnecting, /// Reconnecting means our token has expired and we're still trying to renew it.
+            Error /// Error is only used in the state callback, and is used to inform the callback user that an error that resulted in a disconnect occured.
+        };
+
+        enum class APISessionError {
+            NoError = 0,
+            ConnectionError,                // local socket or curl error - see data returned.
+            BadRequestOrClientIncompatible, // APIServer 400
+            RejectedCredentials,            // APIServer 403
+            BadPassword,                    // APIServer 401
+            OtherRequestError,
+            InvalidAuthToken,          // local parse error
+            AuthTokenExpiryTimeInPast, // local parse error
+        };
+    } // namespace afv
+} // namespace afv_native
+
+#endif // AFV_NATIVE_EVENT_H

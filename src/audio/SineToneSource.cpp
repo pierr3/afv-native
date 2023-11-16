@@ -29,24 +29,19 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/audio/SineToneSource.h"
-
 #include <cmath>
 
 using namespace ::afv_native::audio;
 using namespace ::std;
 
 SineToneSource::SineToneSource(double freqHz, float gain):
-    mFrequency(freqHz),
-    mGain(gain),
-    mFillCount(0)
-{
+    mFrequency(freqHz), mGain(gain), mFillCount(0) {
 }
 
-SourceStatus SineToneSource::getAudioFrame(SampleType *bufferOut)
-{
+SourceStatus SineToneSource::getAudioFrame(SampleType *bufferOut) {
     const double sinMultiplier = M_PI * 2.0 * static_cast<double>(mFrequency) / static_cast<double>(sampleRateHz);
     for (int i = 0; i < frameSizeSamples; i++) {
         bufferOut[i] = static_cast<SampleType>(mGain * sin(sinMultiplier * static_cast<double>(i + (frameSizeSamples * mFillCount))));

@@ -29,21 +29,19 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_SOURCESTATUS_H
 #define AFV_NATIVE_SOURCESTATUS_H
 
 #include "afv-native/audio/audio_params.h"
 
-namespace afv_native {
-    namespace audio {
-        enum class SourceStatus {
-            OK, /// Stream is operating normally
-            Closed, /// Stream has been closed and polling for samples should stop.
-            Error /// Stream has encountered an error and may not be working anymore.
-        };
-    }
-}
+namespace afv_native { namespace audio {
+    enum class SourceStatus {
+        OK,     /// Stream is operating normally
+        Closed, /// Stream has been closed and polling for samples should stop.
+        Error /// Stream has encountered an error and may not be working anymore.
+    };
+}} // namespace afv_native::audio
 
-#endif //AFV_NATIVE_SOURCESTATUS_H
+#endif // AFV_NATIVE_SOURCESTATUS_H

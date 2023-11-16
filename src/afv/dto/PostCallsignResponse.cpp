@@ -29,11 +29,10 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/afv/dto/PostCallsignResponse.h"
 #include "afv-native/afv/dto/VoiceServerConnectionData.h"
-
 #include <nlohmann/json.hpp>
 
 using namespace afv_native::afv::dto;
@@ -41,31 +40,21 @@ using namespace afv_native::afv;
 using namespace std;
 using json = nlohmann::json;
 
-PostCallsignResponse::PostCallsignResponse():
-    VoiceServer()
-{
+PostCallsignResponse::PostCallsignResponse(): VoiceServer() {
 }
 
 PostCallsignResponse::PostCallsignResponse(const PostCallsignResponse &cpysrc):
-    VoiceServer(cpysrc.VoiceServer)
-{
+    VoiceServer(cpysrc.VoiceServer) {
 }
 
 PostCallsignResponse::PostCallsignResponse(PostCallsignResponse &&movesrc) noexcept:
-    VoiceServer(std::move(movesrc.VoiceServer))
-{
+    VoiceServer(std::move(movesrc.VoiceServer)) {
 }
 
-void
-afv_native::afv::dto::from_json(const json &j, PostCallsignResponse &ar)
-{
+void afv_native::afv::dto::from_json(const json &j, PostCallsignResponse &ar) {
     j.at("voiceServer").get_to(ar.VoiceServer);
 }
 
-void
-afv_native::afv::dto::to_json(json &j, const PostCallsignResponse &ar)
-{
-    j = json{
-        {"voiceServer", ar.VoiceServer}
-    };
+void afv_native::afv::dto::to_json(json &j, const PostCallsignResponse &ar) {
+    j = json {{"voiceServer", ar.VoiceServer}};
 }

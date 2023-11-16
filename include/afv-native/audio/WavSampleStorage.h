@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_WAVSAMPLESTORAGE_H
 #define AFV_NATIVE_WAVSAMPLESTORAGE_H
@@ -37,30 +37,28 @@
 #include "afv-native/audio/ISampleStorage.h"
 #include "afv-native/audio/WavFile.h"
 
-namespace afv_native {
-    namespace audio {
-        class WavSampleStorage: public ISampleStorage {
-        protected:
-            SampleType *mBuffer;
-            size_t mBufferSize;
-        public:
-            // no default constructor - these have to be proxied off of
-            // something else.
-            WavSampleStorage() = delete;
+namespace afv_native { namespace audio {
+    class WavSampleStorage: public ISampleStorage {
+      protected:
+        SampleType *mBuffer;
+        size_t      mBufferSize;
 
-            explicit WavSampleStorage(const AudioSampleData &srcdata);
-            WavSampleStorage(const WavSampleStorage &cpysrc);
-            WavSampleStorage(WavSampleStorage &&movesrc) noexcept;
-            virtual ~WavSampleStorage();
+      public:
+        // no default constructor - these have to
+        // be proxied off of something else.
+        WavSampleStorage() = delete;
 
-            WavSampleStorage& operator=(const WavSampleStorage& copySrc);
-            WavSampleStorage& operator=(WavSampleStorage&& copySrc) noexcept;
+        explicit WavSampleStorage(const AudioSampleData &srcdata);
+        WavSampleStorage(const WavSampleStorage &cpysrc);
+        WavSampleStorage(WavSampleStorage &&movesrc) noexcept;
+        virtual ~WavSampleStorage();
 
-            SampleType *data() const override;
-            size_t lengthInSamples() const override;
-        };
-    }
-}
+        WavSampleStorage &operator=(const WavSampleStorage &copySrc);
+        WavSampleStorage &operator=(WavSampleStorage &&copySrc) noexcept;
 
+        SampleType *data() const override;
+        size_t lengthInSamples() const override;
+    };
+}} // namespace afv_native::audio
 
-#endif //AFV_NATIVE_WAVSAMPLESTORAGE_H
+#endif // AFV_NATIVE_WAVSAMPLESTORAGE_H

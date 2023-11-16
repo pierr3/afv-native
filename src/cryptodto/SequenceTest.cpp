@@ -29,27 +29,23 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/cryptodto/SequenceTest.h"
-
 #include <algorithm>
 
 #if defined(_MSC_VER)
 
-#include <intrin.h>
+    #include <intrin.h>
 
-#pragma intrinsic(_BitScanForward64)
+    #pragma intrinsic(_BitScanForward64)
 #endif
 
 using namespace std;
 using namespace afv_native::cryptodto;
 
 SequenceTest::SequenceTest(sequence_t start_sequence, unsigned window):
-        _bitfield(0),
-        _min(start_sequence),
-        _window(window)
-{
+    _bitfield(0), _min(start_sequence), _window(window) {
     if (_window < 1) {
         _window = 1;
     }
@@ -58,9 +54,7 @@ SequenceTest::SequenceTest(sequence_t start_sequence, unsigned window):
     }
 }
 
-void
-SequenceTest::advanceWindow()
-{
+void SequenceTest::advanceWindow() {
     // bitflip the bitfield and look for the first set bit - this will be the
     // first unreceived packet in the window.
     unsigned long idx = 0;
@@ -74,20 +68,18 @@ SequenceTest::advanceWindow()
         idx++;
     }
 #else
-#ifdef __GNUC__
+    #ifdef __GNUC__
     idx = __builtin_ctz(~_bitfield) + 1;
-#else
-#error No BSF for this compiler defined.
-#endif
+    #else
+        #error No BSF for this compiler defined.
+    #endif
 #endif
     idx = std::min(idx, static_cast<unsigned long>(_window));
     _min += idx;
     _bitfield = _bitfield >> (idx);
 }
 
-ReceiveOutcome
-SequenceTest::Received(sequence_t newSequence)
-{
+ReceiveOutcome SequenceTest::Received(sequence_t newSequence) {
     if (newSequence < _min) {
         return ReceiveOutcome::Before;
     }
@@ -117,25 +109,22 @@ SequenceTest::Received(sequence_t newSequence)
     }
     // did we fully advance the window?  If so abandon the old position and restart the stream.
     if (_min >= oldmin + _window) {
-        _min = newSequence + 1;
+        _min      = newSequence + 1;
         _bitfield = 0;
         return ReceiveOutcome::Overflow;
     }
     // if we're inside the window now, mask and return.
-    sequence_t bitidx = newSequence - _min - 1;
-    sequence_bitfield_t mask = 1ULL << bitidx;
+    sequence_t          bitidx = newSequence - _min - 1;
+    sequence_bitfield_t mask   = 1ULL << bitidx;
     _bitfield |= mask;
     return ReceiveOutcome::Overflow;
 }
 
-sequence_t
-SequenceTest::GetNext() const
-{
+sequence_t SequenceTest::GetNext() const {
     return _min;
 }
 
-void SequenceTest::reset()
-{
-    _min = 0;
+void SequenceTest::reset() {
+    _min      = 0;
     _bitfield = 0;
 }

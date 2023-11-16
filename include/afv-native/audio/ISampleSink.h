@@ -29,20 +29,18 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_ISAMPLESINK_H
 #define AFV_NATIVE_ISAMPLESINK_H
 
 #include "afv-native/audio/audio_params.h"
 
-namespace afv_native {
-    namespace audio {
-        class ISampleSink {
-        public:
-            virtual void putAudioFrame(const SampleType *bufferIn) = 0;
-        };
-    }
-}
+namespace afv_native { namespace audio {
+    class ISampleSink {
+      public:
+        virtual void putAudioFrame(const SampleType *bufferIn) = 0;
+    };
+}} // namespace afv_native::audio
 
-#endif //AFV_NATIVE_ISAMPLESINK_H
+#endif // AFV_NATIVE_ISAMPLESINK_H

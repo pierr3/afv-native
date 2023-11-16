@@ -29,23 +29,18 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef AFV_NATIVE_IAUDIOVOICEROOM_H
 #define AFV_NATIVE_IAUDIOVOICEROOM_H
 
 #include <string>
 
-namespace afv_native {
-    namespace afv {
-        namespace dto {
-            class IAudioVoiceRoom {
-            public:
-                std::string VoiceRoom;
-            };
-        }
-    }
-}
+namespace afv_native { namespace afv { namespace dto {
+    class IAudioVoiceRoom {
+      public:
+        std::string VoiceRoom;
+    };
+}}} // namespace afv_native::afv::dto
 
-
-#endif //AFV_NATIVE_IAUDIOVOICEROOM_H
+#endif // AFV_NATIVE_IAUDIOVOICEROOM_H

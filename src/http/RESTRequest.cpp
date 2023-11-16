@@ -29,28 +29,23 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include "afv-native/http/RESTRequest.h"
-
-#include <string>
-#include <nlohmann/json.hpp>
-
 #include "afv-native/http/http.h"
+#include <nlohmann/json.hpp>
+#include <string>
 
 using namespace std;
 using namespace afv_native::http;
 using json = nlohmann::json;
 
 RESTRequest::RESTRequest(string path, Method method, const nlohmann::json &request):
-    Request(path, method)
-{
+    Request(path, method) {
     setRequestBody(request);
 }
 
-nlohmann::json
-RESTRequest::getResponse() const
-{
+nlohmann::json RESTRequest::getResponse() const {
     if (mProgress == Progress::Finished && mResp.size() > 0) {
         return json::parse(getResponseBody());
     } else {
@@ -58,8 +53,7 @@ RESTRequest::getResponse() const
     }
 }
 
-bool RESTRequest::setupHandle()
-{
+bool RESTRequest::setupHandle() {
     setHeader("Content-Type", "application/json; charset=UTF-8");
     return Request::setupHandle();
 }

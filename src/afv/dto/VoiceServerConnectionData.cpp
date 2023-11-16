@@ -29,51 +29,39 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
-#include <nlohmann/json.hpp>
 #include "afv-native/afv/dto/VoiceServerConnectionData.h"
 #include "afv-native/cryptodto/dto/ChannelConfig.h"
+#include <nlohmann/json.hpp>
 
 using namespace afv_native::afv::dto;
-using json = nlohmann::json;
+using json          = nlohmann::json;
 using ChannelConfig = afv_native::cryptodto::dto::ChannelConfig;
 
-void
-afv_native::afv::dto::to_json(json &j, const VoiceServerConnectionData &vsd)
-{
-    j = json{
-        {"addressIpV4",   vsd.AddressIpV4},
-        {"addressIpV6",   vsd.AddressIpV6},
+void afv_native::afv::dto::to_json(json &j, const VoiceServerConnectionData &vsd) {
+    j = json {
+        {"addressIpV4", vsd.AddressIpV4},
+        {"addressIpV6", vsd.AddressIpV6},
         {"channelConfig", vsd.ChannelConfig},
     };
 }
 
-void
-afv_native::afv::dto::from_json(const json &j, VoiceServerConnectionData &vsd)
-{
+void afv_native::afv::dto::from_json(const json &j, VoiceServerConnectionData &vsd) {
     j.at("addressIpV4").get_to(vsd.AddressIpV4);
     j.at("addressIpV6").get_to(vsd.AddressIpV6);
     j.at("channelConfig").get_to(vsd.ChannelConfig);
 }
 
 VoiceServerConnectionData::VoiceServerConnectionData():
-    AddressIpV4(),
-    AddressIpV6(),
-    ChannelConfig()
-{
+    AddressIpV4(), AddressIpV6(), ChannelConfig() {
 }
 
 VoiceServerConnectionData::VoiceServerConnectionData(const VoiceServerConnectionData &cpysrc):
-    AddressIpV4(cpysrc.AddressIpV4),
-    AddressIpV6(cpysrc.AddressIpV6),
-    ChannelConfig(cpysrc.ChannelConfig)
-{
+    AddressIpV4(cpysrc.AddressIpV4), AddressIpV6(cpysrc.AddressIpV6), ChannelConfig(cpysrc.ChannelConfig) {
 }
 
 VoiceServerConnectionData::VoiceServerConnectionData(VoiceServerConnectionData &&movesrc) noexcept:
-    AddressIpV4(std::move(movesrc.AddressIpV4)),
-    AddressIpV6(std::move(movesrc.AddressIpV6)),
-    ChannelConfig(std::move(movesrc.ChannelConfig))
-{
+    AddressIpV4(std::move(movesrc.AddressIpV4)), AddressIpV6(std::move(movesrc.AddressIpV6)),
+    ChannelConfig(std::move(movesrc.ChannelConfig)) {
 }

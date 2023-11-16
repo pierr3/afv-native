@@ -73,24 +73,6 @@ audio::SourceStatus OutputAudioDevice::getAudioFrame(audio::SampleType *bufferOu
     return mRadio.lock()->getAudioFrame(bufferOut, onHeadset);
 }
 
-OutputDeviceState::OutputDeviceState()
-{
-    mChannelBuffer = new audio::SampleType[audio::frameSizeSamples];
-    mMixingBuffer = new audio::SampleType[audio::frameSizeSamples];
-    mLeftMixingBuffer = new audio::SampleType[audio::frameSizeSamples];
-    mRightMixingBuffer = new audio::SampleType[audio::frameSizeSamples];
-    mFetchBuffer = new audio::SampleType[audio::frameSizeSamples];
-}
-
-OutputDeviceState::~OutputDeviceState()
-{
-    delete[] mFetchBuffer;
-    delete[] mMixingBuffer;
-    delete[] mLeftMixingBuffer;
-    delete[] mRightMixingBuffer;
-    delete[] mChannelBuffer;
-}
-
 RadioSimulation::RadioSimulation(
         struct event_base *evBase,
         std::shared_ptr<EffectResources> resources,
