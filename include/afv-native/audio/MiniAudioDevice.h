@@ -20,7 +20,7 @@
 namespace afv_native { namespace audio {
     class MiniAudioAudioDevice: public AudioDevice {
       public:
-        explicit MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceName, const std::string &inputDeviceName, Api audioApi);
+        explicit MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceName, const std::string &inputDeviceName, Api audioApi, bool makeStereo = false);
         virtual ~MiniAudioAudioDevice();
 
         bool openOutput() override;
@@ -51,6 +51,7 @@ namespace afv_native { namespace audio {
         ma_context   context;
         ma_device    outputDev;
         ma_device    inputDev;
+        bool mStereo = false;
         unsigned int mAudioApi;
         bool         mHasClosedManually = false;
     };

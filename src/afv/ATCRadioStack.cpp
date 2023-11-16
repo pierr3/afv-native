@@ -242,7 +242,9 @@ bool ATCRadioStack::_process_radio(const std::map<void *, audio::SampleType[audi
         // We always copy everything into the two buffers if we have both playback
         if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left || mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
             mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
-        } else if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
+        }
+        
+        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
                    mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
             mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
         }
@@ -296,7 +298,8 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
     // empty the output buffer.
     ::memset(state->mMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
     ::memset(state->mRightMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-    ::memset(state->mMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    ::memset(state->mLeftMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    ::memset(state->mRightMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
 
     for (auto &radio: mRadioState) {
         if (!isFrequencyActive(radio.first)) {

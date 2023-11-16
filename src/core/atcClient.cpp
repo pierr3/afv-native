@@ -201,7 +201,7 @@ void ATCClient::startAudio() {
 
     if (!mAudioDevice) {
         LOG("afv::ATCClient", "Initialising Headset Audio...");
-        mAudioDevice = audio::AudioDevice::makeDevice("afv::headset", mAudioOutputDeviceName, mAudioInputDeviceName, mAudioApi);
+        mAudioDevice = audio::AudioDevice::makeDevice("afv::headset", mAudioOutputDeviceName, mAudioInputDeviceName, mAudioApi, true);
 
         if (!mAudioDevice) {
             LOG("afv::ATCClient", "Could not initiate headset audio context.");

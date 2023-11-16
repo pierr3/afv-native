@@ -311,7 +311,6 @@ int afv_native::api::atcClient::GetTransceiverCountForStation(std::string statio
 };
 
 void afv_native::api::atcClient::SetRadiosGain(float gain) {
-    std::lock_guard<std::mutex> lock(afvMutex);
     this->SetRadioGainAll(gain);
 }
 

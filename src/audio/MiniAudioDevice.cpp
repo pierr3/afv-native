@@ -10,8 +10,8 @@ void logger(void *pUserData, ma_uint32 logLevel, const char *message) {
     LOG("MiniAudioAudioDevice", "%s: %s", ma_log_level_to_string(logLevel), msg.c_str());
 }
 
-MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceName, const std::string &inputDeviceName, AudioDevice::Api audioApi):
-    AudioDevice(), mUserStreamName(userStreamName), mOutputDeviceName(outputDeviceName), mInputDeviceName(inputDeviceName), mInputInitialized(false), mOutputInitialized(false), mAudioApi(audioApi) {
+MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceName, const std::string &inputDeviceName, AudioDevice::Api audioApi, bool makeStereo):
+    AudioDevice(), mUserStreamName(userStreamName), mOutputDeviceName(outputDeviceName), mInputDeviceName(inputDeviceName), mInputInitialized(false), mOutputInitialized(false), mAudioApi(audioApi), mStereo(makeStereo) {
     ma_context_config contextConfig      = ma_context_config_init();
     contextConfig.threadPriority         = ma_thread_priority_normal;
     contextConfig.jack.pClientName       = mUserStreamName.c_str();
@@ -214,18 +214,17 @@ bool MiniAudioAudioDevice::initOutput() {
         return false; // no device found
     }
 
-    ma_device_config cfg   = ma_device_config_init(ma_device_type_playback);
-    cfg.playback.pDeviceID = &outputDeviceId;
-    cfg.playback.format    = ma_format_f32;
-    cfg.playback.channels  = 2;
-    cfg.playback.shareMode = ma_share_mode_shared;
-    cfg.playback.channelMixMode = ma_channel_mix_mode_simple;
+    ma_device_config cfg        = ma_device_config_init(ma_device_type_playback);
+    cfg.playback.pDeviceID      = &outputDeviceId;
+    cfg.playback.format         = ma_format_f32;
+    cfg.playback.channels       = mStereo ? 2 : 1;
+    cfg.playback.shareMode      = ma_share_mode_shared;
 
     cfg.sampleRate         = sampleRateHz;
     cfg.periodSizeInFrames = frameSizeSamples;
     cfg.pUserData          = this;
     cfg.dataCallback       = maOutputCallback;
-    
+
     ma_result result;
 
     result = ma_device_init(&context, &cfg, &outputDev);
@@ -397,9 +396,9 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleOutputDevicesForApi(
     return returnDevices;
 }
 
-std::shared_ptr<AudioDevice> AudioDevice::makeDevice(const std::string &userStreamName, const std::string &outputDeviceId, const std::string &inputDeviceId, AudioDevice::Api audioApi) {
+std::shared_ptr<AudioDevice> AudioDevice::makeDevice(const std::string &userStreamName, const std::string &outputDeviceId, const std::string &inputDeviceId, AudioDevice::Api audioApi, bool makeStereo) {
     try {
-        return std::make_shared<MiniAudioAudioDevice>(userStreamName, outputDeviceId, inputDeviceId, audioApi);
+        return std::make_shared<MiniAudioAudioDevice>(userStreamName, outputDeviceId, inputDeviceId, audioApi, makeStereo);
     } catch (std::exception &e) {
         return nullptr;
     }
