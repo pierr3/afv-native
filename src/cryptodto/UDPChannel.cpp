@@ -157,9 +157,10 @@ bool UDPChannel::open() {
         evutil_make_socket_nonblocking(mUDPSocket);
 
         if (saddr.ss_family == AF_INET6) {
-            struct sockaddr_in6 baddr = {
-                AF_INET6, 0, 0, IN6ADDR_ANY_INIT, 0,
-            };
+            struct sockaddr_in6 baddr = {};
+            baddr.sin6_family         = AF_INET6;
+            baddr.sin6_addr           = in6addr_any;
+
             if (::bind(mUDPSocket, reinterpret_cast<struct sockaddr *>(&baddr), sizeof(baddr))) {
                 mLastErrno = evutil_socket_geterror(mUDPSocket);
                 LOG("udpchannel", "couldn't bind IPv6 port: %s", evutil_socket_error_to_string(errno));
