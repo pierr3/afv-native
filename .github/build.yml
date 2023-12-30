@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: atc-client
+          ref: master
           submodules: recursive
       - name: Bootstrap vcpkg
         run: |
@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: atc-client
+          ref: master
           submodules: recursive
       - name: Bootstrap vcpkg
         run: |
@@ -47,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: atc-client
+          ref: master
           submodules: recursive
       - name: Bootstrap vcpkg
         run: |
@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: atc-client
+          ref: master
           submodules: recursive
       - name: Bootstrap vcpkg
         run: |
