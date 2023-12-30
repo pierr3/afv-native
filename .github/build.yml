@@ -2,8 +2,6 @@ name: Build afv-native
 
 on: 
   push:
-    branches:
-      - master
   workflow_dispatch:
 
 concurrency: 
