@@ -10,6 +10,8 @@ project(
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
 if (APPLE)
 	#disable runtime linking to prevent issues with backends that are not actually implemented
 	add_definitions(-DMA_NO_RUNTIME_LINKING)

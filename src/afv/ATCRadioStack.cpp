@@ -63,6 +63,7 @@ void ATCRadioStack::resetRadioFx(unsigned int freq, bool except_click) {
     }
     mRadioState[freq].BlockTone.reset();
     mRadioState[freq].Crackle.reset();
+    mRadioState[freq].WhiteNoise.reset();
 }
 
 void ATCRadioStack::mix_buffers(audio::SampleType *RESTRICT src_dst, const audio::SampleType *RESTRICT src2, float src2_gain) {
@@ -227,9 +228,8 @@ bool ATCRadioStack::_process_radio(const std::map<void *, audio::SampleType[audi
         if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left || mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
             mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
         }
-        
-        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
-                   mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
+
+        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right || mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
             mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
         }
     } else {
