@@ -104,7 +104,7 @@ jobs:
       - name: Zip headers
         run: |
           cp afv_native_export.h include/afv-native/afv_native_export.h
-          zip afv_native_headers include/afv-native/afv_native_export.h include/afv-native/atcClientWrapper.h include/afv-native/event.h include/afv-native/hardwareType.h
+          zip afv_native_headers COPYING.md include/afv-native/afv_native_export.h include/afv-native/atcClientWrapper.h include/afv-native/event.h include/afv-native/hardwareType.h
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
