@@ -320,6 +320,7 @@ bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt)
             if (isNew) {
                 // Need to emit that we have a new pilot that started transmitting
                 // FIXME: Does not emit if the pilot is transmitting on more than one frequency
+                // FIXME: this is not actually only pilots but any station that is transmitting
                 ClientEventCallback->invokeAll(ClientEventType::PilotRxOpen, &trans.Frequency, static_cast<void *>(new std::string {pkt.Callsign}));
             }
             return true;
