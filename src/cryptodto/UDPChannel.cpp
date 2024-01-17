@@ -159,7 +159,7 @@ bool UDPChannel::open() {
         if (saddr.ss_family == AF_INET6) {
             struct sockaddr_in6 baddr = {};
             baddr.sin6_family         = AF_INET6;
-            baddr.sin6_addr           = in6addr_any;
+            baddr.sin6_addr           = IN6ADDR_ANY_INIT;
 
             if (::bind(mUDPSocket, reinterpret_cast<struct sockaddr *>(&baddr), sizeof(baddr))) {
                 mLastErrno = evutil_socket_geterror(mUDPSocket);
