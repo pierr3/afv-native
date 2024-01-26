@@ -541,13 +541,11 @@ void RadioSimulation::maintainIncomingStreams()
     std::vector<std::string> speakerCallsignsToPurge;
     util::monotime_t now = util::monotime_get();
     for (const auto &streamPair: mHeadsetIncomingStreams) {
-        auto idleTime = now - streamPair.second.source->getLastActivityTime();
         if ((now - streamPair.second.source->getLastActivityTime()) > audio::compressedSourceCacheTimeoutMs) {
             callsignsToPurge.emplace_back(streamPair.first);
         }
     }
     for (const auto &streamPair : mSpeakerIncomingStreams) {
-        auto idleTime = now - streamPair.second.source->getLastActivityTime();
         if ((now - streamPair.second.source->getLastActivityTime()) > audio::compressedSourceCacheTimeoutMs) {
             speakerCallsignsToPurge.emplace_back(streamPair.first);
         }

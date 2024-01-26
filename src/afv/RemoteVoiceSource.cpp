@@ -79,6 +79,11 @@ void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio) {
         mEnding = false;
     }
 
+    auto currentTime = util::monotime_get();
+    if((currentTime - mLastActive) > 500) {
+        flush();
+    }
+
     newPacket.data = static_cast<char *>(::malloc(audio.Audio.size()));
     memcpy(newPacket.data, audio.Audio.data(), audio.Audio.size());
     newPacket.len       = audio.Audio.size();
@@ -89,7 +94,7 @@ void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio) {
 
         jitter_buffer_put(mJitterBuffer, &newPacket);
         mSilentFrames = 0;
-        mLastActive   = util::monotime_get();
+        mLastActive = currentTime;
     }
     mIsActive = true;
 }
