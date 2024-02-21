@@ -48,7 +48,7 @@ namespace afv_native {
          * @param clientName The name of this client to advertise to the
          *      audio-subsystem.
          */
-        ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.uk");
+        ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.net");
 
         virtual ~ATCClient();
 

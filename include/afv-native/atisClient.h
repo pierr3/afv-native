@@ -55,7 +55,7 @@ namespace afv_native {
          * @param clientName The name of this client to advertise to the
          *      audio-subsystem.
          */
-        ATISClient(struct event_base *evBase, std::string atisFile, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.uk");
+        ATISClient(struct event_base *evBase, std::string atisFile, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.net");
 
         virtual ~ATISClient();
 
@@ -156,8 +156,8 @@ namespace afv_native {
         struct event_base *mEvBase;
 
         http::EventTransferManager mTransferManager;
-        afv::APISession   mAPISession;
-        afv::VoiceSession mVoiceSession;
+        afv::APISession            mAPISession;
+        afv::VoiceSession          mVoiceSession;
 
         void processCompressedFrame(std::vector<unsigned char> compressedData);
 
@@ -185,20 +185,20 @@ namespace afv_native {
         void stopTransceiverUpdate();
 
       protected:
-        event::EventCallbackTimer mTransceiverUpdateTimer;
-        cryptodto::UDPChannel *mChannel;
-        std::atomic<uint32_t>  mTxSequence;
-        std::shared_ptr<afv::VoiceCompressionSink> mVoiceSink;
-        std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
-        std::shared_ptr<audio::WavSampleStorage> mWavSampleStorage;
+        event::EventCallbackTimer                    mTransceiverUpdateTimer;
+        cryptodto::UDPChannel                       *mChannel;
+        std::atomic<uint32_t>                        mTxSequence;
+        std::shared_ptr<afv::VoiceCompressionSink>   mVoiceSink;
+        std::shared_ptr<audio::SpeexPreprocessor>    mVoiceFilter;
+        std::shared_ptr<audio::WavSampleStorage>     mWavSampleStorage;
         std::shared_ptr<audio::RecordedSampleSource> mRecordedSampleSource;
-        std::shared_ptr<audio::SourceToSinkAdapter> mAdapter;
-        std::vector<std::vector<unsigned char>> mStoredData;
-        bool         looped;
-        bool         playCachedData;
-        unsigned int cacheNum;
-        std::string  mClientName;
-        std::string  mATISFileName;
+        std::shared_ptr<audio::SourceToSinkAdapter>  mAdapter;
+        std::vector<std::vector<unsigned char>>      mStoredData;
+        bool                                         looped;
+        bool                                         playCachedData;
+        unsigned int                                 cacheNum;
+        std::string                                  mClientName;
+        std::string                                  mATISFileName;
 
       public:
     };
