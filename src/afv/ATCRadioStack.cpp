@@ -118,14 +118,6 @@ bool ATCRadioStack::_process_radio(const std::map<void *, audio::SampleType[audi
     for (auto &srcPair: mIncomingStreams) {
         if (!srcPair.second.source || !srcPair.second.source->isActive() ||
             (sampleCache.find(srcPair.second.source.get()) == sampleCache.end())) {
-            // Check if we have a live transmitting callsign still registered here
-            bool hasBeenDeleted =
-                afv_native::util::removeIfExists(srcPair.first, mRadioState[rxIter].liveTransmittingCallsigns);
-            if (hasBeenDeleted) {
-                ClientEventCallback->invokeAll(ClientEventType::PilotRxClosed, &rxIter,
-                                               static_cast<void *>(new std::string {srcPair.first}));
-            }
-
             continue;
         }
         bool  mUseStream = false;
@@ -172,7 +164,7 @@ bool ATCRadioStack::_process_radio(const std::map<void *, audio::SampleType[audi
             // Post Begin Voice Receiving Notfication
             unsigned int freq = rxIter;
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting yet
-            ClientEventCallback->invokeAll(ClientEventType::RxOpen, &freq, nullptr);
+            ClientEventCallback->invokeAll(ClientEventType::FrequencyRxBegin, &freq, nullptr);
         }
         if (!mRadioState[rxIter].mBypassEffects) {
             // if FX are enabled, and we muxed any streams, eq the buffer now to apply
@@ -208,11 +200,11 @@ bool ATCRadioStack::_process_radio(const std::map<void *, audio::SampleType[audi
             unsigned int freq = rxIter;
             for (auto callsign: mRadioState[rxIter].liveTransmittingCallsigns) {
                 // Emit the remaining callsigns event since the frequency is about to close
-                ClientEventCallback->invokeAll(ClientEventType::PilotRxClosed, &rxIter, static_cast<void *>(new std::string {callsign}));
+                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &rxIter, &callsign);
             }
 
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting anymore
-            ClientEventCallback->invokeAll(ClientEventType::RxClosed, &freq, nullptr);
+            ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &freq, nullptr);
         }
     }
     mRadioState[rxIter].mLastRxCount = concurrentStreams;
@@ -283,7 +275,6 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
     ::memset(state->mMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
     ::memset(state->mRightMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
     ::memset(state->mLeftMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-    ::memset(state->mRightMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
 
     for (auto &radio: mRadioState) {
         if (!isFrequencyActive(radio.first)) {
@@ -313,18 +304,31 @@ audio::SourceStatus ATCRadioStack::getAudioFrame(audio::SampleType *bufferOut, b
 bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt) {
     std::lock_guard<std::mutex> radioStateLock(mRadioStateLock);
     for (auto trans: pkt.Transceivers) {
-        if (mRadioState[trans.Frequency].rx) {
-            mRadioState[trans.Frequency].lastTransmitCallsign = pkt.Callsign;
-            bool isNew =
-                afv_native::util::pushbackIfUnique(pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
-            if (isNew) {
-                // Need to emit that we have a new pilot that started transmitting
-                // FIXME: Does not emit if the pilot is transmitting on more than one frequency
-                // FIXME: this is not actually only pilots but any station that is transmitting
-                ClientEventCallback->invokeAll(ClientEventType::PilotRxOpen, &trans.Frequency, static_cast<void *>(new std::string {pkt.Callsign}));
-            }
-            return true;
+        if (!mRadioState[trans.Frequency].rx) {
+            continue;
         }
+
+        mRadioState[trans.Frequency].lastTransmitCallsign = pkt.Callsign;
+
+        if (pkt.LastPacket) {
+            bool hasBeenDeleted =
+                afv_native::util::removeIfExists(pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
+            if (hasBeenDeleted) {
+                // There is a risk that the pointer to lastTransmitCallsign might already change 
+                // or be invalid by the event handler receives it, needs to be checked in real conditions
+                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &trans.Frequency,
+                                               &mRadioState[trans.Frequency].lastTransmitCallsign);
+            }
+        } else {
+            auto newIt =
+                afv_native::util::pushbackIfUnique(pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
+            if (newIt != mRadioState[trans.Frequency].liveTransmittingCallsigns.end()) {
+                // Need to emit that we have a new pilot that started transmitting
+                ClientEventCallback->invokeAll(ClientEventType::StationRxBegin, &trans.Frequency, &(*newIt));
+            }
+        }
+
+        return true;
     }
 
     return false;
