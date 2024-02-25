@@ -314,7 +314,7 @@ bool ATCRadioStack::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt)
             bool hasBeenDeleted =
                 afv_native::util::removeIfExists(pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
             if (hasBeenDeleted) {
-                // There is a risk that the pointer to lastTransmitCallsign might already change 
+                // There is a risk that the pointer to lastTransmitCallsign might already change
                 // or be invalid by the event handler receives it, needs to be checked in real conditions
                 ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &trans.Frequency,
                                                &mRadioState[trans.Frequency].lastTransmitCallsign);
@@ -664,6 +664,9 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string 
 
 void ATCRadioStack::removeFrequency(unsigned int freq) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
+        ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq, &callsign);
+    }
     mRadioState.erase(freq);
 }
 
@@ -710,6 +713,13 @@ void ATCRadioStack::setRx(unsigned int freq, bool rx) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
 
     mRadioState[freq].rx = rx;
+    if (!rx) {
+        // Emit client callback for the end of station transmission
+        for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
+            ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq, &callsign);
+        }
+        mRadioState[freq].liveTransmittingCallsigns = {};
+    }
     remove_unused_frequency(freq);
 }
 
