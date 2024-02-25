@@ -63,25 +63,14 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
     client = std::make_unique<afv_native::ATCClient>(ev_base, resourcePath, clientName);
 
     eventThread = std::make_unique<std::thread>([this] {
-        // Create a new event that triggers every 10 milliseconds
-        struct event *timeout_event = evtimer_new(
-            ev_base,
-            [](evutil_socket_t, short, void *arg) {
-                struct event_base *base = static_cast<event_base *>(arg);
-                event_base_loopbreak(base);
-            },
-            ev_base);
-
-        // Set the event to trigger every 10 milliseconds
-        struct timeval ten_millisec = {0, 10000};
-        evtimer_add(timeout_event, &ten_millisec);
-
         while (!requestLoopExit) {
-            event_base_loop(ev_base, 0);
+            event_base_loop(ev_base, EVLOOP_NONBLOCK);
+#ifdef WIN32
+            Sleep(10);
+#else
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+#endif
         }
-
-        // Clean up the event
-        event_free(timeout_event);
     });
 
     isInitialized = true;
