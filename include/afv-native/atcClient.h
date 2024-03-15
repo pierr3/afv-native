@@ -9,11 +9,12 @@
 #define atcClient_h
 
 #include "afv-native/afv/APISession.h"
-#include "afv-native/afv/ATCRadioStack.h"
+#include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/afv/EffectResources.h"
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
+#include "afv-native/audio/ITick.h"
 #include "afv-native/event.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/hardwareType.h"
@@ -251,7 +252,7 @@ namespace afv_native {
         http::EventTransferManager          mTransferManager;
         afv::APISession                     mAPISession;
         afv::VoiceSession                   mVoiceSession;
-        std::shared_ptr<afv::ATCRadioStack> mATCRadioStack;
+        std::shared_ptr<afv::ATCRadioSimulation> mATCRadioStack;
         std::shared_ptr<audio::AudioDevice> mSpeakerDevice;
 
         std::string mCallsign;

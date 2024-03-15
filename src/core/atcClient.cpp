@@ -7,6 +7,7 @@
 
 #include "afv-native/atcClient.h"
 #include "afv-native/Log.h"
+#include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/params.h"
 #include "afv-native/event.h"
@@ -17,7 +18,7 @@ using namespace afv_native;
 
 ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName, std::string baseUrl):
     mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)), mEvBase(evBase), mTransferManager(mEvBase), mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession),
-    mATCRadioStack(std::make_shared<afv::ATCRadioStack>(mEvBase, mFxRes, &mVoiceSession.getUDPChannel())), mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(0), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
+    mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mEvBase, mFxRes, &mVoiceSession.getUDPChannel())), mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(0), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
@@ -44,7 +45,7 @@ void ATCClient::setClientPosition(double lat, double lon, double amslm, double a
 }
 
 std::string ATCClient::lastTransmitOnFreq(unsigned int freq) {
-    return mATCRadioStack->lastTransmitOnFreq(freq);
+    return mATCRadioStack->getLastTransmitOnFreq(freq);
 }
 
 void ATCClient::setTx(unsigned int freq, bool active) {
@@ -179,46 +180,54 @@ void ATCClient::startAudio() {
     mAudioStoppedThroughCallback = false;
     if (!mSpeakerDevice) {
         LOG("afv::ATCClient", "Initialising Speaker Audio...");
-        mSpeakerDevice = audio::AudioDevice::makeDevice("afv::speaker", mAudioSpeakerDeviceName, mAudioInputDeviceName, mAudioApi);
-
+        mSpeakerDevice = audio::AudioDevice::makeDevice("afv::speaker", mAudioSpeakerDeviceName, mAudioInputDeviceName, mAudioApi, true);
+        LOG("afv::ATCClient", "Speaker Device %s created", mAudioSpeakerDeviceName.c_str());
         if (!mSpeakerDevice) {
             LOG("afv::ATCClient", "Could not initiate speaker audio context.");
             ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
         } else {
             mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
+            LOG("afv::ATCClient", "Speaker Device %s notification setup", mAudioSpeakerDeviceName.c_str());
         }
     } else {
         LOG("afv::ATCClient", "Speaker device already exists, skipping creation");
     }
     mSpeakerDevice->setSink(nullptr);
     mSpeakerDevice->setSource(mATCRadioStack->speakerDevice());
+    LOG("afv::ATCClient", "Speaker Device %s fully setup", mAudioSpeakerDeviceName.c_str());
 
     if (!mSpeakerDevice->openOutput()) {
         LOG("afv::ATCClient", "Unable to open Speaker audio device.");
         stopAudio();
         ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
-    };
+    }
+    LOG("afv::ATCClient", "Speaker Device %s output opened", mAudioSpeakerDeviceName.c_str());
 
     if (!mAudioDevice) {
         LOG("afv::ATCClient", "Initialising Headset Audio...");
         mAudioDevice = audio::AudioDevice::makeDevice("afv::headset", mAudioOutputDeviceName, mAudioInputDeviceName, mAudioApi, true);
-
+        LOG("afv::ATCClient", "Headset Device %s created", mAudioOutputDeviceName.c_str());
         if (!mAudioDevice) {
             LOG("afv::ATCClient", "Could not initiate headset audio context.");
             ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
         } else {
             mAudioDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
+            LOG("afv::ATCClient", "Headset Device %s notification setup", mAudioOutputDeviceName.c_str());
         }
     } else {
         LOG("afv::ATCClient", "Headset device already exists, skipping creation");
     }
     mAudioDevice->setSink(mATCRadioStack);
     mAudioDevice->setSource(mATCRadioStack->headsetDevice());
+    LOG("afv::ATCClient", "Headset Device %s fully setup", mAudioOutputDeviceName.c_str());
 
     if (mAudioDevice->openOutput()) {
+        LOG("afv::ATCClient", "Headset output device opened");
         if (!mAudioDevice->openInput()) {
             LOG("afv::ATCClient", "Couldn't initialize headset microphone device");
             ClientEventCallback.invokeAll(ClientEventType::InputDeviceError, nullptr, nullptr);
+        } else {
+            LOG("afv::ATCClient", "Headset input device opened");
         }
     } else {
         LOG("afv::ATCClient", "Unable to open Headset output device.");
@@ -293,10 +302,10 @@ void ATCClient::unguardPtt() {
 }
 
 void ATCClient::setRecordAtis(bool state) {
-    if (!mPtt && mAudioDevice) {
-        mAtisRecording = !mAtisRecording;
-        mATCRadioStack->setRecordAtis(mAtisRecording);
-    }
+    // if (!mPtt && mAudioDevice) {
+    //     mAtisRecording = !mAtisRecording;
+    //     mATCRadioStack->setRecordAtis(mAtisRecording);
+    // }
 }
 
 bool ATCClient::isAtisRecording() {
@@ -304,27 +313,29 @@ bool ATCClient::isAtisRecording() {
 }
 
 void ATCClient::startAtisPlayback(std::string atisCallsign, unsigned int freq) {
-    if (!isAtisRecording() && isVoiceConnected()) {
-        this->addFrequency(freq, true, atisCallsign);
-        this->linkTransceivers(atisCallsign, freq);
-        mATCRadioStack->startAtisPlayback(atisCallsign);
-    }
+    // if (!isAtisRecording() && isVoiceConnected()) {
+    //     this->addFrequency(freq, true, atisCallsign);
+    //     this->linkTransceivers(atisCallsign, freq);
+    //     mATCRadioStack->startAtisPlayback(atisCallsign);
+    // }
 };
 
 void ATCClient::stopAtisPlayback() {
-    mATCRadioStack->stopAtisPlayback();
+    // mATCRadioStack->stopAtisPlayback();
 };
 
 bool ATCClient::isAtisPlayingBack() {
-    return mATCRadioStack->isAtisPlayingBack();
+    // return mATCRadioStack->isAtisPlayingBack();
+    return false;
 };
 
 void ATCClient::listenToAtis(bool state) {
-    mATCRadioStack->listenToAtis(state);
+    // mATCRadioStack->listenToAtis(state);
 };
 
 bool ATCClient::isAtisListening() {
-    return mATCRadioStack->isAtisListening();
+    // return mATCRadioStack->isAtisListening();
+    return false;
 };
 
 void ATCClient::setPtt(bool pttState) {
@@ -358,7 +369,7 @@ void ATCClient::setPtt(bool pttState) {
 }
 
 void ATCClient::setRT(bool rtState) {
-    mATCRadioStack->setRT(rtState);
+    // mATCRadioStack->setRT(rtState);
 }
 
 void ATCClient::setAudioInputDevice(std::string inputDevice) {
@@ -459,16 +470,7 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
     } else {
         // We got new station transceivers that we don't need to link
         // immediately, but can wait until the next transceiver update
-
-        auto transceivers = getStationTransceivers();
-        if (transceivers[stationName].size() > 0) {
-            auto it = std::find_if(mATCRadioStack->mRadioState.begin(), mATCRadioStack->mRadioState.end(), [&stationName](const auto &t) {
-                return t.second.stationName == stationName;
-            });
-            if (it != mATCRadioStack->mRadioState.end()) {
-                mATCRadioStack->setTransceivers(it->second.Frequency, transceivers[stationName]);
-            }
-        }
+        mATCRadioStack->stationTransceiverUpdateCallback(stationName, transceivers);
     }
 
     ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, &stationName, nullptr);
@@ -534,7 +536,7 @@ void ATCClient::setOnHeadset(unsigned int freq, bool onHeadset) {
 }
 
 bool ATCClient::getOnHeadset(unsigned int freq) {
-    return mATCRadioStack->mRadioState.count(freq) != 0 ? mATCRadioStack->mRadioState[freq].onHeadset : true;
+    return mATCRadioStack->getOnHeadset(freq);
 }
 
 void ATCClient::requestStationTransceivers(std::string inStation) {
@@ -596,9 +598,8 @@ void afv_native::ATCClient::setPlaybackChannel(unsigned int freq, PlaybackChanne
 
 void afv_native::ATCClient::setPlaybackChannelAll(PlaybackChannel channel) {
     mATCRadioStack->setPlaybackChannelAll(channel);
-    mATCRadioStack->setDefaultPlaybackChannel(channel);
 }
 
 afv_native::PlaybackChannel afv_native::ATCClient::getPlaybackChannel(unsigned int freq) {
-    return mATCRadioStack->mRadioState.count(freq) != 0 ? mATCRadioStack->mRadioState[freq].playbackChannel : PlaybackChannel::Both;
+    return mATCRadioStack->getPlaybackChannel(freq);
 }

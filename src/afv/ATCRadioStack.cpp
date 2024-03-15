@@ -63,7 +63,6 @@ void ATCRadioStack::resetRadioFx(unsigned int freq, bool except_click) {
     }
     mRadioState[freq].BlockTone.reset();
     mRadioState[freq].Crackle.reset();
-    mRadioState[freq].WhiteNoise.reset();
 }
 
 void ATCRadioStack::mix_buffers(audio::SampleType *RESTRICT src_dst, const audio::SampleType *RESTRICT src2, float src2_gain) {
@@ -651,7 +650,7 @@ void ATCRadioStack::addFrequency(unsigned int freq, bool onHeadset, std::string 
     mRadioState[freq].xc             = false;
     mRadioState[freq].stationName    = stationName;
     mRadioState[freq].mBypassEffects = false;
-    mRadioState[freq].playbackChannel = channel == PlaybackChannel::Default ? mDefaultPlaybackChannel : channel;
+    mRadioState[freq].playbackChannel = channel == PlaybackChannel::Both ? mDefaultPlaybackChannel : channel;
     mRadioState[freq].vhfFilter = new audio::VHFFilterSource(hardware);
 
     if (stationName.find("_ATIS") != std::string::npos) {
@@ -818,5 +817,5 @@ void afv_native::afv::ATCRadioStack::setPlaybackChannel(unsigned int freq, Playb
 }
 
 void afv_native::afv::ATCRadioStack::setDefaultPlaybackChannel(PlaybackChannel channel) {
-    this->mDefaultPlaybackChannel = channel == PlaybackChannel::Default ? PlaybackChannel::Both : channel;
+    this->mDefaultPlaybackChannel = channel == PlaybackChannel::Both ? PlaybackChannel::Both : channel;
 }

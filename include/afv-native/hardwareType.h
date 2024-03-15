@@ -11,8 +11,7 @@ namespace afv_native {
     enum class PlaybackChannel {
         Both,
         Left,
-        Right,
-        Default
+        Right
     };
 } // namespace afv_native
 

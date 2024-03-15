@@ -29,6 +29,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/APISession.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/EffectResources.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/RadioSimulation.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/ATCRadioSimulation.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/RemoteVoiceSource.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/VoiceCompressionSink.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/VoiceSession.cpp
@@ -65,7 +66,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/util/base64.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/util/monotime.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/VHFFilterSource.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/ATCRadioStack.cpp
+			# ${CMAKE_CURRENT_SOURCE_DIR}/src/afv/ATCRadioStack.cpp <== Unused, previous implementation
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/CrossCoupleGroup.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/dto/StationTransceiver.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SourceToSinkAdapter.cpp

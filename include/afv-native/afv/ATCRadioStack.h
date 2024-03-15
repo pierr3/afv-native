@@ -38,12 +38,12 @@ namespace afv_native { namespace afv {
 
     class ATCRadioStack;
 
-    class AtcOutputAudioDevice: public audio::ISampleSource {
+    class OldAtcOutputAudioDevice: public audio::ISampleSource {
       public:
         std::weak_ptr<ATCRadioStack> mStack;
         bool                         isHeadset;
 
-        AtcOutputAudioDevice(std::weak_ptr<ATCRadioStack> stack, bool isHeadset);
+        OldAtcOutputAudioDevice(std::weak_ptr<ATCRadioStack> stack, bool isHeadset);
 
         audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut) override;
     };
@@ -88,7 +88,7 @@ namespace afv_native { namespace afv {
         void setUDPChannel(cryptodto::UDPChannel *newChannel);
         void setCallsign(const std::string &newCallsign);
         void setClientPosition(double lat, double lon, double amslm, double aglm);
-        void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B, PlaybackChannel channel = PlaybackChannel::Default);
+        void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B, PlaybackChannel channel = PlaybackChannel::Both);
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
 
@@ -170,8 +170,8 @@ namespace afv_native { namespace afv {
         std::vector<std::vector<unsigned char>> mStoredAtisData;
 
         std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
-        std::shared_ptr<AtcOutputAudioDevice>        mHeadsetDevice;
-        std::shared_ptr<AtcOutputAudioDevice>        mSpeakerDevice;
+        std::shared_ptr<OldAtcOutputAudioDevice>        mHeadsetDevice;
+        std::shared_ptr<OldAtcOutputAudioDevice>        mSpeakerDevice;
 
         PlaybackChannel mDefaultPlaybackChannel = PlaybackChannel::Both;
 
