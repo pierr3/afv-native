@@ -75,7 +75,9 @@ namespace afv_native::api {
         AFV_NATIVE_API void FetchStationVccs(std::string station);
         AFV_NATIVE_API void GetStation(std::string station);
 
+
         AFV_NATIVE_API int GetTransceiverCountForStation(std::string station);
+        AFV_NATIVE_API int GetTransceiverCountForFrequency(unsigned int freq);
 
         AFV_NATIVE_API void SetPtt(bool pttState);
 
@@ -99,6 +101,7 @@ namespace afv_native::api {
         AFV_NATIVE_API void SetPlaybackChannelAll(PlaybackChannel channel);
         // Sets the playback channel for a single channel
         AFV_NATIVE_API void SetPlaybackChannel(unsigned int freq, PlaybackChannel channel);
+        AFV_NATIVE_API int GetPlaybackChannel(unsigned int freq);
 
         AFV_NATIVE_API void AddFrequency(unsigned int freq, std::string stationName = "");
         AFV_NATIVE_API void RemoveFrequency(unsigned int freq);

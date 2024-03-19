@@ -198,9 +198,7 @@ namespace afv_native {
         void        startAudio();
         void        stopAudio();
 
-        int getTransceiverCountForFrequency(unsigned int freq) {
-            return mATCRadioStack->getTransceiverCountForFrequency(freq);
-        }
+        int getTransceiverCountForFrequency(unsigned int freq);
 
         /** logAudioStatistics dumps the internal data about over/underflow totals to the AFV log.
          *

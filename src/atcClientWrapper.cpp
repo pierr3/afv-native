@@ -412,3 +412,13 @@ AFV_NATIVE_API void afv_native::api::atcClient::SetPlaybackChannel(unsigned int 
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setPlaybackChannel(freq, channel);
 }
+
+AFV_NATIVE_API int afv_native::api::atcClient::GetPlaybackChannel(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    return static_cast<int>(client->getPlaybackChannel(freq));
+}
+
+AFV_NATIVE_API int afv_native::api::atcClient::GetTransceiverCountForFrequency(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    return client->getTransceiverCountForFrequency(freq);
+};

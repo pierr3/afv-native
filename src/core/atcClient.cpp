@@ -606,3 +606,6 @@ void afv_native::ATCClient::setPlaybackChannelAll(PlaybackChannel channel) {
 afv_native::PlaybackChannel afv_native::ATCClient::getPlaybackChannel(unsigned int freq) {
     return mATCRadioStack->getPlaybackChannel(freq);
 }
+int afv_native::ATCClient::getTransceiverCountForFrequency(unsigned int freq) {
+    return mATCRadioStack->getTransceiverCountForFrequency(freq);
+}
