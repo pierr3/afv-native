@@ -97,7 +97,7 @@ namespace afv_native { namespace afv {
         std::shared_ptr<audio::RecordedSampleSource> HfWhiteNoise;
         std::shared_ptr<audio::SineToneSource>       BlockTone;
         audio::SimpleCompressorEffect                simpleCompressorEffect;
-        audio::VHFFilterSource                       vhfFilter;
+        std::shared_ptr<audio::VHFFilterSource>      vhfFilter;
         int                                          mLastRxCount;
         bool                                         mBypassEffects;
         bool                                         mHfSquelch;

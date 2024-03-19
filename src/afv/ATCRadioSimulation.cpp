@@ -34,6 +34,8 @@
  */
 
 #include "afv-native/afv/ATCRadioSimulation.h"
+#include "afv-native/audio/VHFFilterSource.h"
+#include <memory>
 
 using namespace afv_native;
 using namespace afv_native::afv;
@@ -60,7 +62,7 @@ audio::SourceStatus AtcOutputAudioDevice::getAudioFrame(audio::SampleType *buffe
 }
 
 ATCRadioSimulation::ATCRadioSimulation(struct event_base *evBase, std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel):
-    IncomingAudioStreams(0), mEvBase(evBase), mResources(std::move(resources)), mChannel(), mStreamMapLock(), mHeadsetIncomingStreams(), mSpeakerIncomingStreams(), mRadioStateLock(), mPtt(false), mLastFramePtt(false), mTxSequence(0), mVoiceSink(std::make_shared<VoiceCompressionSink>(*this)), mVoiceFilter(), mMaintenanceTimer(mEvBase, std::bind(&ATCRadioSimulation::maintainIncomingStreams, this)), mVuMeter(300 / audio::frameLengthMs) // VU is a 300ms zero to peak response...
+    IncomingAudioStreams(0), mEvBase(evBase), mResources(std::move(resources)), mChannel(), mStreamMapLock(), mHeadsetIncomingStreams(), mSpeakerIncomingStreams(), mRadioStateLock(), mPtt(false), mLastFramePtt(false), mTxSequence(0), mVoiceSink(std::make_shared<VoiceCompressionSink>(*this)), mVoiceFilter(std::make_shared<audio::SpeexPreprocessor>(mVoiceSink)), mMaintenanceTimer(mEvBase, std::bind(&ATCRadioSimulation::maintainIncomingStreams, this)), mVuMeter(300 / audio::frameLengthMs) // VU is a 300ms zero to peak response...
 {
     setUDPChannel(channel);
     mMaintenanceTimer.enable(maintenanceTimerIntervalMs);
@@ -75,7 +77,11 @@ void ATCRadioSimulation::putAudioFrame(const audio::SampleType *bufferIn) {
     }
 
     audio::SampleType samples[audio::frameSizeSamples];
-    mVoiceFilter->transformFrame(samples, bufferIn);
+    if (static_cast<bool>(mVoiceFilter)) {
+        mVoiceFilter->transformFrame(samples, bufferIn);
+    } else {
+        ::memcpy(samples, bufferIn, sizeof(samples));
+    }
 
     float value = 0;
     for (int i = 0; i < audio::frameSizeSamples; i++) {
@@ -187,7 +193,7 @@ inline bool freqIsHF(unsigned int freq) {
 
 bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache, unsigned int rxIter, bool onHeadset) {
     if (!isFrequencyActive(rxIter)) {
-        // resetRadioFx(rxIter);
+        resetRadioFx(rxIter);
         return false;
     }
 
@@ -219,11 +225,6 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
                      srcPair.second.transceivers.end(), std::back_inserter(matchingTransceivers), [&](afv::dto::RxTransceiver k) {
                          return k.Frequency == mRadioState[rxIter].Frequency;
                      });
-
-        auto closestTransceiver =
-            *std::max_element(matchingTransceivers.begin(), matchingTransceivers.end(), [](afv::dto::RxTransceiver a, afv::dto::RxTransceiver b) {
-                return (a.DistanceRatio < b.DistanceRatio);
-            });
 
         if (matchingTransceivers.size() > 0) {
             mUseStream = true;
@@ -292,12 +293,11 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
                 }
             }
 
-            mRadioState[rxIter].vhfFilter.transformFrame(state->mChannelBuffer,
+            set_radio_effects(rxIter);
+            mRadioState[rxIter].vhfFilter->transformFrame(state->mChannelBuffer,
                                                          state->mChannelBuffer);
             mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer,
                                                                       state->mChannelBuffer);
-
-            set_radio_effects(rxIter);
             if (!mix_effect(mRadioState[rxIter].Crackle,
                             crackleGain * mRadioState[rxIter].Gain, state)) {
                 mRadioState[rxIter].Crackle.reset();
@@ -416,6 +416,10 @@ void ATCRadioSimulation::set_radio_effects(unsigned int rxIter) {
         mRadioState[rxIter].AcBus =
             std::make_shared<audio::RecordedSampleSource>(mResources->mAcBus, true);
     }
+    if (!mRadioState[rxIter].vhfFilter) {
+        mRadioState[rxIter].vhfFilter =
+            std::make_shared<audio::VHFFilterSource>(mRadioState[rxIter].simulatedHardware);
+    }
 }
 
 bool ATCRadioSimulation::mix_effect(std::shared_ptr<audio::ISampleSource> effect, float gain, std::shared_ptr<OutputDeviceState> state) {
@@ -498,7 +502,6 @@ void ATCRadioSimulation::addFrequency(unsigned int radio, bool onHeadset, std::s
     mRadioState[radio].playbackChannel   = channel;
     mRadioState[radio].stationName       = stationName;
     mRadioState[radio].simulatedHardware = hardware;
-    mRadioState[radio].vhfFilter         = audio::VHFFilterSource(hardware);
 
     if (stationName.find("_ATIS") != std::string::npos) {
         mRadioState[radio].isATIS = true;
@@ -519,6 +522,7 @@ void ATCRadioSimulation::resetRadioFx(unsigned int radio, bool except_click) {
     mRadioState[radio].VhfWhiteNoise.reset();
     mRadioState[radio].HfWhiteNoise.reset();
     mRadioState[radio].AcBus.reset();
+    mRadioState[radio].vhfFilter.reset();
 }
 
 void ATCRadioSimulation::setPtt(bool pressed) {
@@ -776,16 +780,16 @@ std::vector<afv::dto::Transceiver> ATCRadioSimulation::makeTransceiverDto() {
     std::lock_guard<std::mutex>        radioStateGuard(mRadioStateLock);
     std::vector<afv::dto::Transceiver> retSet;
     unsigned int                       i = 0;
-    for (auto &state: mRadioState) {
-        if (state.second.transceivers.empty()) {
+    for (auto &[_, radio]: mRadioState) {
+        if (radio.transceivers.empty()) {
             // If there are no transceivers received from the network, we're
             // using the client position
-            retSet.emplace_back(i, state.first, mClientLatitude, mClientLongitude, mClientAltitudeMSLM, mClientAltitudeGLM);
+            retSet.emplace_back(i, radio.Frequency, mClientLatitude, mClientLongitude, mClientAltitudeMSLM, mClientAltitudeGLM);
             // Update the radioStack with the added transponder
-            state.second.transceivers = {retSet.back()};
+            radio.transceivers = {retSet.back()};
             i++;
         } else {
-            for (auto &trans: state.second.transceivers) {
+            for (auto &trans: radio.transceivers) {
                 retSet.emplace_back(i, trans.Frequency, trans.LatDeg, trans.LonDeg,
                                     trans.HeightMslM, trans.HeightAglM);
                 trans.ID = i;
@@ -865,11 +869,15 @@ bool afv_native::afv::ATCRadioSimulation::getXcState(unsigned int freq) {
 };
 void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    if (!isFrequencyActive(freq)) {
+        return;
+    }
     for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
         // ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq, &callsign);
         LOG("ATCRadioSimulation", "removeFrequency StationRxEnd event: %i: %s", freq,
             callsign.c_str());
     }
+    resetRadioFx(freq, false);
     mRadioState.erase(freq);
     LOG("ATCRadioSimulation", "removeFrequency: %i", freq);
 }

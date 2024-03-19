@@ -18,7 +18,7 @@ using namespace afv_native;
 
 ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName, std::string baseUrl):
     mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)), mEvBase(evBase), mTransferManager(mEvBase), mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession),
-    mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mEvBase, mFxRes, &mVoiceSession.getUDPChannel())), mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(0), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
+    mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mEvBase, mFxRes, &mVoiceSession.getUDPChannel())), mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
@@ -549,6 +549,7 @@ void ATCClient::requestStationVccs(std::string inStation) {
 
 void ATCClient::addFrequency(unsigned int freq, bool onHeadset, std::string stationName) {
     mATCRadioStack->addFrequency(freq, onHeadset, stationName, this->activeHardware);
+    queueTransceiverUpdate();
 }
 
 bool ATCClient::isFrequencyActive(unsigned int freq) {
