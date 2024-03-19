@@ -83,6 +83,7 @@ void ATCClient::disconnect() {
     // voicesession must come first.
     if (isVoiceConnected()) {
         mVoiceSession.Disconnect(true);
+        mATCRadioStack->reset();
     } else {
         mAPISession.Disconnect();
     }
@@ -180,7 +181,7 @@ void ATCClient::startAudio() {
     mAudioStoppedThroughCallback = false;
     if (!mSpeakerDevice) {
         LOG("afv::ATCClient", "Initialising Speaker Audio...");
-        mSpeakerDevice = audio::AudioDevice::makeDevice("afv::speaker", mAudioSpeakerDeviceName, mAudioInputDeviceName, mAudioApi, true);
+        mSpeakerDevice = audio::AudioDevice::makeDevice("afv::speaker", mAudioSpeakerDeviceName, mAudioInputDeviceName, mAudioApi);
         LOG("afv::ATCClient", "Speaker Device %s created", mAudioSpeakerDeviceName.c_str());
         if (!mSpeakerDevice) {
             LOG("afv::ATCClient", "Could not initiate speaker audio context.");
@@ -558,6 +559,7 @@ bool ATCClient::isFrequencyActive(unsigned int freq) {
 
 void ATCClient::removeFrequency(unsigned int freq) {
     mATCRadioStack->removeFrequency(freq);
+    queueTransceiverUpdate();
 }
 
 void ATCClient::setHardware(HardwareType hardware) {

@@ -2,7 +2,6 @@
 #define AFV_NATIVE_UTIL_OTHER_H
 
 #include <algorithm>
-#include <optional>
 #include <string>
 #include <vector>
 

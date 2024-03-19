@@ -35,6 +35,7 @@
 
 #include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/audio/VHFFilterSource.h"
+#include "afv-native/util/other.h"
 #include <memory>
 
 using namespace afv_native;
@@ -295,7 +296,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
 
             set_radio_effects(rxIter);
             mRadioState[rxIter].vhfFilter->transformFrame(state->mChannelBuffer,
-                                                         state->mChannelBuffer);
+                                                          state->mChannelBuffer);
             mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer,
                                                                       state->mChannelBuffer);
             if (!mix_effect(mRadioState[rxIter].Crackle,
@@ -347,10 +348,14 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
     }
 
     // now, finally, mix the channel buffer into the mixing buffer.
-    if (mRadioState[rxIter].playbackChannel != PlaybackChannel::Both) {
-        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left) {
+    if (onHeadset) {
+        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left ||
+            mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
             mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
-        } else if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right) {
+        }
+
+        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
+            mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
             mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
         }
     } else {
@@ -456,14 +461,16 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
             }
         } else {
-            auto newIt = afv_native::util::pushbackIfUnique(
-                pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
-            if (newIt != mRadioState[trans.Frequency].liveTransmittingCallsigns.end()) {
+            if (afv_native::util::vectorContains(pkt.Callsign,
+                                                 mRadioState[trans.Frequency].liveTransmittingCallsigns)) {
+                LOG("ATCRadioSimulation", "StationRxBegin event: %i: %s", trans.Frequency,
+                    mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
                 // Need to emit that we have a new pilot that started transmitting
                 // ClientEventCallback->invokeAll(ClientEventType::StationRxBegin,
                 //                                &trans.Frequency, &(*newIt));
-                LOG("ATCRadioSimulation", "StationRxBegin event: %i: %s", trans.Frequency,
-                    *newIt->c_str());
+
+                afv_native::util::removeIfExists(mRadioState[trans.Frequency].lastTransmitCallsign,
+                                                 mRadioState[trans.Frequency].liveTransmittingCallsigns);
             }
         }
 
@@ -476,16 +483,18 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
 void ATCRadioSimulation::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt) {
     std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
     // FIXME:  Deal with the case of a single-callsign transmitting multiple different voicestreams simultaneously.
-    mHeadsetIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
-    mHeadsetIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
+    if (_packetListening(pkt)) {
+        mHeadsetIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
+        mHeadsetIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
 
-    mSpeakerIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
-    mSpeakerIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
+        mSpeakerIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
+        mSpeakerIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
+    }
 }
 
 void ATCRadioSimulation::addFrequency(unsigned int radio, bool onHeadset, std::string stationName, HardwareType hardware, PlaybackChannel channel) {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
-    bool                        isUnused = isFrequencyUnused(radio);
+    bool                        isUnused = isFrequencyActiveButUnused(radio);
     if (isFrequencyActive(radio) && !isUnused) {
         LOG("ATCRadioSimulation", "addFrequency cancelled: %i is already active", radio);
         return;
@@ -571,8 +580,8 @@ void ATCRadioSimulation::setUDPChannel(cryptodto::UDPChannel *newChannel) {
                 objHdl.get().convert(rxAudio);
                 this->rxVoicePacket(rxAudio);
             } catch (const msgpack::type_error &e) {
-                LOG("radiosimulation", "unable to unpack audio data received: %s", e.what());
-                LOGDUMPHEX("radiosimulation", data, len);
+                LOG("ATCRadioSimulation", "unable to unpack audio data received: %s", e.what());
+                LOGDUMPHEX("ATCRadioSimulation", data, len);
             }
         });
     }
@@ -619,6 +628,10 @@ void ATCRadioSimulation::reset() {
         std::lock_guard<std::mutex> ml(mStreamMapLock);
         mHeadsetIncomingStreams.clear();
         mSpeakerIncomingStreams.clear();
+    }
+    {
+        std::lock_guard<std::mutex> ml(mRadioStateLock);
+        mRadioState.clear();
     }
     mTxSequence.store(0);
     mPtt.store(false);
@@ -685,15 +698,6 @@ void ATCRadioSimulation::setOnHeadset(unsigned int radio, bool onHeadset) {
     mRadioState[radio].onHeadset = onHeadset;
 }
 
-void ATCRadioSimulation::setSplitAudioChannels(unsigned int radio, PlaybackChannel channel) {
-    std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
-    if (!isFrequencyActive(radio)) {
-        LOG("ATCRadioSimulation", "setSplitAudioChannels failed, frequency inactive: %i", radio);
-        return;
-    }
-    mRadioState[radio].playbackChannel = channel;
-}
-
 void afv_native::afv::ATCRadioSimulation::setRx(unsigned int freq, bool rx) {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
     if (!isFrequencyActive(freq)) {
@@ -745,9 +749,9 @@ bool afv_native::afv::ATCRadioSimulation::isFrequencyActive(unsigned int freq) {
     return mRadioState.count(freq) != 0;
 };
 
-bool afv_native::afv::ATCRadioSimulation::isFrequencyUnused(unsigned int freq) {
+bool afv_native::afv::ATCRadioSimulation::isFrequencyActiveButUnused(unsigned int freq) {
     if (!isFrequencyActive(freq)) {
-        return true;
+        return false;
     }
 
     if (mRadioState[freq].tx == false && mRadioState[freq].rx == false &&
@@ -844,29 +848,39 @@ bool afv_native::afv::ATCRadioSimulation::getOnHeadset(unsigned int freq) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     return mRadioState.count(freq) != 0 ? mRadioState[freq].onHeadset : true;
 }
+
 void afv_native::afv::ATCRadioSimulation::setPlaybackChannelAll(PlaybackChannel channel) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     for (auto radio: mRadioState) {
         mRadioState[radio.first].playbackChannel = channel;
     }
 }
+
 void afv_native::afv::ATCRadioSimulation::setPlaybackChannel(unsigned int freq, PlaybackChannel channel) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
+    if (!isFrequencyActive(freq)) {
+        LOG("ATCRadioSimulation", "setSplitAudioChannels failed, frequency inactive: %i", freq);
+        return;
+    }
     mRadioState[freq].playbackChannel = channel;
 }
+
 afv_native::PlaybackChannel afv_native::afv::ATCRadioSimulation::getPlaybackChannel(unsigned int freq) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     return mRadioState.count(freq) != 0 ? mRadioState[freq].playbackChannel : PlaybackChannel::Both;
 }
+
 bool afv_native::afv::ATCRadioSimulation::getRxState(unsigned int freq) {
     return mRadioState.count(freq) != 0 ? mRadioState[freq].rx : false;
-};
+}
 bool afv_native::afv::ATCRadioSimulation::getTxState(unsigned int freq) {
     return mRadioState.count(freq) != 0 ? mRadioState[freq].tx : false;
-};
+}
+
 bool afv_native::afv::ATCRadioSimulation::getXcState(unsigned int freq) {
     return mRadioState.count(freq) != 0 ? mRadioState[freq].xc : false;
-};
+}
+
 void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
     std::lock_guard<std::mutex> mRadioStateGuard(mRadioStateLock);
     if (!isFrequencyActive(freq)) {
@@ -880,4 +894,12 @@ void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
     resetRadioFx(freq, false);
     mRadioState.erase(freq);
     LOG("ATCRadioSimulation", "removeFrequency: %i", freq);
+}
+
+int afv_native::afv::ATCRadioSimulation::getTransceiverCountForFrequency(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(mRadioStateLock);
+    if (isFrequencyActive(freq)) {
+        return mRadioState[freq].transceivers.size();
+    }
+    return 0;
 }

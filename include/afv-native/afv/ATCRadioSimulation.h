@@ -158,7 +158,7 @@ namespace afv_native { namespace afv {
         void addFrequency(unsigned int radio, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B, PlaybackChannel channel = PlaybackChannel::Both);
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
-        bool isFrequencyUnused(unsigned int freq);
+        bool isFrequencyActiveButUnused(unsigned int freq);
 
         bool getRxState(unsigned int freq);
         bool getTxState(unsigned int freq);
@@ -172,6 +172,13 @@ namespace afv_native { namespace afv {
         bool getRxActive(unsigned int radio);
 
         std::string getLastTransmitOnFreq(unsigned int freq);
+        /**
+         * Returns the number of transceivers for a given frequency.
+         *
+         * @param freq The frequency for which to retrieve the transceiver count.
+         * @return The number of transceivers for the given frequency.
+         */
+        int         getTransceiverCountForFrequency(unsigned int freq);
 
         void setGain(unsigned int radio, float gain);
         void setGainAll(float gain);
@@ -204,8 +211,6 @@ namespace afv_native { namespace afv {
 
         void setOnHeadset(unsigned int radio, bool onHeadset);
         bool getOnHeadset(unsigned int freq);
-
-        void setSplitAudioChannels(unsigned int radio, PlaybackChannel channel);
 
         void stationTransceiverUpdateCallback(const std::string &stationName, std::map<std::string, std::vector<afv::dto::StationTransceiver>> transceivers);
 
