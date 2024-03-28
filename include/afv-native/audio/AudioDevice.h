@@ -57,7 +57,7 @@ namespace afv_native { namespace audio {
         std::mutex                   mSinkPtrLock;
         std::shared_ptr<ISampleSource> mSource;
         std::mutex mSourcePtrLock;
-        std::function<void(std::string, int)> mNotificationFunc;
+        std::function<void(std::string, int)> mNotificationFunc = std::function<void(std::string, int)>();
         std::mutex mNotificationFuncLock;
 
         /** Ensures data within the abstract is zeroed. Should always be called via

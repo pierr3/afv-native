@@ -163,7 +163,7 @@ void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
 
 std::string afv_native::api::atcClient::GetDefaultAudioInputDevice(unsigned int mAudioApi) {
     auto devices = afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(mAudioApi);
-    auto it      = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
+    auto it = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
         return kv.second.isDefault;
     });
 
@@ -178,7 +178,7 @@ std::string afv_native::api::atcClient::GetDefaultAudioInputDevice(unsigned int 
 
 std::string afv_native::api::atcClient::GetDefaultAudioOutputDevice(unsigned int mAudioApi) {
     auto devices = afv_native::audio::AudioDevice::getCompatibleOutputDevicesForApi(mAudioApi);
-    auto it      = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
+    auto it = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
         return kv.second.isDefault;
     });
 
@@ -191,23 +191,23 @@ std::string afv_native::api::atcClient::GetDefaultAudioOutputDevice(unsigned int
     return std::string();
 }
 
-std::vector<std::string> afv_native::api::atcClient::GetAudioInputDevices(unsigned int mAudioApi) {
-    std::vector<std::string> out;
+std::vector<afv_native::api::AudioInterface> afv_native::api::atcClient::GetAudioInputDevices(unsigned int mAudioApi) {
+    std::vector<afv_native::api::AudioInterface> out;
     auto devices = afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(mAudioApi);
 
-    std::transform(devices.begin(), devices.end(), std::back_inserter(out), [](auto &kv) {
-        return kv.second.name;
+    std::transform(devices.begin(), devices.end(), std::back_inserter(out), [](auto &kv) -> afv_native::api::AudioInterface {
+        return {kv.second.id, kv.second.name, kv.second.isDefault};
     });
 
     return out;
 }
 
-std::vector<std::string> afv_native::api::atcClient::GetAudioOutputDevices(unsigned int mAudioApi) {
-    std::vector<std::string> out;
+std::vector<afv_native::api::AudioInterface> afv_native::api::atcClient::GetAudioOutputDevices(unsigned int mAudioApi) {
+    std::vector<afv_native::api::AudioInterface> out;
     auto devices = afv_native::audio::AudioDevice::getCompatibleOutputDevicesForApi(mAudioApi);
 
-    std::transform(devices.begin(), devices.end(), std::back_inserter(out), [](auto &kv) {
-        return kv.second.name;
+    std::transform(devices.begin(), devices.end(), std::back_inserter(out), [](auto &kv) -> afv_native::api::AudioInterface {
+        return {kv.second.id, kv.second.name, kv.second.isDefault};
     });
 
     return out;

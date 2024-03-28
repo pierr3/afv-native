@@ -413,14 +413,14 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
         return;
     }
 
-    auto device = reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
+    // auto device = reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
 
-    if (pNotification->type == ma_device_notification_type_stopped) {
-        if (mHasClosedManually) {
-            mHasClosedManually = false; // This is a clean exit, we don't emit anything
-            return;
-        }
+    // if (pNotification->type == ma_device_notification_type_stopped) {
+    //     if (mHasClosedManually) {
+    //         mHasClosedManually = false; // This is a clean exit, we don't emit anything
+    //         return;
+    //     }
 
-        mNotificationFunc(mUserStreamName, 0);
-    }
+    //     // mNotificationFunc(mUserStreamName, 0);
+    // }
 }

@@ -15,6 +15,12 @@ namespace afv_native {
 namespace afv_native::api {
     AFV_NATIVE_API void setLogger(afv_native::modern_log_fn gLogger);
 
+    struct AFV_NATIVE_API AudioInterface {
+        std::string id;
+        std::string name;
+        bool        isDefault;
+    };
+
     class atcClient {
       public:
         AFV_NATIVE_API atcClient(std::string clientName, std::string resourcePath = "");
@@ -37,11 +43,11 @@ namespace afv_native::api {
         AFV_NATIVE_API std::map<unsigned int, std::string> GetAudioApis();
 
         AFV_NATIVE_API void SetAudioInputDevice(std::string inputDevice);
-        AFV_NATIVE_API std::vector<std::string> GetAudioInputDevices(unsigned int mAudioApi);
+        AFV_NATIVE_API std::vector<AudioInterface> GetAudioInputDevices(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioInputDevice(unsigned int mAudioApi);
-        AFV_NATIVE_API void        SetAudioOutputDevice(std::string outputDevice);
-        AFV_NATIVE_API void        SetAudioSpeakersOutputDevice(std::string outputDevice);
-        AFV_NATIVE_API std::vector<std::string> GetAudioOutputDevices(unsigned int mAudioApi);
+        AFV_NATIVE_API void SetAudioOutputDevice(std::string outputDevice);
+        AFV_NATIVE_API void SetAudioSpeakersOutputDevice(std::string outputDevice);
+        AFV_NATIVE_API std::vector<AudioInterface> GetAudioOutputDevices(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioOutputDevice(unsigned int mAudioApi);
 
         AFV_NATIVE_API double GetInputPeak() const;
@@ -75,7 +81,6 @@ namespace afv_native::api {
         AFV_NATIVE_API void FetchStationVccs(std::string station);
         AFV_NATIVE_API void GetStation(std::string station);
 
-
         AFV_NATIVE_API int GetTransceiverCountForStation(std::string station);
         AFV_NATIVE_API int GetTransceiverCountForFrequency(unsigned int freq);
 
@@ -96,7 +101,6 @@ namespace afv_native::api {
         AFV_NATIVE_API void SetRadioGainAll(float gain);
         AFV_NATIVE_API void SetRadioGain(unsigned int freq, float gain);
 
-        
         // Sets the playback channel for all channels and saves it to be used in the future for new channels
         AFV_NATIVE_API void SetPlaybackChannelAll(PlaybackChannel channel);
         // Sets the playback channel for a single channel
