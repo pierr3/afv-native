@@ -628,6 +628,7 @@ int afv_native::ATCClient::getTransceiverCountForFrequency(unsigned int freq) {
 std::map<unsigned int, afv::AtcRadioState> afv_native::ATCClient::getRadioState() {
     return mATCRadioStack->getRadioState();
 }
+
 void afv_native::ATCClient::reset() {
-    mATCRadioStack.reset();
+    mATCRadioStack->reset();
 }
