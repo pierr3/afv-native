@@ -1,5 +1,6 @@
 #include "afv-native/atcClientWrapper.h"
 #include "afv-native/Log.h"
+#include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/atcClient.h"
 #include "afv-native/hardwareType.h"
 #include <algorithm>
@@ -335,9 +336,9 @@ std::string afv_native::api::atcClient::LastTransmitOnFreq(unsigned int freq) {
     return client->lastTransmitOnFreq(freq);
 }
 
-void afv_native::api::atcClient::AddFrequency(unsigned int freq, std::string stationName) {
+bool afv_native::api::atcClient::AddFrequency(unsigned int freq, std::string stationName) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->addFrequency(freq, true, stationName);
+    return client->addFrequency(freq, true, stationName);
 }
 
 void afv_native::api::atcClient::RemoveFrequency(unsigned int freq) {
@@ -421,4 +422,28 @@ AFV_NATIVE_API int afv_native::api::atcClient::GetPlaybackChannel(unsigned int f
 AFV_NATIVE_API int afv_native::api::atcClient::GetTransceiverCountForFrequency(unsigned int freq) {
     std::lock_guard<std::mutex> lock(afvMutex);
     return client->getTransceiverCountForFrequency(freq);
+};
+AFV_NATIVE_API void afv_native::api::atcClient::reset() {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->reset();
+};
+
+AFV_NATIVE_API std::map<unsigned int, afv_native::SimpleAtcRadioState> afv_native::api::atcClient::getRadioState() {
+    std::lock_guard<std::mutex>                             lock(afvMutex);
+    std::map<unsigned int, afv_native::SimpleAtcRadioState> state;
+    for (const auto &[freq, radio]: client->getRadioState()) {
+        state.emplace(
+            freq, afv_native::SimpleAtcRadioState {.tx        = radio.tx,
+                                                   .rx        = radio.rx,
+                                                   .xc        = radio.xc,
+                                                   .onHeadset = radio.onHeadset,
+                                                   .Frequency = freq,
+                                                   .stationName = radio.stationName,
+                                                   .simulatedHardware = radio.simulatedHardware,
+                                                   .isATIS = radio.isATIS,
+                                                   .playbackChannel = radio.playbackChannel,
+                                                   .lastTransmitCallsign = radio.lastTransmitCallsign});
+    }
+
+    return state;
 };

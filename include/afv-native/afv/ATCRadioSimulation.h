@@ -155,10 +155,12 @@ namespace afv_native { namespace afv {
         void setCallsign(const std::string &newCallsign);
         void setClientPosition(double lat, double lon, double amslm, double aglm);
 
-        void addFrequency(unsigned int radio, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B, PlaybackChannel channel = PlaybackChannel::Both);
+        bool addFrequency(unsigned int radio, bool onHeadset, std::string stationName = "", HardwareType hardware = HardwareType::Schmid_ED_137B, PlaybackChannel channel = PlaybackChannel::Both);
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
         bool isFrequencyActiveButUnused(unsigned int freq);
+
+        std::map<unsigned int, AtcRadioState> getRadioState();
 
         bool getRxState(unsigned int freq);
         bool getTxState(unsigned int freq);
@@ -263,7 +265,7 @@ namespace afv_native { namespace afv {
         std::atomic<bool>             mPtt;
         bool                          mLastFramePtt;
         std::atomic<uint32_t>         mTxSequence;
-        std::map<int, AtcRadioState>  mRadioState;
+        std::map<unsigned int, AtcRadioState>  mRadioState;
         std::shared_ptr<audio::ITick> mTick;
 
         std::shared_ptr<AtcOutputAudioDevice> mHeadsetDevice;
@@ -298,12 +300,7 @@ namespace afv_native { namespace afv {
       private:
         bool _process_radio(const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache, unsigned int rxIter, bool onHeadset);
 
-        inline void interleave(audio::SampleType *leftChannel, audio::SampleType *rightChannel, audio::SampleType *outputBuffer, size_t numSamples) {
-            for (size_t i = 0; i < numSamples; i++) {
-                outputBuffer[2 * i] = leftChannel[i]; // Interleave left channel data
-                outputBuffer[2 * i + 1] = rightChannel[i]; // Interleave right channel data
-            }
-        }
+        void interleave(audio::SampleType *leftChannel, audio::SampleType *rightChannel, audio::SampleType *outputBuffer, size_t numSamples);
 
         /** mix_buffers is a utility function that mixes two buffers of audio together. The src_dst
          * buffer is assumed to be the final output buffer and is modified by the mixing in place.

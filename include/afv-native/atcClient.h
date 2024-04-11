@@ -23,8 +23,8 @@
 #include <memory>
 
 namespace afv_native {
-    /** ATCClient provides a fully functional ATC Client that can be integrated into
-     * an application.
+    /** ATCClient provides a fully functional ATC Client that can be integrated
+     * into an application.
      */
     class ATCClient {
       public:
@@ -40,10 +40,10 @@ namespace afv_native {
          * (It's used for some tear-down operations which must run to completion
          * after the client is shut-down if possible.)
          *
-         * @param evBase an initialised libevent event_base to register the client's
-         *      asynchronous IO and deferred operations against.
-         * @param resourceBasePath A relative or absolute path to where the AFV-native
-         *      resource files are located.
+         * @param evBase an initialised libevent event_base to register the
+         * client's asynchronous IO and deferred operations against.
+         * @param resourceBasePath A relative or absolute path to where the
+         * AFV-native resource files are located.
          * @param baseUrl The baseurl for the AFV API server to connect to.  The
          *      default should be used in most cases.
          * @param clientName The name of this client to advertise to the
@@ -55,8 +55,8 @@ namespace afv_native {
 
         /** setBaseUrl is used to change the API URL.
          *
-         * @note This affects all future API requests, but any in flight will not
-         * be cancelled and resent.
+         * @note This affects all future API requests, but any in flight will
+         * not be cancelled and resent.
          *
          * @param newUrl the new URL (without at trailing slash).
          */
@@ -85,9 +85,9 @@ namespace afv_native {
 
         /** sets the PTT (push-to-talk) state for the radio.
          *
-         * @note If the radio frequencies are out of sync with the server, this will
-         * initiate an immediate transceiver set update and the Ptt will remain
-         * blocked/guarded until the update has been acknowledged.
+         * @note If the radio frequencies are out of sync with the server, this
+         * will initiate an immediate transceiver set update and the Ptt will
+         * remain blocked/guarded until the update has been acknowledged.
          *
          * @param pttState true to start transmitting, false otherwise.
          */
@@ -108,8 +108,8 @@ namespace afv_native {
         void setOnHeadset(unsigned int freq, bool onHeadset);
         bool getOnHeadset(unsigned int freq);
 
-        void            setPlaybackChannel(unsigned int freq, PlaybackChannel channel);
-        void            setPlaybackChannelAll(PlaybackChannel channel);
+        void setPlaybackChannel(unsigned int freq, PlaybackChannel channel);
+        void setPlaybackChannelAll(PlaybackChannel channel);
         PlaybackChannel getPlaybackChannel(unsigned int freq);
 
         /** sets the (linear) gain to be applied to radioNum */
@@ -133,8 +133,8 @@ namespace afv_native {
          */
         void setCallsign(std::string callsign);
 
-        /** set the audioApi (per the audio::AudioDevice definitions) to use when next starting the
-         * audio system.
+        /** set the audioApi (per the audio::AudioDevice definitions) to use
+         * when next starting the audio system.
          * @param api an API id
          */
         void setAudioApi(audio::AudioDevice::Api api);
@@ -180,7 +180,7 @@ namespace afv_native {
          * The callbacks take two paremeters-  the first is the ClientEventType which informs the client what type
          * of event occured.
          *
-         * The second argument is a pointer to data relevant to the callback.  The memory it points to is only
+         * The second argument is a pointer to data relevant to the callback. The memory it points to is only
          * guaranteed to be available for the duration of the callback.
          */
         util::ChainedCallback<void(ClientEventType, void *, void *)> ClientEventCallback;
@@ -207,8 +207,8 @@ namespace afv_native {
 
         std::shared_ptr<const audio::AudioDevice> getAudioDevice() const;
 
-        /** getRxActive returns if the nominated radio is currently Receiving voice, irrespective as
-         * to if it's audiable or not.
+        /** getRxActive returns if the nominated radio is currently Receiving
+         * voice, irrespective as to if it's audiable or not.
          *
          * @param radioNumber the number (starting from 0) of the radio to probe
          * @return true if the radio would have voice to play, false otherwise.
@@ -234,10 +234,14 @@ namespace afv_native {
 
         void requestStationVccs(std::string inStation);
 
-        void addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "");
+        bool addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "");
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
         void linkTransceivers(std::string callsign, unsigned int freq);
+
+        std::map<unsigned int, afv::AtcRadioState> getRadioState();
+
+        void reset();
 
         void setHardware(HardwareType hardware);
 
@@ -251,11 +255,11 @@ namespace afv_native {
         struct event_base                    *mEvBase;
         std::shared_ptr<afv::EffectResources> mFxRes;
 
-        http::EventTransferManager          mTransferManager;
-        afv::APISession                     mAPISession;
-        afv::VoiceSession                   mVoiceSession;
+        http::EventTransferManager               mTransferManager;
+        afv::APISession                          mAPISession;
+        afv::VoiceSession                        mVoiceSession;
         std::shared_ptr<afv::ATCRadioSimulation> mATCRadioStack;
-        std::shared_ptr<audio::AudioDevice> mSpeakerDevice;
+        std::shared_ptr<audio::AudioDevice>      mSpeakerDevice;
 
         std::string mCallsign;
 
@@ -271,10 +275,10 @@ namespace afv_native {
 
         std::vector<afv::dto::Transceiver> makeTransceiverDto();
         /* sendTransceiverUpdate sends the update now, in process.
-         * queueTransceiverUpdate schedules it for the next eventloop.  This is a
-         * critical difference as it prevents bad reentrance as the transceiver
-         * update callback can trigger a second update if the desired state is
-         * out of sync! */
+         * queueTransceiverUpdate schedules it for the next eventloop.  This is
+         * a critical difference as it prevents bad reentrance as the
+         * transceiver update callback can trigger a second update if the
+         * desired state is out of sync! */
         void sendTransceiverUpdate();
         void queueTransceiverUpdate();
         void stopTransceiverUpdate();
@@ -299,7 +303,7 @@ namespace afv_native {
         std::string             mAudioOutputDeviceName;
         std::string             mAudioSpeakerDeviceName;
 
-        int                                 linkNewTransceiversFrequencyFlag = -1;
+        int linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
 
         HardwareType activeHardware;
