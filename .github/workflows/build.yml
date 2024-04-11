@@ -19,6 +19,10 @@ jobs:
         with:
           ref: master
           submodules: recursive
+      - name: Setup environment
+        run: |
+          sudo apt-get update && sudo apt-get upgrade
+          sudo apt-get install -y build-essential pkg-config
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
@@ -35,6 +39,10 @@ jobs:
         with:
           ref: master
           submodules: recursive
+      - name: Setup environment
+        run: |
+          brew update
+          brew install cmake pkg-config
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
@@ -51,6 +59,10 @@ jobs:
         with:
           ref: master
           submodules: recursive
+      - name: Setup environment
+        run: |
+          brew update
+          brew install cmake pkg-config
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
