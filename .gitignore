@@ -2,6 +2,10 @@ cmake-build-**
 build/
 .DS_Store
 .cache
+.vscode
 debug_copy.sh
 
 example/
+
+afv_native.h
+atcClientWrapper_edit.h

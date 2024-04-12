@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+// --- REMOVE ABOVE BEFORE PUBLISHING ---
+
 namespace afv_native {
     typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
     typedef std::function<void(std::string subsystem, std::string file, int line, std::string lineOut)> modern_log_fn;

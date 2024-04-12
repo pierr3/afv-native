@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.29.2)
 
 # Setup vcpkg
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
 project(
     afv_native
-    VERSION 1.19.0
+    VERSION 1.24.0
     LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -186,4 +186,12 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}_export.h
 if (WIN32)
 	file(COPY ${SPEEXDSP_LIBRARY}
 	DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_SOURCE_DIR}
+		python3 ${CMAKE_CURRENT_SOURCE_DIR}/compile_licenses.py
+		COMMENT "Running compile_licenses.py"
+	)
 endif()

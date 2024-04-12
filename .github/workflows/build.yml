@@ -21,8 +21,9 @@ jobs:
           submodules: recursive
       - name: Setup environment
         run: |
-          sudo apt-get update && sudo apt-get upgrade
-          sudo apt-get install -y build-essential pkg-config
+          sudo apt-get update
+          sudo apt-get upgrade -y cmake
+          cmake --version
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
@@ -42,7 +43,7 @@ jobs:
       - name: Setup environment
         run: |
           brew update
-          brew install cmake pkg-config
+          brew upgrade cmake
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
@@ -79,6 +80,10 @@ jobs:
         with:
           ref: master
           submodules: recursive
+      - name: Setup environment
+        run: |
+          choco upgrade chocolatey
+          choco install cmake ----version 3.9.2
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.bat -disableMetrics

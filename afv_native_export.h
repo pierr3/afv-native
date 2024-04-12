@@ -1,4 +1,4 @@
-
+#pragma once
 #ifndef AFV_NATIVE_API_H
 #define AFV_NATIVE_API_H
 
