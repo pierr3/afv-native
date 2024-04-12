@@ -432,17 +432,19 @@ AFV_NATIVE_API std::map<unsigned int, afv_native::SimpleAtcRadioState> afv_nativ
     std::lock_guard<std::mutex>                             lock(afvMutex);
     std::map<unsigned int, afv_native::SimpleAtcRadioState> state;
     for (const auto &[freq, radio]: client->getRadioState()) {
-        state.emplace(
-            freq, afv_native::SimpleAtcRadioState {.tx        = radio.tx,
-                                                   .rx        = radio.rx,
-                                                   .xc        = radio.xc,
-                                                   .onHeadset = radio.onHeadset,
-                                                   .Frequency = freq,
-                                                   .stationName = radio.stationName,
-                                                   .simulatedHardware = radio.simulatedHardware,
-                                                   .isATIS = radio.isATIS,
-                                                   .playbackChannel = radio.playbackChannel,
-                                                   .lastTransmitCallsign = radio.lastTransmitCallsign});
+        afv_native::SimpleAtcRadioState radioState;
+        radioState.tx                   = radio.tx;
+        radioState.rx                   = radio.rx;
+        radioState.xc                   = radio.xc;
+        radioState.onHeadset            = radio.onHeadset;
+        radioState.Frequency            = freq;
+        radioState.stationName          = radio.stationName;
+        radioState.simulatedHardware    = radio.simulatedHardware;
+        radioState.isATIS               = radio.isATIS;
+        radioState.playbackChannel      = radio.playbackChannel;
+        radioState.lastTransmitCallsign = radio.lastTransmitCallsign;
+
+        state.emplace(freq, radioState);
     }
 
     return state;
