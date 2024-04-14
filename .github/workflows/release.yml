@@ -33,7 +33,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/*.a
+          files: build/*.so
   build-macos-universal:
     runs-on: macos-latest
     strategy:
