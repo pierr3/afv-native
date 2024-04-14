@@ -33,7 +33,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/*.so
+          files: build/*.a
   build-macos-universal:
     runs-on: macos-latest
     strategy:
@@ -115,7 +115,6 @@ jobs:
           submodules: recursive
       - name: Compile License file
         run: |
-          python3 compile_licenses.py
           mv ALL_LICENSES.txt LICENSE
       - name: Zip headers
         run: |

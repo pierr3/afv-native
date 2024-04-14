@@ -21,7 +21,13 @@ if (WIN32)
 	add_definitions(-DMA_NO_WINMM)
 endif()
 
-add_library(${PROJECT_NAME} SHARED)
+if (UNIX)
+	add_library(${PROJECT_NAME} SHARED)
+endif()
+
+if (WIN32)
+	add_library(${PROJECT_NAME} SHARED)
+endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 
@@ -111,8 +117,7 @@ if (WIN32)
 	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
 endif()
 
-target_link_libraries(afv_native
-		PRIVATE
+set(LIBRARIES 
 		OpenSSL::SSL OpenSSL::Crypto
 		cpp-jwt::cpp-jwt
 		CURL::libcurl
@@ -122,6 +127,13 @@ target_link_libraries(afv_native
 		nlohmann_json::nlohmann_json
 		Threads::Threads
 		${SPEEXDSP_LIBRARY})
+
+target_link_libraries(afv_native
+		PRIVATE
+		${LIBRARIES})
+
+# add_custom_target(combined ALL
+# 		COMMAND ${CMAKE_AR} rc libcombined.a $<TARGET_FILE:${PROJECT_NAME}> ${SPEEXDSP_LIBRARY} Threads::Threads)
 
 if(APPLE)
 	find_library(CORE_AUDIO CoreAudio)
