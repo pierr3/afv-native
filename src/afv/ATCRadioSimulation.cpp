@@ -465,7 +465,7 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
             }
         } else {
-            if (afv_native::util::vectorContains(pkt.Callsign,
+            if (!afv_native::util::vectorContains(pkt.Callsign,
                                                  mRadioState[trans.Frequency].liveTransmittingCallsigns)) {
                 LOG("ATCRadioSimulation", "StationRxBegin event: %i: %s", trans.Frequency,
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
@@ -475,8 +475,7 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
                                                &trans.Frequency,
                                                &mRadioState[trans.Frequency].lastTransmitCallsign);
 
-                afv_native::util::removeIfExists(mRadioState[trans.Frequency].lastTransmitCallsign,
-                                                 mRadioState[trans.Frequency].liveTransmittingCallsigns);
+                mRadioState[trans.Frequency].liveTransmittingCallsigns.emplace_back(pkt.Callsign);
             }
         }
 
