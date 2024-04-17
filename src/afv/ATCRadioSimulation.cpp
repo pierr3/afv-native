@@ -516,6 +516,8 @@ bool ATCRadioSimulation::addFrequency(unsigned int radio, bool onHeadset, std::s
     mRadioState[radio].playbackChannel   = channel;
     mRadioState[radio].stationName       = stationName;
     mRadioState[radio].simulatedHardware = hardware;
+    mRadioState[radio].mBypassEffects    = mDefaultBypassEffects;
+    mRadioState[radio].mHfSquelch        = mDefaultEnableHfSquelch;
 
     if (stationName.find("_ATIS") != std::string::npos) {
         mRadioState[radio].isATIS = true;
@@ -674,6 +676,7 @@ void ATCRadioSimulation::setEnableOutputEffects(bool enableEffects) {
     for (auto &[_, thisRadio]: mRadioState) {
         thisRadio.mBypassEffects = !enableEffects;
     }
+    mDefaultBypassEffects = !enableEffects;
     LOG("ATCRadioSimulation", "setEnableOutputEffects: %i", enableEffects);
 }
 
@@ -682,6 +685,7 @@ void ATCRadioSimulation::setEnableHfSquelch(bool enableSquelch) {
     for (auto &[_, thisRadio]: mRadioState) {
         thisRadio.mHfSquelch = enableSquelch;
     }
+    mDefaultEnableHfSquelch = enableSquelch;
     LOG("ATCRadioSimulation", "setEnableHfSquelch: %i", enableSquelch);
 }
 
@@ -744,6 +748,24 @@ void afv_native::afv::ATCRadioSimulation::setXc(unsigned int freq, bool xc) {
     mRadioState[freq].xc = xc;
     LOG("ATCRadioSimulation", "setXcRadio: %i", freq);
 };
+
+void afv_native::afv::ATCRadioSimulation::setCrossCoupleAcross(unsigned int freq, bool crossCoupleAcross) {
+    std::lock_guard<std::mutex> lock(mRadioStateLock);
+    if (!isFrequencyActive(freq)) {
+        LOG("ATCRadioSimulation", "setXcRadio failed, frequency inactive: %i", freq);
+        return;
+    }
+    mRadioState[freq].crossCoupleAcross = crossCoupleAcross;
+    if (crossCoupleAcross) {
+        mRadioState[freq].xc = false;
+    }
+    LOG("ATCRadioSimulation", "setXcRadio: %i", freq);
+}
+
+bool afv_native::afv::ATCRadioSimulation::getCrossCoupleAcrossState(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(mRadioStateLock);
+    return mRadioState.count(freq) != 0 ? mRadioState[freq].crossCoupleAcross : false;
+}
 
 void afv_native::afv::ATCRadioSimulation::setGainAll(float gain) {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
@@ -817,24 +839,32 @@ std::vector<afv::dto::Transceiver> ATCRadioSimulation::makeTransceiverDto() {
 
 std::vector<afv::dto::CrossCoupleGroup> ATCRadioSimulation::makeCrossCoupleGroupDto() {
     // Make one cross couple group per frequency
-    std::vector<afv::dto::CrossCoupleGroup> out;
-    unsigned int                            index = 0;
+    std::vector<afv::dto::CrossCoupleGroup> out   = {{0, {}}};
+    unsigned int                            index = 1;
 
     for (auto &state: mRadioState) {
         // There are transceivers and they need to be coupled
-        if (!state.second.xc || !state.second.tx) {
+        if ((!state.second.xc && !state.second.crossCoupleAcross) ||
+            !state.second.tx) {
             continue;
         }
 
-        afv::dto::CrossCoupleGroup group(index, {});
+        if (state.second.crossCoupleAcross) {
+            // Cross couple accross allows for cross coupling multiple frequencies together
+            for (auto &trans: state.second.transceivers) {
+                out[0].TransceiverIDs.push_back(trans.ID);
+            }
+        } else if (state.second.xc) {
+            // Standard cross couples just couples all the transceivers together
+            afv::dto::CrossCoupleGroup group(index, {});
 
-        for (auto &trans: state.second.transceivers) {
-            group.TransceiverIDs.push_back(trans.ID);
+            for (auto &trans: state.second.transceivers) {
+                group.TransceiverIDs.push_back(trans.ID);
+            }
+
+            out.push_back(group);
+            index++;
         }
-
-        out.push_back(group);
-
-        index++;
     }
 
     return std::move(out);

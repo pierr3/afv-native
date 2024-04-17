@@ -100,13 +100,13 @@ namespace afv_native { namespace afv {
         std::shared_ptr<audio::VHFFilterSource>      vhfFilter;
         int                                          mLastRxCount;
         bool                                         mBypassEffects = false;
-        bool                                         mHfSquelch;
-        bool                                         mIsReceiving;
-        bool                                         onHeadset   = true;
-        bool                                         tx          = false;
-        bool                                         rx          = true;
-        bool                                         xc          = false;
-        std::string                                  stationName = "";
+        bool                                         mHfSquelch     = true;
+        bool                                         onHeadset         = true;
+        bool                                         tx                = false;
+        bool                                         rx                = true;
+        bool                                         xc                = false;
+        bool                                         crossCoupleAcross = false;
+        std::string                                  stationName       = "";
         std::vector<dto::Transceiver>                transceivers;
         HardwareType    simulatedHardware = HardwareType::Schmid_ED_137B;
         bool            isATIS            = false;
@@ -165,10 +165,12 @@ namespace afv_native { namespace afv {
         bool getRxState(unsigned int freq);
         bool getTxState(unsigned int freq);
         bool getXcState(unsigned int freq);
+        bool getCrossCoupleAcrossState(unsigned int freq);
 
         void setRx(unsigned int freq, bool rx);
         void setTx(unsigned int freq, bool tx);
         void setXc(unsigned int freq, bool xc);
+        void setCrossCoupleAcross(unsigned int freq, bool crossCoupleAcross);
 
         bool getTxActive(unsigned int radio);
         bool getRxActive(unsigned int radio);
@@ -180,7 +182,7 @@ namespace afv_native { namespace afv {
          * @param freq The frequency for which to retrieve the transceiver count.
          * @return The number of transceivers for the given frequency.
          */
-        int         getTransceiverCountForFrequency(unsigned int freq);
+        int getTransceiverCountForFrequency(unsigned int freq);
 
         void setGain(unsigned int radio, float gain);
         void setGainAll(float gain);
@@ -261,12 +263,15 @@ namespace afv_native { namespace afv {
         std::unordered_map<std::string, struct AtcCallsignMeta> mHeadsetIncomingStreams;
         std::unordered_map<std::string, struct AtcCallsignMeta> mSpeakerIncomingStreams;
 
-        std::mutex                    mRadioStateLock;
-        std::atomic<bool>             mPtt;
-        bool                          mLastFramePtt;
-        std::atomic<uint32_t>         mTxSequence;
-        std::map<unsigned int, AtcRadioState>  mRadioState;
-        std::shared_ptr<audio::ITick> mTick;
+        std::mutex                            mRadioStateLock;
+        std::atomic<bool>                     mPtt;
+        bool                                  mLastFramePtt;
+        std::atomic<uint32_t>                 mTxSequence;
+        std::map<unsigned int, AtcRadioState> mRadioState;
+        std::shared_ptr<audio::ITick>         mTick;
+
+        bool mDefaultEnableHfSquelch = true;
+        bool mDefaultBypassEffects = false;
 
         std::shared_ptr<AtcOutputAudioDevice> mHeadsetDevice;
         std::shared_ptr<AtcOutputAudioDevice> mSpeakerDevice;

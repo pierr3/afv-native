@@ -436,6 +436,7 @@ AFV_NATIVE_API std::map<unsigned int, afv_native::SimpleAtcRadioState> afv_nativ
         radioState.tx                   = radio.tx;
         radioState.rx                   = radio.rx;
         radioState.xc                   = radio.xc;
+        radioState.crossCoupleAcross    = radio.crossCoupleAcross;
         radioState.onHeadset            = radio.onHeadset;
         radioState.Frequency            = freq;
         radioState.stationName          = radio.stationName;
@@ -449,3 +450,12 @@ AFV_NATIVE_API std::map<unsigned int, afv_native::SimpleAtcRadioState> afv_nativ
 
     return state;
 };
+
+AFV_NATIVE_API void afv_native::api::atcClient::SetCrossCoupleAcross(unsigned int freq, bool active) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setCrossCoupleAcross(freq, active);
+}
+
+AFV_NATIVE_API bool afv_native::api::atcClient::GetCrossCoupleAcrossState(unsigned int freq) {
+    return client->GetCrossCoupleAcrossState(freq);
+}

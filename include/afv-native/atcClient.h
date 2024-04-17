@@ -83,6 +83,8 @@ namespace afv_native {
 
         void setXc(unsigned int freq, bool active);
 
+        void setCrossCoupleAcross(unsigned int freq, bool active);
+
         /** sets the PTT (push-to-talk) state for the radio.
          *
          * @note If the radio frequencies are out of sync with the server, this
@@ -225,6 +227,7 @@ namespace afv_native {
         bool GetTxState(unsigned int freq);
         bool GetRxState(unsigned int freq);
         bool GetXcState(unsigned int freq);
+        bool GetCrossCoupleAcrossState(unsigned int freq);
 
         /** requestStationTransceivers requests the list of transceivers associated with the named station
          *

@@ -66,6 +66,11 @@ void ATCClient::setXc(unsigned int freq, bool active) {
     queueTransceiverUpdate();
 }
 
+void afv_native::ATCClient::setCrossCoupleAcross(unsigned int freq, bool active) {
+    mATCRadioStack->setCrossCoupleAcross(freq, active);
+    queueTransceiverUpdate();
+}
+
 bool ATCClient::connect() {
     if (!isAPIConnected()) {
         if (mAPISession.getState() != afv::APISessionState::Disconnected) {
@@ -543,6 +548,10 @@ bool ATCClient::GetRxState(unsigned int freq) {
         return mATCRadioStack->getRxState(freq);
     }
     return false;
+};
+
+bool afv_native::ATCClient::GetCrossCoupleAcrossState(unsigned int freq) {
+    return mATCRadioStack->getCrossCoupleAcrossState(freq);
 };
 
 void ATCClient::setOnHeadset(unsigned int freq, bool onHeadset) {
