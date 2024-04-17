@@ -245,7 +245,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
                 crackleFactor = fmax(0.0f, crackleFactor);
                 crackleFactor = fmin(0.20f, crackleFactor);
 
-                if (freqIsHF(closestTransceiver.Frequency)) {
+                if (freqIsHF(rxIter)) {
                     if (!mRadioState[rxIter].mHfSquelch) {
                         hfGain = fxHfWhiteNoiseGain;
                     } else {
@@ -466,7 +466,7 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
             }
         } else {
             if (!afv_native::util::vectorContains(pkt.Callsign,
-                                                 mRadioState[trans.Frequency].liveTransmittingCallsigns)) {
+                                                  mRadioState[trans.Frequency].liveTransmittingCallsigns)) {
                 LOG("ATCRadioSimulation", "StationRxBegin event: %i: %s", trans.Frequency,
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
 
@@ -795,21 +795,22 @@ std::vector<afv::dto::Transceiver> ATCRadioSimulation::makeTransceiverDto() {
     std::lock_guard<std::mutex>        radioStateGuard(mRadioStateLock);
     std::vector<afv::dto::Transceiver> retSet;
     unsigned int                       i = 0;
-    for (auto &[_, radio]: mRadioState) {
-        if (radio.transceivers.empty()) {
+    for (auto &state: mRadioState) {
+        if (state.second.transceivers.empty()) {
             // If there are no transceivers received from the network, we're
             // using the client position
-            retSet.emplace_back(i, radio.Frequency, mClientLatitude, mClientLongitude, mClientAltitudeMSLM, mClientAltitudeGLM);
+            retSet.emplace_back(i, state.first, mClientLatitude, mClientLongitude, mClientAltitudeMSLM, mClientAltitudeGLM);
             // Update the radioStack with the added transponder
-            radio.transceivers = {retSet.back()};
+            state.second.transceivers = {retSet.back()};
+            i++;
         } else {
-            for (auto &trans: radio.transceivers) {
+            for (auto &trans: state.second.transceivers) {
                 retSet.emplace_back(i, trans.Frequency, trans.LatDeg, trans.LonDeg,
                                     trans.HeightMslM, trans.HeightAglM);
                 trans.ID = i;
+                i++;
             }
         }
-        i++;
     }
     return std::move(retSet);
 }

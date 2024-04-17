@@ -99,7 +99,7 @@ namespace afv_native { namespace afv {
         audio::SimpleCompressorEffect                simpleCompressorEffect;
         std::shared_ptr<audio::VHFFilterSource>      vhfFilter;
         int                                          mLastRxCount;
-        bool                                         mBypassEffects;
+        bool                                         mBypassEffects = false;
         bool                                         mHfSquelch;
         bool                                         mIsReceiving;
         bool                                         onHeadset   = true;
