@@ -151,7 +151,7 @@ namespace afv_native {
          */
         void setAudioApi(audio::AudioDevice::Api api);
 
-        void setAudioInputDevice(std::string inputDevice);
+        void setMicrophoneDevice(std::string inputDevice);
         void setSpeakerDevice(std::string speakerDevice);
         void setHeadsetDevice(std::string headsetDevice);
 
@@ -213,9 +213,14 @@ namespace afv_native {
         void startAudio();
         void stopAudio();
 
+        void startMicrophone();
+        void startHeadset();
+        void startSpeaker();
+
         std::shared_ptr<const afv::RadioSimulation> getRadioSimulation() const;
-        std::shared_ptr<const audio::AudioDevice>   getHeadsetDevice() const;
-        std::shared_ptr<const audio::AudioDevice>   getSpeakerDevice() const;
+        std::shared_ptr<const audio::AudioDevice> getMicrophoneDevice() const;
+        std::shared_ptr<const audio::AudioDevice> getHeadsetDevice() const;
+        std::shared_ptr<const audio::AudioDevice> getSpeakerDevice() const;
 
         /** getRxActive returns if the nominated radio is currently Receiving
          * voice, irrespective as to if it's audiable or not.
@@ -246,6 +251,7 @@ namespace afv_native {
         afv::VoiceSession                     mVoiceSession;
         std::shared_ptr<afv::RadioSimulation> mRadioSim;
 
+        std::shared_ptr<audio::AudioDevice> mMicrophoneDevice;
         std::shared_ptr<audio::AudioDevice> mHeadsetDevice;
         std::shared_ptr<audio::AudioDevice> mSpeakerDevice;
 
@@ -285,14 +291,14 @@ namespace afv_native {
 
         std::string             mClientName;
         audio::AudioDevice::Api mAudioApi;
-        std::string             mAudioInputDeviceName;
-        std::string             mHeadsetDeviceName;
-        std::string             mSpeakerDeviceName;
-        bool                    mSplitAudioChannels;
-        bool                    mInvalidDeviceConfig = false;
-
-      public:
+        std::string mMicrophoneDeviceName;
+        std::string mHeadsetDeviceName;
+        std::string mSpeakerDeviceName;
+        bool mSplitAudioChannels;
+        bool mInvalidDeviceConfig = false;
+    public:
     };
-} // namespace afv_native
+}
+ // namespace afv_native
 
 #endif // AFV_NATIVE_CLIENT_H
