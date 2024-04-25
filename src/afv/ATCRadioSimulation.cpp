@@ -842,23 +842,32 @@ std::vector<afv::dto::CrossCoupleGroup> ATCRadioSimulation::makeCrossCoupleGroup
     std::vector<afv::dto::CrossCoupleGroup> out   = {{0, {}}};
     unsigned int                            index = 1;
 
-    for (auto &state: mRadioState) {
+    for (auto &[frequency, radio]: mRadioState) {
+        if (!radio.xc && !radio.crossCoupleAcross) {
+            continue;
+        }
         // There are transceivers and they need to be coupled
-        if ((!state.second.xc && !state.second.crossCoupleAcross) ||
-            !state.second.tx) {
+
+        if (!radio.tx || !radio.rx) {
+            // If the radio is not transmitting or receiving, we don't need to couple it
             continue;
         }
 
-        if (state.second.crossCoupleAcross) {
+        if (radio.transceivers.empty()) {
+            // If there are no transceivers, we don't need to couple it
+            continue;
+        }
+
+        if (radio.crossCoupleAcross) {
             // Cross couple accross allows for cross coupling multiple frequencies together
-            for (auto &trans: state.second.transceivers) {
+            for (const auto trans: radio.transceivers) {
                 out[0].TransceiverIDs.push_back(trans.ID);
             }
-        } else if (state.second.xc) {
+        } else if (radio.xc) {
             // Standard cross couples just couples all the transceivers together
             afv::dto::CrossCoupleGroup group(index, {});
 
-            for (auto &trans: state.second.transceivers) {
+            for (const auto trans: radio.transceivers) {
                 group.TransceiverIDs.push_back(trans.ID);
             }
 
