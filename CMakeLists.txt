@@ -22,16 +22,23 @@ if (WIN32)
 endif()
 
 if (UNIX)
-	add_library(${PROJECT_NAME} SHARED)
+	add_library(afv_native SHARED)
 endif()
 
 if (WIN32)
-	add_library(${PROJECT_NAME} SHARED)
+	add_library(afv_native SHARED)
 endif()
+
+
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 
-target_sources(${PROJECT_NAME} PRIVATE 
+# Link the test client if available
+if(EXISTS "${PROJECT_SOURCE_DIR}/test/afv-native-testclient/CMakeLists.txt")
+	add_subdirectory(test/afv-native-testclient)
+endif()
+
+target_sources(afv_native PRIVATE 
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/APISession.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/EffectResources.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/RadioSimulation.cpp
@@ -133,7 +140,7 @@ target_link_libraries(afv_native
 		${LIBRARIES})
 
 # add_custom_target(combined ALL
-# 		COMMAND ${CMAKE_AR} rc libcombined.a $<TARGET_FILE:${PROJECT_NAME}> ${SPEEXDSP_LIBRARY} Threads::Threads)
+# 		COMMAND ${CMAKE_AR} rc libcombined.a $<TARGET_FILE:afv_native> ${SPEEXDSP_LIBRARY} Threads::Threads)
 
 if(APPLE)
 	find_library(CORE_AUDIO CoreAudio)
@@ -160,40 +167,40 @@ include(GNUInstallDirs)
 # the command must be included in double quotes so the two directories,
 # separated by a ';' can both be used (cmake needs it to be a string)
 target_include_directories(
-    ${PROJECT_NAME}
+    afv_native
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/;${CMAKE_CURRENT_BINARY_DIR}/include>"
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "d")
+set_target_properties(afv_native PROPERTIES DEBUG_POSTFIX "d")
 
 # generates header to provide export macros for library
 include(GenerateExportHeader)
-generate_export_header(${PROJECT_NAME} 
+generate_export_header(afv_native 
 						EXPORT_MACRO_NAME AFV_NATIVE_API
-						EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}_export.h)
+						EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/afv_native_export.h)
 
 # specify the target to install (calculator library defined above)
 # set the export name <name>-config (does not need to match target name)
 # also specify where the .dylib/.so/.dll+.lib file should be installed
 install(
-    TARGETS ${PROJECT_NAME}
-    EXPORT ${PROJECT_NAME}-config
+    TARGETS afv_native
+    EXPORT afv_native-config
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(
-    EXPORT ${PROJECT_NAME}-config
-    NAMESPACE ${PROJECT_NAME}::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+    EXPORT afv_native-config
+    NAMESPACE afv_native::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/afv_native)
 
-install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/${PROJECT_NAME}/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/afv_native/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/afv_native)
 
 # copy the generated export file to the include install location
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}_export.h
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/afv_native_export.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/afv_native)
 
 if (WIN32)
 	file(COPY ${SPEEXDSP_LIBRARY}
@@ -201,9 +208,11 @@ if (WIN32)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
-	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	add_custom_command(TARGET afv_native POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_SOURCE_DIR}
 		python3 ${CMAKE_CURRENT_SOURCE_DIR}/compile_licenses.py
 		COMMENT "Running compile_licenses.py"
 	)
 endif()
+
+

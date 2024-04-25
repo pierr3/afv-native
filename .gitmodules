@@ -1,3 +1,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/Microsoft/vcpkg.git
+[submodule "test/afv-native-testclient"]
+	path = test/afv-native-testclient
+	url = https://github.com/vatsimnetwork/afv-native-testclient.git
