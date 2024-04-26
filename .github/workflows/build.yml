@@ -18,9 +18,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: master
-          submodules: recursive
       - name: Setup environment
         run: |
+          git submodule update --init -- vcpkg
           pip install cmake
           cmake --version
       - name: Bootstrap vcpkg
@@ -38,9 +38,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: master
-          submodules: recursive
       - name: Setup environment
         run: |
+          git submodule update --init -- vcpkg
           brew update
           brew upgrade cmake
       - name: Bootstrap vcpkg
@@ -58,9 +58,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: master
-          submodules: recursive
       - name: Setup environment
         run: |
+          git submodule update --init -- vcpkg
           brew update
           brew install cmake pkg-config
       - name: Bootstrap vcpkg
@@ -78,9 +78,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: master
-          submodules: recursive
       - name: Setup environment
         run: |
+          git submodule update --init -- vcpkg
           pip install cmake
       - name: Bootstrap vcpkg
         run: |
