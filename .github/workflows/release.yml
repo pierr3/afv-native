@@ -53,7 +53,7 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
       - name: Configure cmake (intel)
         run: |
-          cmake -S . -B build_intel/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          cmake -S . -B build_intel/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_OSX_ARCHITECTURES=x64 -DVCPKG_TARGET_TRIPLET=x64-osx
       - name: Build cmake (intel)
         run: |
           cmake --build build_intel/ --config ${{ matrix.build_type }}
