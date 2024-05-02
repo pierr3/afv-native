@@ -1,121 +1,128 @@
-name: Release afv-native
+name: Release
 
 on:
   push:
     tags:
-      - v*
+      - "v*"
   workflow_dispatch:
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  release:
     strategy:
       matrix:
-        build_type: [Release, Debug]
+        os: [ubuntu-latest, windows-latest]
+        arch: [x86_64, arm64]
+        exclude:
+          - os: windows-latest
+            arch: arm64
+        include:
+          - os: macos-latest
+            arch: universal
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
-      - name: Setup environment
+
+      - run: git submodule update --init -- vcpkg
+
+      - name: Set OS name
+        id: os_name
+        shell: bash
         run: |
-          git submodule update --init -- vcpkg
-          pip install cmake
-          cmake --version
-      - name: Bootstrap vcpkg
+          if [[ ${{ matrix.os }} == 'ubuntu-latest' ]]; then
+            echo "os=Linux" >> $GITHUB_OUTPUT
+          elif [[ ${{ matrix.os }} == 'windows-latest' ]]; then
+            echo "os=Windows" >> $GITHUB_OUTPUT
+          elif [[ ${{ matrix.os }} == 'macos-latest' ]]; then
+            echo "os=Darwin" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get release tag
+        id: rel_tag
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+
+      - name: Replace repositories with amd64 and arm64 repositories
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
         run: |
-          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
-      - name: Configure cmake
+          echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" | sudo tee /etc/apt/sources.list
+          echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=amd64] http://archive.canonical.com/ubuntu/ jammy partner" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ jammy main restricted" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ jammy-updates main restricted" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ jammy universe" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ jammy-updates universe" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ jammy multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ jammy-updates multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ jammy-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+
+      - name: Install cross-compilation to arm on linux dependencies
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
         run: |
-          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-      - name: Build cmake
+          sudo apt-get remove libgpg-error-dev
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu:amd64 g++-aarch64-linux-gnu:amd64 python3-jinja2:amd64 libgcrypt20:arm64 libgcrypt20-dev:arm64 libgpg-error-dev:arm64
+
+      - name: Upgrade CMake
+        if: matrix.os == 'macos-latest'
+        run: brew install cmake
+
+      - name: Upgrade CMake
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y cmake
+
+      - name: Upgrade CMake
+        if: matrix.os == 'windows-latest'
+        run: choco install cmake
+
+      - name: Verify cmake --version
+        run: cmake --version
+
+      - name: Configure CMake
+        if: matrix.os == 'windows-latest'
         run: |
-          cmake --build build/ --config ${{ matrix.build_type }}
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: build/*.so
-  build-macos-universal:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        build_type: [Release, Debug]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: master
-      - name: Setup environment
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows
+      
+      - name: Configure CMake
+        if: matrix.os == 'macos-latest' && matrix.arch == 'universal'
         run: |
-          git submodule update --init -- vcpkg
-          brew update
-          brew upgrade cmake
-      - name: Bootstrap vcpkg
+          cmake -B build_x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -DVCPKG_TARGET_TRIPLET=x64-osx -DVCPKG_BUILD_TYPE=release
+          cmake -B build_arm64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx -DVCPKG_BUILD_TYPE=release
+
+      - name: Configure CMake
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x86_64'
         run: |
-          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
-      - name: Configure cmake (intel)
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-linux -DVCPKG_BUILD_TYPE=release
+
+      - name: Configure CMake
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
         run: |
-          cmake -S . -B build_intel/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_OSX_ARCHITECTURES=x86_64 -DVCPKG_TARGET_TRIPLET=x64-osx
-      - name: Build cmake (intel)
+          export HOST_ARCH=arm64
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_ARM64_LINUX=1 -DVCPKG_TARGET_TRIPLET=arm64-linux -DVCPKG_BUILD_TYPE=release
+
+      - name: Get debug logs
+        if: failure()
+        run: cat /home/runner/work/afv-native/afv-native/build/vcpkg_installed/vcpkg/issue_body.md
+
+      - name: Build
+        if: matrix.os == 'macos-latest' && matrix.arch == 'universal'
         run: |
-          cmake --build build_intel/ --config ${{ matrix.build_type }}
-      - name: Configure cmake (arm64)
-        run: |
-          cmake -S . -B build_arm/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
-      - name: Build cmake (arm64)
-        run: |
-          cmake --build build_arm/ --config ${{ matrix.build_type }}
-      - name: Create Universal Binary (Rel)
-        if: matrix.build_type == 'Release'
-        run: |
-          lipo -create build_arm/libafv_native.dylib build_intel/libafv_native.dylib -output ./libafv_native.dylib
-      - name: Create Universal Binary (Deb)
-        if: matrix.build_type == 'Debug'
-        run: |
-          lipo -create build_arm/libafv_natived.dylib build_intel/libafv_natived.dylib -output ./libafv_natived.dylib
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ./*.dylib
-  build-windows:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        build_type: [Release, Debug]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: master
-      - name: Setup environment
-        run: |
-          git submodule update --init -- vcpkg
-          pip install cmake
-          cmake --version
-      - name: Bootstrap vcpkg
-        run: |
-          ./vcpkg/bootstrap-vcpkg.bat -disableMetrics
-      - name: Configure cmake
-        run: |
-          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-      - name: Build cmake
-        run: |
-          cmake --build build/ --config ${{ matrix.build_type }}
-      - name: Zip build
-        run: |
-          Compress-Archive -Path build/${{ matrix.build_type }}/*.dll -Destination win64-${{ matrix.build_type }}.zip
-          Compress-Archive -Path build/${{ matrix.build_type }}/*.lib -Update -Destination win64-${{ matrix.build_type }}.zip
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: win64-${{ matrix.build_type }}.zip
-  upload-headers:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: master
-      - name: Compile License file
-        run: |
-          mv ALL_LICENSES.txt LICENSE
-      - name: Zip headers
+          cmake --build build_x64 --config Release
+          cmake --build build_arm64 --config Release
+          mkdir -p build
+          lipo -create build_arm64/libafv_native.dylib build_x64/libafv_native.dylib -output build/libafv_native.dylib
+
+      - name: Build
+        if: matrix.os != 'macos-latest' || matrix.arch != 'universal'
+        run: cmake --build build --config Release
+
+      - name: Compile headers
+        if: matrix.os != 'windows-latest'
         run: |
           cp afv_native_export.h afv_native.h
           cat afv_native_includes.in >> afv_native.h
@@ -124,9 +131,55 @@ jobs:
           cp include/afv-native/atcClientWrapper.h include/afv-native/atcClientWrapper_edit.h
           sed -i.bak '/\/\/ --- REMOVE ABOVE BEFORE PUBLISHING ---/,$!d' include/afv-native/atcClientWrapper_edit.h && rm include/afv-native/atcClientWrapper_edit.h.bak           
           cat include/afv-native/atcClientWrapper_edit.h >> afv_native.h
+
+      - name: Compile headers
+        if: matrix.os == 'windows-latest'
+        run: |
+          Copy-Item afv_native_export.h afv_native.h
+          Get-Content afv_native_includes.in >> afv_native.h
+          Get-Content include/afv-native/event.h >> afv_native.h
+          Get-Content include/afv-native/hardwareType.h >> afv_native.h
+          Copy-Item include/afv-native/atcClientWrapper.h include/afv-native/atcClientWrapper_edit.h
+          (Get-Content include/afv-native/atcClientWrapper_edit.h) -replace '/\/\/ --- REMOVE ABOVE BEFORE PUBLISHING ---/,$!d' | Set-Content include/afv-native/atcClientWrapper_edit.h
+          Get-Content include/afv-native/atcClientWrapper_edit.h >> afv_native.h
+
+      - name: Create package structure
+        run: |
+          mkdir -p artifact/afv-native/include/afv-native
+          mkdir -p artifact/afv-native/lib
+          cp afv_native.h artifact/afv-native/include/afv-native/
+          cp Findafv-native.cmake artifact/afv-native/
+          cp ALL_LICENSES.txt artifact/afv-native/LICENSE
+
+      - name: Copy libraries
+        if: matrix.os == 'windows-latest'
+        run: |
+          Copy-Item build/Release/*.dll artifact/afv-native/lib/
+          Copy-Item build/Release/*.lib artifact/afv-native/lib/
+
+      - name: Copy libraries
+        if: matrix.os == 'macos-latest'
+        run: |
+          cp build/libafv_native.dylib artifact/afv-native/lib/
+
+      - name: Copy libraries
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cp build/libafv_native.so artifact/afv-native/lib/
+
+      - name: Zip Package
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd artifact/
+          Compress-Archive -Path * -DestinationPath ../libafv-${{ steps.rel_tag.outputs.RELEASE_VERSION }}-${{ steps.os_name.outputs.os }}-${{ matrix.arch }}.zip
+
+      - name: Zip Package
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd artifact/
+          zip -r ../libafv-${{ steps.rel_tag.outputs.RELEASE_VERSION }}-${{ steps.os_name.outputs.os }}-${{ matrix.arch }}.zip *
+
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            afv_native.h
-            LICENSE
+          files: ./*.zip

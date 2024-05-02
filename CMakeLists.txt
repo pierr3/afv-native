@@ -3,14 +3,28 @@ cmake_minimum_required(VERSION 3.29.2)
 # Setup vcpkg
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
+if (DEFINED CMAKE_BUILD_ARM64_LINUX)
+	# arm64-linux-gnu.toolchain.cmake
+
+	# Set the target architecture
+	set(CMAKE_SYSTEM_PROCESSOR arm64)
+
+	# Set the compiler flags for arm64 architecture
+	set(CMAKE_C_FLAGS "-march=armv8-a")
+	set(CMAKE_CXX_FLAGS "-march=armv8-a")
+
+	# Set the compiler
+	set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
+	set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
 project(
     afv_native
     VERSION 1.24.0
     LANGUAGES C CXX)
-
-set(CMAKE_CXX_STANDARD 17)
-
-set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 if (APPLE)
 	#disable runtime linking to prevent issues with backends that are not actually implemented
