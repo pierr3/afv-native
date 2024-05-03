@@ -1,9 +1,4 @@
-# Findafv-native.cmake
-
-find_path(AFV_NATIVE_INCLUDE_DIR
-  NAMES afv_native.h
-  PATHS ${afv_native_SOURCE_DIR}/include
-)
+set(AFV_NATIVE_INCLUDE_DIR ${afv_native_SOURCE_DIR}/include)
 
 find_library(AFV_NATIVE_LIBRARY
   NAMES afv_native libafv_native

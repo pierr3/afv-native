@@ -148,7 +148,7 @@ jobs:
           mkdir -p artifact/afv-native/include/afv-native
           mkdir -p artifact/afv-native/lib
           cp afv_native.h artifact/afv-native/include/afv-native/
-          cp Findafv-native.cmake artifact/afv-native/
+          cp Findafv_native.cmake artifact/afv-native/
           cp ALL_LICENSES.txt artifact/afv-native/LICENSE
 
       - name: Copy libraries
