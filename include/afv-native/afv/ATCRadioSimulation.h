@@ -100,7 +100,7 @@ namespace afv_native { namespace afv {
         std::shared_ptr<audio::VHFFilterSource>      vhfFilter;
         int                                          mLastRxCount;
         bool                                         mBypassEffects = false;
-        bool                                         mHfSquelch     = true;
+        bool                                         mHfSquelch     = false;
         bool                                         onHeadset         = true;
         bool                                         tx                = false;
         bool                                         rx                = true;
@@ -270,7 +270,7 @@ namespace afv_native { namespace afv {
         std::map<unsigned int, AtcRadioState> mRadioState;
         std::shared_ptr<audio::ITick>         mTick;
 
-        bool mDefaultEnableHfSquelch = true;
+        bool mDefaultEnableHfSquelch = false;
         bool mDefaultBypassEffects = false;
 
         std::shared_ptr<AtcOutputAudioDevice> mHeadsetDevice;
