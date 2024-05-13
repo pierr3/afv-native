@@ -100,15 +100,7 @@ bool Request::setupHandle() {
     /* Disable Nagle because Mac says so.... */
     curl_easy_setopt(mCurlHandle, CURLOPT_TCP_NODELAY, 1);
 
-    /*FIXME:  We do not verify peers (yet).  This is not a code issue, but a larger OpenSSL management one.
-     *
-     * We do not verify peers because libcurl is a pain in the ass and does not
-     * use the system configured CAs in all cases.
-     *
-     * We do not verify peers because we do not want to have to hand adjust this
-     * all the damned time.
-     */
-    curl_easy_setopt(mCurlHandle, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_easy_setopt(mCurlHandle, CURLOPT_SSL_VERIFYPEER, 1);
 
     switch (mMethod) {
         case Method::GET:

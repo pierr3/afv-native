@@ -446,6 +446,10 @@ bool ATCRadioSimulation::mix_effect(std::shared_ptr<audio::ISampleSource> effect
 bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers &pkt) {
     std::lock_guard<std::mutex> radioStateLock(mRadioStateLock);
     for (auto trans: pkt.Transceivers) {
+        if (!isFrequencyActive(trans.Frequency)) {
+            continue;
+        }
+        
         if (!mRadioState[trans.Frequency].rx) {
             continue;
         }
