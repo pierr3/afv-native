@@ -759,10 +759,11 @@ void afv_native::afv::ATCRadioSimulation::setCrossCoupleAcross(unsigned int freq
         LOG("ATCRadioSimulation", "setXcRadio failed, frequency inactive: %i", freq);
         return;
     }
-    mRadioState[freq].crossCoupleAcross = crossCoupleAcross;
-    if (crossCoupleAcross) {
-        mRadioState[freq].xc = false;
-    }
+    mRadioState[freq].xc = crossCoupleAcross;
+    // mRadioState[freq].crossCoupleAcross = crossCoupleAcross;
+    // if (crossCoupleAcross) {
+    //     mRadioState[freq].xc = false;
+    // }
     LOG("ATCRadioSimulation", "setXcRadio: %i", freq);
 }
 
@@ -847,7 +848,7 @@ std::vector<afv::dto::CrossCoupleGroup> ATCRadioSimulation::makeCrossCoupleGroup
     unsigned int                            index = 1;
 
     for (auto &[frequency, radio]: mRadioState) {
-        if (!radio.xc && !radio.crossCoupleAcross) {
+        if (!radio.xc /*&& !radio.crossCoupleAcross*/) {
             continue;
         }
         // There are transceivers and they need to be coupled
@@ -862,12 +863,12 @@ std::vector<afv::dto::CrossCoupleGroup> ATCRadioSimulation::makeCrossCoupleGroup
             continue;
         }
 
-        if (radio.crossCoupleAcross) {
-            // Cross couple accross allows for cross coupling multiple frequencies together
-            for (const auto trans: radio.transceivers) {
-                out[0].TransceiverIDs.push_back(trans.ID);
-            }
-        } else if (radio.xc) {
+        // if (radio.crossCoupleAcross) {
+        //     // Cross couple accross allows for cross coupling multiple frequencies together
+        //     for (const auto trans: radio.transceivers) {
+        //         out[0].TransceiverIDs.push_back(trans.ID);
+        //     }
+        // } else if (radio.xc) {
             // Standard cross couples just couples all the transceivers together
             afv::dto::CrossCoupleGroup group(index, {});
 
@@ -877,7 +878,7 @@ std::vector<afv::dto::CrossCoupleGroup> ATCRadioSimulation::makeCrossCoupleGroup
 
             out.push_back(group);
             index++;
-        }
+        // }
     }
 
     return std::move(out);
