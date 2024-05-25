@@ -823,6 +823,10 @@ std::vector<afv::dto::Transceiver> ATCRadioSimulation::makeTransceiverDto() {
     std::vector<afv::dto::Transceiver> retSet;
     unsigned int                       i = 0;
     for (auto &state: mRadioState) {
+        if (!state.second.rx) {
+            continue;
+        }
+        
         if (state.second.transceivers.empty()) {
             // If there are no transceivers received from the network, we're
             // using the client position
