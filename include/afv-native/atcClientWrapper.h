@@ -63,6 +63,7 @@ namespace afv_native::api {
         AFV_NATIVE_API void SetAudioApi(unsigned int api);
         AFV_NATIVE_API std::map<unsigned int, std::string> GetAudioApis();
         AFV_NATIVE_API const char                        **GetAudioApisNative();
+        AFV_NATIVE_API void FreeAudioApis(char **apis);
 
         AFV_NATIVE_API void SetAudioInputDevice(std::string inputDevice);
         AFV_NATIVE_API void SetAudioInputDevice(char *inputDevice);
@@ -78,6 +79,7 @@ namespace afv_native::api {
         AFV_NATIVE_API AudioInterface **GetAudioOutputDevicesNative(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioOutputDevice(unsigned int mAudioApi);
         AFV_NATIVE_API const char *GetDefaultAudioOutputDeviceNative(unsigned int mAudioApi);
+        AFV_NATIVE_API void FreeAudioDevices(AudioInterface **in);
 
         AFV_NATIVE_API double GetInputPeak() const;
         AFV_NATIVE_API double GetInputVu() const;
@@ -152,8 +154,10 @@ namespace afv_native::api {
         AFV_NATIVE_API bool IsFrequencyActive(unsigned int freq);
         AFV_NATIVE_API std::map<unsigned int, SimpleAtcRadioState> getRadioState();
         AFV_NATIVE_API SimpleAtcRadioState **getRadioStateNative();
+        AFV_NATIVE_API void FreeRadioState(SimpleAtcRadioState **state);
 
         AFV_NATIVE_API void reset();
+        AFV_NATIVE_API void FreeString(char *in);
 
         AFV_NATIVE_API void SetHardware(afv_native::HardwareType hardware);
 

@@ -586,3 +586,28 @@ AFV_NATIVE_API void afv_native::api::atcClient::SetCrossCoupleAcross(unsigned in
 AFV_NATIVE_API bool afv_native::api::atcClient::GetCrossCoupleAcrossState(unsigned int freq) {
     return client->GetCrossCoupleAcrossState(freq);
 }
+
+AFV_NATIVE_API void afv_native::api::atcClient::FreeAudioApis(char **apis) {
+    for (char *c = *apis; c; c = *++apis) {
+        free(c);
+    }
+    delete apis;
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::FreeAudioDevices(AudioInterface **in) {
+    for (AudioInterface *c = *in; c; c = *++in) {
+        delete c;
+    }
+    delete in;
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::FreeString(char *in) {
+    free(in);
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::FreeRadioState(afv_native::SimpleAtcRadioState **state) {
+    for (afv_native::SimpleAtcRadioState *c = *state; c; c = *++state) {
+        delete c;
+    }
+    delete state;
+}
