@@ -370,12 +370,12 @@ bool afv_native::api::atcClient::GetRxState(unsigned int freq) {
     return client->GetRxState(freq);
 };
 
-void afv_native::api::atcClient::UseTransceiversFromStation(std::string station, int freq) {
+void afv_native::api::atcClient::UseTransceiversFromStation(std::string station, unsigned int freq) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->linkTransceivers(station, freq);
 };
 
-void afv_native::api::atcClient::UseTransceiversFromStation(char *station, int freq) {
+void afv_native::api::atcClient::UseTransceiversFromStation(char *station, unsigned int freq) {
     UseTransceiversFromStation(std::string(station), freq);
 }
 

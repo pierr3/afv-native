@@ -105,6 +105,7 @@ target_sources(afv_native PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atcClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atisClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientWrapper.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientFlat.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleComp.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleEnvelope.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleGate.cpp

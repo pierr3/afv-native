@@ -71,6 +71,7 @@ namespace afv_native::api {
         AFV_NATIVE_API AudioInterface **GetAudioInputDevicesNative(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioInputDevice(unsigned int mAudioApi);
         AFV_NATIVE_API const char *GetDefaultAudioInputDeviceNative(unsigned int mAudioApi);
+
         AFV_NATIVE_API void SetAudioOutputDevice(std::string outputDevice);
         AFV_NATIVE_API void SetAudioOutputDevice(char *outputDevice);
         AFV_NATIVE_API void SetAudioSpeakersOutputDevice(std::string outputDevice);
@@ -109,8 +110,8 @@ namespace afv_native::api {
         AFV_NATIVE_API bool GetCrossCoupleAcrossState(unsigned int freq);
 
         // Use this to set the current transceivers to the transceivers from this station, pulled from the AFV database, only one at a time can be active
-        AFV_NATIVE_API void UseTransceiversFromStation(std::string station, int freq);
-        AFV_NATIVE_API void UseTransceiversFromStation(char *station, int freq);
+        AFV_NATIVE_API void UseTransceiversFromStation(std::string station, unsigned int freq);
+        AFV_NATIVE_API void UseTransceiversFromStation(char *station, unsigned int freq);
 
         AFV_NATIVE_API void FetchTransceiverInfo(std::string station);
         AFV_NATIVE_API void FetchTransceiverInfo(char *station);
