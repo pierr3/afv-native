@@ -28,9 +28,9 @@ struct AFV_NATIVE_API AudioInterfaceNative {
 
 */
 
-ATCClientType ATCClient_Create(char *clientName, char *resourcePath);
-void          ATCClient_Destroy(ATCClientType handle);
-bool          ATCClient_IsInitialized(ATCClientType handle);
+ATCClientType ATCClient_Create(char *clientName, char *resourcePath, char *baseURL);
+void ATCClient_Destroy(ATCClientType handle);
+bool ATCClient_IsInitialized(ATCClientType handle);
 void ATCClient_SetCredentials(ATCClientType handle, char *username, char *password);
 void ATCClient_SetCallsign(ATCClientType handle, char *callsign);
 void ATCClient_SetClientPosition(ATCClientType handle, double lat, double lon, double amslm, double aglm);

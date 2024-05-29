@@ -51,7 +51,7 @@ void afv_native::api::setLogger(afv_native::modern_log_fn gLogger) {
     afv_native::setLogger(gLogger);
 }
 
-afv_native::api::atcClient::atcClient(std::string clientName, std::string resourcePath) {
+afv_native::api::atcClient::atcClient(std::string clientName, std::string resourcePath, std::string baseURL) {
 #ifdef WIN32
     WORD    wVersionRequested;
     WSADATA wsaData;
@@ -61,7 +61,7 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
 
     ev_base = event_base_new();
 
-    client = std::make_unique<afv_native::ATCClient>(ev_base, resourcePath, clientName);
+    client = std::make_unique<afv_native::ATCClient>(ev_base, resourcePath, clientName, baseURL);
 
     eventThread = std::make_unique<std::thread>([this] {
         while (!requestLoopExit) {
@@ -77,7 +77,7 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
     isInitialized = true;
 }
 
-afv_native::api::atcClient::atcClient(char *clientName, char *resourcePath) {
+afv_native::api::atcClient::atcClient(char *clientName, char *resourcePath, char *baseURL) {
     atcClient(std::string(clientName), std::string(resourcePath));
 }
 

@@ -46,8 +46,8 @@ namespace afv_native::api {
 
     class atcClient {
       public:
-        AFV_NATIVE_API atcClient(std::string clientName, std::string resourcePath = "");
-        AFV_NATIVE_API atcClient(char *clientName, char *resourcePath);
+        AFV_NATIVE_API atcClient(std::string clientName, std::string resourcePath = "", std::string baseURL = "https://voice1.vatsim.net");
+        AFV_NATIVE_API atcClient(char *clientName, char *resourcePath, char *baseURL);
         AFV_NATIVE_API ~atcClient();
 
         AFV_NATIVE_API bool IsInitialized();

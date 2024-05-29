@@ -2,8 +2,8 @@
 #include "afv-native/atcClient.h"
 #include "afv-native/atcClientWrapper.h"
 
-ATCClientType ATCClient_Create(char *clientName, char *resourcePath) {
-    auto out = new afv_native::api::atcClient(clientName, resourcePath);
+ATCClientType ATCClient_Create(char *clientName, char *resourcePath, char *baseURL) {
+    auto out = new afv_native::api::atcClient(clientName, resourcePath, baseURL);
     return (void *) out;
 }
 
