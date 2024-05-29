@@ -251,13 +251,16 @@ std::vector<afv_native::api::AudioInterface> afv_native::api::atcClient::GetAudi
     return out;
 }
 
-afv_native::api::AudioInterface **afv_native::api::atcClient::GetAudioInputDevicesNative(unsigned int mAudioApi) {
+afv_native::api::AudioInterfaceNative **afv_native::api::atcClient::GetAudioInputDevicesNative(unsigned int mAudioApi) {
     auto data = GetAudioInputDevices(mAudioApi);
-    afv_native::api::AudioInterface *out = new afv_native::api::AudioInterface[data.size()];
-    std::copy(data.begin(), data.end(), out);
-    afv_native::api::AudioInterface **rout = new afv_native::api::AudioInterface *[data.size()];
-    for (int x = 0; x < data.size(); x++) {
-        rout[x] = &out[x];
+    int  x    = 0;
+    afv_native::api::AudioInterfaceNative **rout = new afv_native::api::AudioInterfaceNative *[data.size() + 1];
+    for (const auto &i: data) {
+        auto item       = new afv_native::api::AudioInterfaceNative();
+        item->id        = strdup(i.id.c_str());
+        item->name      = strdup(i.name.c_str());
+        item->isDefault = i.isDefault;
+        rout[x]         = item;
     }
     rout[data.size()] = 0;
     return rout;
@@ -274,13 +277,16 @@ std::vector<afv_native::api::AudioInterface> afv_native::api::atcClient::GetAudi
     return out;
 }
 
-afv_native::api::AudioInterface **afv_native::api::atcClient::GetAudioOutputDevicesNative(unsigned int mAudioApi) {
+afv_native::api::AudioInterfaceNative **afv_native::api::atcClient::GetAudioOutputDevicesNative(unsigned int mAudioApi) {
     auto data = GetAudioOutputDevices(mAudioApi);
-    afv_native::api::AudioInterface *out = new afv_native::api::AudioInterface[data.size()];
-    std::copy(data.begin(), data.end(), out);
-    afv_native::api::AudioInterface **rout = new afv_native::api::AudioInterface *[data.size()];
-    for (int x = 0; x < data.size(); x++) {
-        rout[x] = &out[x];
+    int  x    = 0;
+    afv_native::api::AudioInterfaceNative **rout = new afv_native::api::AudioInterfaceNative *[data.size() + 1];
+    for (const auto &i: data) {
+        auto item       = new afv_native::api::AudioInterfaceNative();
+        item->id        = strdup(i.id.c_str());
+        item->name      = strdup(i.name.c_str());
+        item->isDefault = i.isDefault;
+        rout[x]         = item;
     }
     rout[data.size()] = 0;
     return rout;
@@ -594,8 +600,10 @@ AFV_NATIVE_API void afv_native::api::atcClient::FreeAudioApis(char **apis) {
     delete apis;
 }
 
-AFV_NATIVE_API void afv_native::api::atcClient::FreeAudioDevices(AudioInterface **in) {
-    for (AudioInterface *c = *in; c; c = *++in) {
+AFV_NATIVE_API void afv_native::api::atcClient::FreeAudioDevices(AudioInterfaceNative **in) {
+    for (AudioInterfaceNative *c = *in; c; c = *++in) {
+        free(c->id);
+        free(c->name);
         delete c;
     }
     delete in;

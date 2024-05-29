@@ -38,6 +38,12 @@ namespace afv_native::api {
         bool        isDefault;
     };
 
+    struct AFV_NATIVE_API AudioInterfaceNative {
+        char *id;
+        char *name;
+        bool  isDefault;
+    };
+
     class atcClient {
       public:
         AFV_NATIVE_API atcClient(std::string clientName, std::string resourcePath = "");
@@ -68,7 +74,7 @@ namespace afv_native::api {
         AFV_NATIVE_API void SetAudioInputDevice(std::string inputDevice);
         AFV_NATIVE_API void SetAudioInputDevice(char *inputDevice);
         AFV_NATIVE_API std::vector<AudioInterface> GetAudioInputDevices(unsigned int mAudioApi);
-        AFV_NATIVE_API AudioInterface **GetAudioInputDevicesNative(unsigned int mAudioApi);
+        AFV_NATIVE_API AudioInterfaceNative **GetAudioInputDevicesNative(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioInputDevice(unsigned int mAudioApi);
         AFV_NATIVE_API const char *GetDefaultAudioInputDeviceNative(unsigned int mAudioApi);
 
@@ -77,10 +83,10 @@ namespace afv_native::api {
         AFV_NATIVE_API void SetAudioSpeakersOutputDevice(std::string outputDevice);
         AFV_NATIVE_API void SetAudioSpeakersOutputDevice(char *outputDevice);
         AFV_NATIVE_API std::vector<AudioInterface> GetAudioOutputDevices(unsigned int mAudioApi);
-        AFV_NATIVE_API AudioInterface **GetAudioOutputDevicesNative(unsigned int mAudioApi);
+        AFV_NATIVE_API AudioInterfaceNative **GetAudioOutputDevicesNative(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioOutputDevice(unsigned int mAudioApi);
         AFV_NATIVE_API const char *GetDefaultAudioOutputDeviceNative(unsigned int mAudioApi);
-        AFV_NATIVE_API void FreeAudioDevices(AudioInterface **in);
+        AFV_NATIVE_API void FreeAudioDevices(AudioInterfaceNative **in);
 
         AFV_NATIVE_API double GetInputPeak() const;
         AFV_NATIVE_API double GetInputVu() const;

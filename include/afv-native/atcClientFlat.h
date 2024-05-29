@@ -6,6 +6,28 @@
 
 typedef void *ATCClientType;
 
+/*
+struct AFV_NATIVE_API AudioInterfaceNative {
+        char *id;
+        char *name;
+        bool  isDefault;
+    };
+
+    enum class HardwareType {
+        Schmid_ED_137B,
+        Rockwell_Collins_2100,
+        Garex_220
+    };
+
+    enum class PlaybackChannel {
+        Both,
+        Left,
+        Right
+    };
+
+
+*/
+
 ATCClientType ATCClient_Create(char *clientName, char *resourcePath);
 void          ATCClient_Destroy(ATCClientType handle);
 bool          ATCClient_IsInitialized(ATCClientType handle);
@@ -20,13 +42,13 @@ void         ATCClient_SetAudioApi(ATCClientType handle, unsigned int api);
 const char **ATCClient_GetAudioApis(ATCClientType handle);
 void         ATCClient_FreeAudioApis(ATCClientType handle, char **apis);
 void ATCClient_SetAudioInputDevice(ATCClientType handle, char *inputDevice);
-afv_native::api::AudioInterface **ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi);
+afv_native::api::AudioInterfaceNative **ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi);
 const char *ATCClient_GetDefaultAudioInputDevice(ATCClientType handle, unsigned int mAudioApi);
 void ATCClient_SetAudioOutputDevice(ATCClientType handle, char *outputDevice);
 void ATCClient_SetAudioSpeakersOutputDevice(ATCClientType handle, char *outputDevice);
-afv_native::api::AudioInterface **ATCClient_GetAudioOutputDevices(ATCClientType handle, unsigned int mAudioApi);
+afv_native::api::AudioInterfaceNative **ATCClient_GetAudioOutputDevices(ATCClientType handle, unsigned int mAudioApi);
 const char *ATCClient_GetDefaultAudioOutputDevice(ATCClientType handle, unsigned int mAudioApi);
-void ATCClient_FreeAudioDevices(ATCClientType handle, afv_native::api::AudioInterface **in);
+void ATCClient_FreeAudioDevices(ATCClientType handle, afv_native::api::AudioInterfaceNative **in);
 const double ATCClient_GetInputPeak(ATCClientType handle);
 const double ATCClient_GetInputVu(ATCClientType handle);
 void ATCClient_SetEnableInputFilters(ATCClientType handle, bool enableInputFilters);

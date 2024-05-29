@@ -72,7 +72,7 @@ void ATCClient_SetAudioInputDevice(ATCClientType handle, char *inputDevice) {
     out->SetAudioInputDevice(inputDevice);
 }
 
-afv_native::api::AudioInterface **ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi) {
+afv_native::api::AudioInterfaceNative **ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi) {
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
     return out->GetAudioInputDevicesNative(mAudioApi);
 }
@@ -92,7 +92,7 @@ void ATCClient_SetAudioSpeakersOutputDevice(ATCClientType handle, char *outputDe
     out->SetAudioSpeakersOutputDevice(outputDevice);
 }
 
-afv_native::api::AudioInterface **ATCClient_GetAudioOutputDevices(ATCClientType handle, unsigned int mAudioApi) {
+afv_native::api::AudioInterfaceNative **ATCClient_GetAudioOutputDevices(ATCClientType handle, unsigned int mAudioApi) {
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
     return out->GetAudioOutputDevicesNative(mAudioApi);
 }
@@ -102,7 +102,7 @@ const char *ATCClient_GetDefaultAudioOutputDevice(ATCClientType handle, unsigned
     return out->GetDefaultAudioOutputDeviceNative(mAudioApi);
 }
 
-void ATCClient_FreeAudioDevices(ATCClientType handle, afv_native::api::AudioInterface **in) {
+void ATCClient_FreeAudioDevices(ATCClientType handle, afv_native::api::AudioInterfaceNative **in) {
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
     out->FreeAudioDevices(in);
 }
