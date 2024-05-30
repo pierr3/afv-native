@@ -7,6 +7,7 @@
 typedef void *ATCClientType;
 
 typedef void (*CharStarCallback)(const char *);
+typedef void (*AudioApisCallback)(unsigned int id, const char *);
 typedef void (*AudioInterfaceNativeCallback)(char *id, char *name, bool isDefault);
 
 /*
@@ -44,7 +45,7 @@ extern "C" {
     AFV_NATIVE_API bool ATCClient_Connect(ATCClientType handle);
     AFV_NATIVE_API void ATCClient_Disconnect(ATCClientType handle);
     AFV_NATIVE_API void ATCClient_SetAudioApi(ATCClientType handle, unsigned int api);
-    AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientType handle, CharStarCallback callback);
+    AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientType handle, AudioApisCallback callback);
     AFV_NATIVE_API void ATCClient_FreeAudioApis(ATCClientType handle, char **apis);
     AFV_NATIVE_API void ATCClient_SetAudioInputDevice(ATCClientType handle, char *inputDevice);
     AFV_NATIVE_API void ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi, AudioInterfaceNativeCallback callback);

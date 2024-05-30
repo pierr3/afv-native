@@ -57,14 +57,15 @@ AFV_NATIVE_API void ATCClient_SetAudioApi(ATCClientType handle, unsigned int api
     out->SetAudioApi(api);
 }
 
-AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientType handle, CharStarCallback callback) {
-    afv_native::api::atcClient *out    = (afv_native::api::atcClient *) handle;
-    char                      **values = (char **) out->GetAudioApisNative();
-    char                      **origvalues = values;
-    for (auto *c = *values; c; c = *++values) {
-        callback(c);
+AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientType handle, AudioApisCallback callback) {
+    afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
+    typedef std::map<unsigned int, std::string> MapType;
+    std::vector<std::string>                    v;
+    auto                                        m = out->GetAudioApis();
+    for (MapType::iterator it = m.begin(); it != m.end(); ++it) {
+        v.push_back(it->second);
+        callback(it->first, it->second.c_str());
     }
-    out->FreeAudioApis(origvalues);
 }
 
 AFV_NATIVE_API void ATCClient_FreeAudioApis(ATCClientType handle, char **apis) {
