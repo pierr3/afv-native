@@ -260,7 +260,7 @@ afv_native::api::AudioInterfaceNative **afv_native::api::atcClient::GetAudioInpu
         item->id        = strdup(i.id.c_str());
         item->name      = strdup(i.name.c_str());
         item->isDefault = i.isDefault;
-        rout[x]         = item;
+        rout[x++]       = item;
     }
     rout[data.size()] = 0;
     return rout;
@@ -286,7 +286,7 @@ afv_native::api::AudioInterfaceNative **afv_native::api::atcClient::GetAudioOutp
         item->id        = strdup(i.id.c_str());
         item->name      = strdup(i.name.c_str());
         item->isDefault = i.isDefault;
-        rout[x]         = item;
+        rout[x++]       = item;
     }
     rout[data.size()] = 0;
     return rout;
