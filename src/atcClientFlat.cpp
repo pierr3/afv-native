@@ -63,7 +63,7 @@ AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientType handle, CharStarCallbac
     for (auto *c = *values; c; c = *++values) {
         callback(c);
     }
-    ATCClient_FreeAudioApis(handle, values);
+    out->FreeAudioApis(values);
 }
 
 AFV_NATIVE_API void ATCClient_FreeAudioApis(ATCClientType handle, char **apis) {
@@ -82,7 +82,7 @@ AFV_NATIVE_API void ATCClient_GetAudioInputDevices(ATCClientType handle, unsigne
     for (auto *c = *values; c; c = *++values) {
         callback(c->id, c->name, c->isDefault);
     }
-    ATCClient_FreeAudioDevices(handle, values);
+    out->FreeAudioDevices(values);
 }
 
 AFV_NATIVE_API const char *ATCClient_GetDefaultAudioInputDevice(ATCClientType handle, unsigned int mAudioApi) {
@@ -106,7 +106,7 @@ AFV_NATIVE_API void ATCClient_GetAudioOutputDevices(ATCClientType handle, unsign
     for (auto *c = *values; c; c = *++values) {
         callback(c->id, c->name, c->isDefault);
     }
-    ATCClient_FreeAudioDevices(handle, values);
+    out->FreeAudioDevices(values);
 }
 
 AFV_NATIVE_API const char *ATCClient_GetDefaultAudioOutputDevice(ATCClientType handle, unsigned int mAudioApi) {
