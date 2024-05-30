@@ -31,8 +31,8 @@ struct AFV_NATIVE_API AudioInterfaceNative {
 AFV_NATIVE_API ATCClientType ATCClient_Create(char *clientName, char *resourcePath, char *baseURL);
 AFV_NATIVE_API void ATCClient_Destroy(ATCClientType handle);
 AFV_NATIVE_API bool ATCClient_IsInitialized(ATCClientType handle);
-AFV_NATIVE_API AFV_NATIVE_API void ATCClient_SetCredentials(ATCClientType handle, char *username, char *password);
-AFV_NATIVE_API AFV_NATIVE_API void ATCClient_SetCallsign(ATCClientType handle, char *callsign);
+AFV_NATIVE_API void ATCClient_SetCredentials(ATCClientType handle, char *username, char *password);
+AFV_NATIVE_API void ATCClient_SetCallsign(ATCClientType handle, char *callsign);
 AFV_NATIVE_API void ATCClient_SetClientPosition(ATCClientType handle, double lat, double lon, double amslm, double aglm);
 AFV_NATIVE_API bool ATCClient_IsVoiceConnected(ATCClientType handle);
 AFV_NATIVE_API bool ATCClient_IsAPIConnected(ATCClientType handle);
