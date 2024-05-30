@@ -596,6 +596,7 @@ AFV_NATIVE_API bool afv_native::api::atcClient::GetCrossCoupleAcrossState(unsign
 AFV_NATIVE_API void afv_native::api::atcClient::FreeAudioApis(char **apis) {
     for (char *c = *apis; c; c = *++apis) {
         free(c);
+        *apis = nullptr;
     }
     delete apis;
 }
@@ -605,6 +606,7 @@ AFV_NATIVE_API void afv_native::api::atcClient::FreeAudioDevices(AudioInterfaceN
         free(c->id);
         free(c->name);
         delete c;
+        *in = nullptr;
     }
     delete in;
 }
