@@ -57,9 +57,12 @@ AFV_NATIVE_API void ATCClient_SetAudioApi(ATCClientType handle, unsigned int api
     out->SetAudioApi(api);
 }
 
-AFV_NATIVE_API const char **ATCClient_GetAudioApis(ATCClientType handle) {
-    afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
-    return out->GetAudioApisNative();
+AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientType handle, CharStarCallback callback) {
+    afv_native::api::atcClient *out    = (afv_native::api::atcClient *) handle;
+    auto                        values = out->GetAudioApisNative();
+    for (const char *c = *values; c; c = *++values) {
+        callback(c);
+    }
 }
 
 AFV_NATIVE_API void ATCClient_FreeAudioApis(ATCClientType handle, char **apis) {
