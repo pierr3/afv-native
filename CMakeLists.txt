@@ -37,8 +37,10 @@ if (WIN32)
 	add_definitions(-DMA_NO_WINMM)
 endif()
 
-if (UNIX)
-	add_library(afv_native SHARED)
+if (UNIX AND DEFINED AFV_STATIC)
+add_library(afv_native STATIC)
+elseif(UNIX)
+add_library(afv_native SHARED)
 endif()
 
 if (WIN32)
