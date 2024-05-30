@@ -77,7 +77,7 @@ AFV_NATIVE_API afv_native::api::AudioInterfaceNative **ATCClient_GetAudioInputDe
     return out->GetAudioInputDevicesNative(mAudioApi);
 }
 
-AFV_NATIVE_API AFV_NATIVE_API const char *ATCClient_GetDefaultAudioInputDevice(ATCClientType handle, unsigned int mAudioApi) {
+AFV_NATIVE_API const char *ATCClient_GetDefaultAudioInputDevice(ATCClientType handle, unsigned int mAudioApi) {
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
     return out->GetDefaultAudioInputDeviceNative(mAudioApi);
 }
@@ -257,7 +257,7 @@ AFV_NATIVE_API void ATCClient_SetRadioGain(ATCClientType handle, unsigned int fr
     out->SetRadioGain(freq, gain);
 }
 
-AFV_NATIVE_API AFV_NATIVE_API void ATCClient_SetPlaybackChannelAll(ATCClientType handle, afv_native::PlaybackChannel channel) {
+AFV_NATIVE_API void ATCClient_SetPlaybackChannelAll(ATCClientType handle, afv_native::PlaybackChannel channel) {
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
     out->SetPlaybackChannelAll(channel);
 }
