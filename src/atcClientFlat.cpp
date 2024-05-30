@@ -59,10 +59,11 @@ AFV_NATIVE_API void ATCClient_SetAudioApi(ATCClientType handle, unsigned int api
 
 AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientType handle, CharStarCallback callback) {
     afv_native::api::atcClient *out    = (afv_native::api::atcClient *) handle;
-    auto                        values = out->GetAudioApisNative();
-    for (const char *c = *values; c; c = *++values) {
+    char                      **values = (char **) out->GetAudioApisNative();
+    for (auto *c = *values; c; c = *++values) {
         callback(c);
     }
+    ATCClient_FreeAudioApis(handle, values);
 }
 
 AFV_NATIVE_API void ATCClient_FreeAudioApis(ATCClientType handle, char **apis) {
@@ -75,9 +76,13 @@ AFV_NATIVE_API void ATCClient_SetAudioInputDevice(ATCClientType handle, char *in
     out->SetAudioInputDevice(inputDevice);
 }
 
-AFV_NATIVE_API afv_native::api::AudioInterfaceNative **ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi) {
+AFV_NATIVE_API void ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi, AudioInterfaceNativeCallback callback) {
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
-    return out->GetAudioInputDevicesNative(mAudioApi);
+    auto values = out->GetAudioInputDevicesNative(mAudioApi);
+    for (auto *c = *values; c; c = *++values) {
+        callback(c);
+    }
+    ATCClient_FreeAudioDevices(handle, values);
 }
 
 AFV_NATIVE_API const char *ATCClient_GetDefaultAudioInputDevice(ATCClientType handle, unsigned int mAudioApi) {
@@ -95,9 +100,13 @@ AFV_NATIVE_API void ATCClient_SetAudioSpeakersOutputDevice(ATCClientType handle,
     out->SetAudioSpeakersOutputDevice(outputDevice);
 }
 
-AFV_NATIVE_API afv_native::api::AudioInterfaceNative **ATCClient_GetAudioOutputDevices(ATCClientType handle, unsigned int mAudioApi) {
+AFV_NATIVE_API void ATCClient_GetAudioOutputDevices(ATCClientType handle, unsigned int mAudioApi, AudioInterfaceNativeCallback callback) {
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
-    return out->GetAudioOutputDevicesNative(mAudioApi);
+    auto values = out->GetAudioOutputDevicesNative(mAudioApi);
+    for (auto *c = *values; c; c = *++values) {
+        callback(c);
+    }
+    ATCClient_FreeAudioDevices(handle, values);
 }
 
 AFV_NATIVE_API const char *ATCClient_GetDefaultAudioOutputDevice(ATCClientType handle, unsigned int mAudioApi) {

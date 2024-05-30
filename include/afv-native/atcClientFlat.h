@@ -7,6 +7,7 @@
 typedef void *ATCClientType;
 
 typedef void (*CharStarCallback)(const char *);
+typedef void (*AudioInterfaceNativeCallback)(afv_native::api::AudioInterfaceNative *);
 
 /*
 struct AFV_NATIVE_API AudioInterfaceNative {
@@ -46,11 +47,11 @@ extern "C" {
     AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientType handle, CharStarCallback callback);
     AFV_NATIVE_API void ATCClient_FreeAudioApis(ATCClientType handle, char **apis);
     AFV_NATIVE_API void ATCClient_SetAudioInputDevice(ATCClientType handle, char *inputDevice);
-    AFV_NATIVE_API afv_native::api::AudioInterfaceNative **ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi);
+    AFV_NATIVE_API void ATCClient_GetAudioInputDevices(ATCClientType handle, unsigned int mAudioApi, AudioInterfaceNativeCallback callback);
     AFV_NATIVE_API const char *ATCClient_GetDefaultAudioInputDevice(ATCClientType handle, unsigned int mAudioApi);
     AFV_NATIVE_API void ATCClient_SetAudioOutputDevice(ATCClientType handle, char *outputDevice);
     AFV_NATIVE_API void ATCClient_SetAudioSpeakersOutputDevice(ATCClientType handle, char *outputDevice);
-    AFV_NATIVE_API afv_native::api::AudioInterfaceNative **ATCClient_GetAudioOutputDevices(ATCClientType handle, unsigned int mAudioApi);
+    AFV_NATIVE_API void ATCClient_GetAudioOutputDevices(ATCClientType handle, unsigned int mAudioApi, AudioInterfaceNativeCallback callback);
     AFV_NATIVE_API const char *ATCClient_GetDefaultAudioOutputDevice(ATCClientType handle, unsigned int mAudioApi);
     AFV_NATIVE_API void ATCClient_FreeAudioDevices(ATCClientType handle, afv_native::api::AudioInterfaceNative **in);
     AFV_NATIVE_API const double ATCClient_GetInputPeak(ATCClientType handle);
