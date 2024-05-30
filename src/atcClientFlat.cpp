@@ -80,7 +80,7 @@ AFV_NATIVE_API void ATCClient_GetAudioInputDevices(ATCClientType handle, unsigne
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
     auto values = out->GetAudioInputDevicesNative(mAudioApi);
     for (auto *c = *values; c; c = *++values) {
-        callback(c);
+        callback(c->id, c->name, c->isDefault);
     }
     ATCClient_FreeAudioDevices(handle, values);
 }
@@ -104,7 +104,7 @@ AFV_NATIVE_API void ATCClient_GetAudioOutputDevices(ATCClientType handle, unsign
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
     auto values = out->GetAudioOutputDevicesNative(mAudioApi);
     for (auto *c = *values; c; c = *++values) {
-        callback(c);
+        callback(c->id, c->name, c->isDefault);
     }
     ATCClient_FreeAudioDevices(handle, values);
 }

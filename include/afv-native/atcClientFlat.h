@@ -7,7 +7,7 @@
 typedef void *ATCClientType;
 
 typedef void (*CharStarCallback)(const char *);
-typedef void (*AudioInterfaceNativeCallback)(afv_native::api::AudioInterfaceNative *);
+typedef void (*AudioInterfaceNativeCallback)(char *id, char *name, bool isDefault);
 
 /*
 struct AFV_NATIVE_API AudioInterfaceNative {
