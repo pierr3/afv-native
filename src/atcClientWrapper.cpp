@@ -77,8 +77,8 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
     isInitialized = true;
 }
 
-afv_native::api::atcClient::atcClient(char *clientName, char *resourcePath, char *baseURL) {
-    atcClient(std::string(clientName), std::string(resourcePath));
+afv_native::api::atcClient::atcClient(char *clientName, char *resourcePath, char *baseURL):
+    atcClient(std::string(clientName), std::string(resourcePath), std::string(baseURL)) {
 }
 
 afv_native::api::atcClient::~atcClient() {
@@ -506,7 +506,7 @@ void afv_native::api::atcClient::RaiseClientEvent(std::function<void(afv_native:
 
 void afv_native::api::atcClient::RaiseClientEvent(void *handle, void (*callback)(afv_native::ClientEventType, void *, void *)) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->ClientEventCallback.addCallback(handle, callback);
+    client->ClientEventCallback.addCallback(handle, std::function(callback));
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetRadioGainAll(float gain) {

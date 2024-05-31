@@ -45,7 +45,7 @@ if (WIN32)
 	add_library(afv_native SHARED)
 endif()
 
-
+target_compile_options(afv_native PUBLIC "-g")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 
