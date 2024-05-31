@@ -35,7 +35,7 @@
 #define AFV_NATIVE_EVENT_H
 
 namespace afv_native {
-    enum class ClientEventType {
+    enum ClientEventType {
         APIServerConnected,
         APIServerDisconnected,
         APIServerError, // data is a pointer to the APISessionError
@@ -47,8 +47,8 @@ namespace afv_native {
         PttClosed,
         StationAliasesUpdated,
         StationTransceiversUpdated,
-        FrequencyRxBegin,      // data is a pointer to an unsigned int containing the frequency
-        FrequencyRxEnd,    // data is a pointer to an unsigned int containing the frequency
+        FrequencyRxBegin, // data is a pointer to an unsigned int containing the frequency
+        FrequencyRxEnd, // data is a pointer to an unsigned int containing the frequency
         StationRxBegin, // data is a pointer to an unsigned int containing the frequency, data2 is pointer to char* containing callsign
         StationRxEnd, // data is a pointer to an unsigned int containing the frequency, data2 is pointer to char* containing callsign
         AudioError,
@@ -70,7 +70,7 @@ namespace afv_native {
 
         enum class APISessionError {
             NoError = 0,
-            ConnectionError,                // local socket or curl error - see data returned.
+            ConnectionError, // local socket or curl error - see data returned.
             BadRequestOrClientIncompatible, // APIServer 400
             RejectedCredentials,            // APIServer 403
             BadPassword,                    // APIServer 401

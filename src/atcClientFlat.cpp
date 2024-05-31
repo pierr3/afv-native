@@ -330,5 +330,5 @@ AFV_NATIVE_API void ATCClient_SetHardware(ATCClientType handle, afv_native::Hard
 
 AFV_NATIVE_API void ATCClient_RaiseClientEvent(ATCClientType handle, void (*callback)(afv_native::ClientEventType, void *, void *)) {
     afv_native::api::atcClient *out = (afv_native::api::atcClient *) handle;
-    out->RaiseClientEvent(callback);
+    out->RaiseClientEvent(handle, callback);
 }

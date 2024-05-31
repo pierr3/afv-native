@@ -169,7 +169,7 @@ namespace afv_native::api {
         AFV_NATIVE_API void SetHardware(afv_native::HardwareType hardware);
 
         AFV_NATIVE_API void RaiseClientEvent(std::function<void(afv_native::ClientEventType, void *, void *)> callback);
-        AFV_NATIVE_API void RaiseClientEvent(void (*callback)(afv_native::ClientEventType, void *, void *));
+        AFV_NATIVE_API void RaiseClientEvent(void* handle, void (*callback)(afv_native::ClientEventType, void *, void *));
 
         //
         // Deprecated functions

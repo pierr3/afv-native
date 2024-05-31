@@ -460,7 +460,8 @@ void ATCClient::aliasUpdateCallback() {
 }
 
 void ATCClient::stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs) {
-    ClientEventCallback.invokeAll(ClientEventType::VccsReceived, &stationName, &vccs);
+    ClientEventCallback.invokeAll(ClientEventType::VccsReceived,
+                                  (void *) stationName.c_str(), &vccs);
 }
 
 void ATCClient::stationSearchCallback(bool found, std::pair<std::string, unsigned int> data) {
@@ -489,7 +490,8 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
         mATCRadioStack->stationTransceiverUpdateCallback(stationName, transceivers);
     }
 
-    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, &stationName, nullptr);
+    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated,
+                                  (void *) stationName.c_str(), nullptr);
 }
 
 std::map<std::string, std::vector<afv::dto::StationTransceiver>> ATCClient::getStationTransceivers() const {
@@ -617,7 +619,8 @@ void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName, int er
         "use, etc)",
         deviceName.c_str());
 
-    ClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError, &deviceName, nullptr);
+    ClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError,
+                                  (void *) deviceName.c_str(), nullptr);
 }
 
 void afv_native::ATCClient::setPlaybackChannel(unsigned int freq, PlaybackChannel channel) {

@@ -462,9 +462,9 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
             if (hasBeenDeleted) {
                 // There is a risk that the pointer to lastTransmitCallsign might already change
                 // or be invalid by the event handler receives it, needs to be checked in real conditions
-                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd,
-                                               &trans.Frequency,
-                                               &mRadioState[trans.Frequency].lastTransmitCallsign);
+                ClientEventCallback->invokeAll(
+                    ClientEventType::StationRxEnd, &trans.Frequency,
+                    (void *) mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
                 LOG("ATCRadioSimulation", "StationRxEnd event: %i: %s", trans.Frequency,
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
             }
@@ -475,9 +475,9 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
 
                 // Need to emit that we have a new pilot that started transmitting
-                ClientEventCallback->invokeAll(ClientEventType::StationRxBegin,
-                                               &trans.Frequency,
-                                               &mRadioState[trans.Frequency].lastTransmitCallsign);
+                ClientEventCallback->invokeAll(
+                    ClientEventType::StationRxBegin, &trans.Frequency,
+                    (void *) mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
 
                 mRadioState[trans.Frequency].liveTransmittingCallsigns.emplace_back(pkt.Callsign);
             }
@@ -723,7 +723,8 @@ void afv_native::afv::ATCRadioSimulation::setRx(unsigned int freq, bool rx) {
         ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &freq, nullptr);
         LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", freq);
         for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
-            ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq, &callsign);
+            ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq,
+                                           (void *) callsign.c_str());
             LOG("ATCRadioSimulation", "SetRx false StationRxEnd event: %i: %s", freq,
                 callsign.c_str());
         }
@@ -759,7 +760,7 @@ void afv_native::afv::ATCRadioSimulation::setCrossCoupleAcross(unsigned int freq
         LOG("ATCRadioSimulation", "setXcRadio failed, frequency inactive: %i", freq);
         return;
     }
-    mRadioState[freq].xc = crossCoupleAcross;
+    mRadioState[freq].xc                = crossCoupleAcross;
     mRadioState[freq].crossCoupleAcross = crossCoupleAcross;
     if (crossCoupleAcross) {
         mRadioState[freq].xc = false;
@@ -956,7 +957,8 @@ void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
     ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &freq, nullptr);
     LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", freq);
     for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
-        ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq, &callsign);
+        ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq,
+                                       (void *) callsign.c_str());
         LOG("ATCRadioSimulation", "removeFrequency StationRxEnd event: %i: %s", freq,
             callsign.c_str());
     }
