@@ -980,6 +980,6 @@ void afv_native::afv::ATCRadioSimulation::interleave(audio::SampleType *leftChan
     }
 }
 std::map<unsigned int, AtcRadioState> afv_native::afv::ATCRadioSimulation::getRadioState() {
-    std::lock_guard<std::mutex> lock(mRadioStateLock);
+    // std::lock_guard<std::mutex> lock(mRadioStateLock);
     return mRadioState;
 }

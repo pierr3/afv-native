@@ -431,7 +431,8 @@ AFV_NATIVE_API void afv_native::api::atcClient::reset() {
 AFV_NATIVE_API std::map<unsigned int, afv_native::SimpleAtcRadioState> afv_native::api::atcClient::getRadioState() {
     std::lock_guard<std::mutex>                             lock(afvMutex);
     std::map<unsigned int, afv_native::SimpleAtcRadioState> state;
-    for (const auto &[freq, radio]: client->getRadioState()) {
+    const auto afvRadioState = client->getRadioState();
+    for (const auto &[freq, radio]: afvRadioState) {
         afv_native::SimpleAtcRadioState radioState;
         radioState.tx                   = radio.tx;
         radioState.rx                   = radio.rx;
