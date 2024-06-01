@@ -194,7 +194,8 @@ void ATCClient::startAudio() {
             mAudioSpeakerDeviceName.c_str());
         if (!mSpeakerDevice) {
             LOG("afv::ATCClient", "Could not initiate speaker audio context.");
-            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
+            const char *error = "Could not initiate speaker audio context.";
+            ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         } else {
             mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
             LOG("afv::ATCClient", "Speaker Device %s notification setup",
@@ -210,8 +211,9 @@ void ATCClient::startAudio() {
 
     if (!mSpeakerDevice->openOutput()) {
         LOG("afv::ATCClient", "Unable to open Speaker audio device.");
+        const char *error = "Unable to open Speaker audio device.";
         stopAudio();
-        ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
     }
     LOG("afv::ATCClient", "Speaker Device %s output opened",
         mAudioSpeakerDeviceName.c_str());
@@ -223,7 +225,8 @@ void ATCClient::startAudio() {
             mAudioOutputDeviceName.c_str());
         if (!mAudioDevice) {
             LOG("afv::ATCClient", "Could not initiate headset audio context.");
-            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
+            const char *error = "Could not initiate headset audio context.";
+            ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         } else {
             mAudioDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
             LOG("afv::ATCClient", "Headset Device %s notification setup",
@@ -247,8 +250,9 @@ void ATCClient::startAudio() {
         }
     } else {
         LOG("afv::ATCClient", "Unable to open Headset output device.");
+        const char *error = "Unable to open Speaker audio device.";
         stopAudio();
-        ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
     }
 }
 

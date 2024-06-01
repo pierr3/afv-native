@@ -35,7 +35,7 @@
 #define AFV_NATIVE_EVENT_H
 
 namespace afv_native {
-    enum ClientEventType {
+    enum class ClientEventType {
         APIServerConnected,
         APIServerDisconnected,
         APIServerError, // data is a pointer to the APISessionError
