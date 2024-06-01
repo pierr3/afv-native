@@ -250,7 +250,7 @@ void ATCClient::startAudio() {
         }
     } else {
         LOG("afv::ATCClient", "Unable to open Headset output device.");
-        const char *error = "Unable to open Speaker audio device.";
+        const char *error = "Unable to open Headset audio device.";
         stopAudio();
         ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
     }
