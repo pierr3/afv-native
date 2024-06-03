@@ -4,6 +4,16 @@
 #include "afv-native/atcClient.h"
 #include "afv-native/atcClientWrapper.h"
 
+typedef struct StationTransceiverFlat {
+    char  *ID;
+    char  *Name;
+    double LatDeg;
+    double LonDeg;
+    double HeightMslM;
+    double HeightAglM;
+
+} StationTransceiverFlat_t;
+
 typedef struct ATCClientHandle_ *ATCClientHandle;
 
 typedef void (*CharStarCallback)(const char *);
@@ -97,6 +107,7 @@ extern "C" {
     AFV_NATIVE_API void ATCClient_FreeString(ATCClientHandle handle, char *in);
     AFV_NATIVE_API void ATCClient_SetHardware(ATCClientHandle handle, afv_native::HardwareType hardware);
     AFV_NATIVE_API void ATCClient_RaiseClientEvent(ATCClientHandle handle, void (*callback)(afv_native::ClientEventType, void *, void *));
+    AFV_NATIVE_API void ATCClient_SetTransceivers(ATCClientHandle handle, unsigned int freq, int count, StationTransceiverFlat_t transceivers[]);
 }
 
 #endif

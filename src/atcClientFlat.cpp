@@ -285,3 +285,19 @@ AFV_NATIVE_API void ATCClient_SetHardware(ATCClientHandle handle, afv_native::Ha
 AFV_NATIVE_API void ATCClient_RaiseClientEvent(ATCClientHandle handle, void (*callback)(afv_native::ClientEventType, void *, void *)) {
     handle->impl->RaiseClientEvent(handle, callback);
 }
+
+AFV_NATIVE_API void ATCClient_SetTransceivers(ATCClientHandle handle, unsigned int freq, int count, StationTransceiverFlat_t transceivers[]) {
+    auto trans = new std::vector<afv_native::afv::dto::StationTransceiver>;
+    for (int j = 0; j < count; j++) {
+        afv_native::afv::dto::StationTransceiver t;
+        t.ID         = std::string(transceivers[j].ID);
+        t.Name       = std::string(transceivers[j].Name);
+        t.LatDeg     = transceivers[j].LatDeg;
+        t.LonDeg     = transceivers[j].LonDeg;
+        t.HeightMslM = transceivers[j].HeightMslM;
+        t.HeightAglM = transceivers[j].HeightAglM;
+        trans->push_back(t);
+    }
+    handle->impl->SetManualTransceivers(freq, *trans);
+    delete trans;
+}

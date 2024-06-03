@@ -1,6 +1,7 @@
 #include "afv-native/atcClientWrapper.h"
 #include "afv-native/Log.h"
 #include "afv-native/afv/ATCRadioSimulation.h"
+#include "afv-native/afv/dto/StationTransceiver.h"
 #include "afv-native/atcClient.h"
 #include "afv-native/hardwareType.h"
 #include <algorithm>
@@ -622,4 +623,9 @@ AFV_NATIVE_API void afv_native::api::atcClient::FreeRadioState(afv_native::Simpl
         delete c;
     }
     delete state;
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::SetManualTransceivers(unsigned int freq, std::vector<afv_native::afv::dto::StationTransceiver> transceivers) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setManualTransceivers(freq, transceivers);
 }

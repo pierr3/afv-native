@@ -597,6 +597,13 @@ void ATCClient::setHardware(HardwareType hardware) {
     this->activeHardware = hardware;
 }
 
+void ATCClient::setManualTransceivers(unsigned int freq, std::vector<afv::dto::StationTransceiver> transceivers) {
+    if (transceivers.size() > 0) {
+        mATCRadioStack->setTransceivers(freq, transceivers);
+        queueTransceiverUpdate();
+    }
+}
+
 void ATCClient::linkTransceivers(std::string callsign, unsigned int freq) {
     auto transceivers = getStationTransceivers();
     if (transceivers[callsign].size() > 0) {
