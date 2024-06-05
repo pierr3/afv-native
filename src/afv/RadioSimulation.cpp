@@ -137,8 +137,8 @@ void RadioSimulation::processCompressedFrame(std::vector<unsigned char> compress
             audioOutDto.Transceivers.emplace_back(mTxRadio);
         }
         audioOutDto.SequenceCounter = std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
-        audioOutDto.Callsign        = mCallsign;
-        audioOutDto.Audio           = std::move(compressedData);
+        audioOutDto.Callsign = mCallsign;
+        audioOutDto.Audio    = std::move(compressedData);
         mChannel->sendDto(audioOutDto);
     }
 }
@@ -222,7 +222,8 @@ bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[au
         if (mUseStream) {
             // then include this stream.
             try {
-                mix_buffers(state->mChannelBuffer, sampleCache.at(srcPair.second.source.get()),
+                mix_buffers(state->mChannelBuffer,
+                            sampleCache.at(srcPair.second.source.get()),
                             voiceGain * mRadioState[rxIter].Gain);
                 concurrentStreams++;
             } catch (const std::out_of_range &) {
@@ -243,20 +244,26 @@ bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[au
                 }
             }
 
-            mRadioState[rxIter].vhfFilter.transformFrame(state->mChannelBuffer, state->mChannelBuffer);
-            mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer, state->mChannelBuffer);
+            mRadioState[rxIter].vhfFilter.transformFrame(state->mChannelBuffer,
+                                                         state->mChannelBuffer);
+            mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer,
+                                                                      state->mChannelBuffer);
 
             set_radio_effects(rxIter);
-            if (!mix_effect(mRadioState[rxIter].Crackle, crackleGain * mRadioState[rxIter].Gain, state)) {
+            if (!mix_effect(mRadioState[rxIter].Crackle,
+                            crackleGain * mRadioState[rxIter].Gain, state)) {
                 mRadioState[rxIter].Crackle.reset();
             }
-            if (!mix_effect(mRadioState[rxIter].HfWhiteNoise, hfGain * mRadioState[rxIter].Gain, state)) {
+            if (!mix_effect(mRadioState[rxIter].HfWhiteNoise,
+                            hfGain * mRadioState[rxIter].Gain, state)) {
                 mRadioState[rxIter].HfWhiteNoise.reset();
             }
-            if (!mix_effect(mRadioState[rxIter].VhfWhiteNoise, vhfGain * mRadioState[rxIter].Gain, state)) {
+            if (!mix_effect(mRadioState[rxIter].VhfWhiteNoise,
+                            vhfGain * mRadioState[rxIter].Gain, state)) {
                 mRadioState[rxIter].VhfWhiteNoise.reset();
             }
-            if (!mix_effect(mRadioState[rxIter].AcBus, acBusGain * mRadioState[rxIter].Gain, state)) {
+            if (!mix_effect(mRadioState[rxIter].AcBus,
+                            acBusGain * mRadioState[rxIter].Gain, state)) {
                 mRadioState[rxIter].AcBus.reset();
             }
         } // bypass effects
@@ -264,7 +271,8 @@ bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[au
             if (!mRadioState[rxIter].BlockTone) {
                 mRadioState[rxIter].BlockTone = std::make_shared<audio::SineToneSource>(fxBlockToneFreq);
             }
-            if (!mix_effect(mRadioState[rxIter].BlockTone, fxBlockToneGain * mRadioState[rxIter].Gain, state)) {
+            if (!mix_effect(mRadioState[rxIter].BlockTone,
+                            fxBlockToneGain * mRadioState[rxIter].Gain, state)) {
                 mRadioState[rxIter].BlockTone.reset();
             }
         } else {
@@ -275,7 +283,8 @@ bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[au
     } else {
         resetRadioFx(rxIter, true);
         if (mRadioState[rxIter].mLastRxCount > 0) {
-            mRadioState[rxIter].Click = std::make_shared<audio::RecordedSampleSource>(mResources->mClick, false);
+            mRadioState[rxIter].Click =
+                std::make_shared<audio::RecordedSampleSource>(mResources->mClick, false);
         }
     }
     mRadioState[rxIter].mLastRxCount = concurrentStreams;
@@ -309,7 +318,8 @@ audio::SourceStatus RadioSimulation::getAudioFrame(audio::SampleType *bufferOut,
     for (auto &src: (onHeadset ? mHeadsetIncomingStreams : mSpeakerIncomingStreams)) {
         if (src.second.source && src.second.source->isActive() &&
             (sampleCache.find(src.second.source.get()) == sampleCache.end())) {
-            const auto rv = src.second.source->getAudioFrame(sampleCache[src.second.source.get()]);
+            const auto rv =
+                src.second.source->getAudioFrame(sampleCache[src.second.source.get()]);
             if (rv != audio::SourceStatus::OK) {
                 sampleCache.erase(src.second.source.get());
             }
@@ -340,16 +350,20 @@ audio::SourceStatus RadioSimulation::getAudioFrame(audio::SampleType *bufferOut,
 
 void RadioSimulation::set_radio_effects(size_t rxIter) {
     if (!mRadioState[rxIter].VhfWhiteNoise) {
-        mRadioState[rxIter].VhfWhiteNoise = std::make_shared<audio::RecordedSampleSource>(mResources->mVhfWhiteNoise, true);
+        mRadioState[rxIter].VhfWhiteNoise =
+            std::make_shared<audio::RecordedSampleSource>(mResources->mVhfWhiteNoise, true);
     }
     if (!mRadioState[rxIter].HfWhiteNoise) {
-        mRadioState[rxIter].HfWhiteNoise = std::make_shared<audio::RecordedSampleSource>(mResources->mHfWhiteNoise, true);
+        mRadioState[rxIter].HfWhiteNoise =
+            std::make_shared<audio::RecordedSampleSource>(mResources->mHfWhiteNoise, true);
     }
     if (!mRadioState[rxIter].Crackle) {
-        mRadioState[rxIter].Crackle = std::make_shared<audio::RecordedSampleSource>(mResources->mCrackle, true);
+        mRadioState[rxIter].Crackle =
+            std::make_shared<audio::RecordedSampleSource>(mResources->mCrackle, true);
     }
     if (!mRadioState[rxIter].AcBus) {
-        mRadioState[rxIter].AcBus = std::make_shared<audio::RecordedSampleSource>(mResources->mAcBus, true);
+        mRadioState[rxIter].AcBus =
+            std::make_shared<audio::RecordedSampleSource>(mResources->mAcBus, true);
     }
 }
 
@@ -433,7 +447,7 @@ void RadioSimulation::instDtoHandler(const std::string &dtoName, const unsigned 
     if (dtoName == "AR") {
         try {
             dto::AudioRxOnTransceivers audioIn;
-            auto unpacker   = msgpack::unpack(reinterpret_cast<const char *>(bufIn), bufLen);
+            auto unpacker = msgpack::unpack(reinterpret_cast<const char *>(bufIn), bufLen);
             auto msgpackObj = unpacker.get();
             msgpackObj.convert(audioIn);
             rxVoicePacket(audioIn);

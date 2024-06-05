@@ -54,5 +54,5 @@ namespace afv_native { namespace afv { namespace dto {
     void to_json(nlohmann::json &j, const VoiceServerConnectionData &vsd);
 
     void from_json(const nlohmann::json &j, VoiceServerConnectionData &vsd);
-}}}    // namespace afv_native::afv::dto
+}}} // namespace afv_native::afv::dto
 #endif // AFV_NATIVE_VOICESERVERCONNECTIONDATA_H

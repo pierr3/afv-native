@@ -207,8 +207,8 @@ void ATISClient::sendTransceiverUpdate() {
     /* ok - magic!
      *
      * so, in order to ensure that we flip the radio states to the CORRECT ONE
-     * when the callback fires, we copy capture the update message itself (which is
-     * all value copies) and use that to do the internal state update.
+     * when the callback fires, we copy capture the update message itself (which
+     * is all value copies) and use that to do the internal state update.
      */
     mVoiceSession.postTransceiverUpdate(transceiverDto, [this, transceiverDto](http::Request *r, bool success) {
         if (success && r->getStatusCode() == 200) {
@@ -296,8 +296,8 @@ void ATISClient::sendCachedFrame() {
         dto::AudioTxOnTransceivers audioOutDto;
         { audioOutDto.Transceivers.emplace_back(0); }
         audioOutDto.SequenceCounter = std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
-        audioOutDto.Callsign        = mCallsign;
-        audioOutDto.Audio           = mStoredData[cacheNum];
+        audioOutDto.Callsign = mCallsign;
+        audioOutDto.Audio    = mStoredData[cacheNum];
         cacheNum++;
         if (cacheNum > mStoredData.size()) {
             cacheNum = 0;
@@ -338,8 +338,8 @@ void ATISClient::processCompressedFrame(std::vector<unsigned char> compressedDat
         dto::AudioTxOnTransceivers audioOutDto;
         { audioOutDto.Transceivers.emplace_back(0); }
         audioOutDto.SequenceCounter = std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
-        audioOutDto.Callsign        = mCallsign;
-        audioOutDto.Audio           = std::move(compressedData);
+        audioOutDto.Callsign = mCallsign;
+        audioOutDto.Audio    = std::move(compressedData);
 
         mChannel->sendDto(audioOutDto);
     }

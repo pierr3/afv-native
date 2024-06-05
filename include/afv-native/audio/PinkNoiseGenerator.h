@@ -40,14 +40,13 @@
 namespace afv_native { namespace audio {
     /** PinkNoiseGenerator generates pink noise.
      *
-     * The Pink Noise is based on a filter by Paul Kellett published on musicdsp.org.  It incorporates the downscale
-     * "fix" from NAudio.
+     * The Pink Noise is based on a filter by Paul Kellett published on
+     * musicdsp.org.  It incorporates the downscale "fix" from NAudio.
      */
     class PinkNoiseGenerator: public ISampleSource {
       public:
         explicit PinkNoiseGenerator(float gain = 1.0):
-            white(), mGain(gain),
-            mB {0.0, 0.0, 0.0, 0.0, 0.0, 0.0} {
+            white(), mGain(gain), mB {0.0, 0.0, 0.0, 0.0, 0.0, 0.0} {
         }
 
         inline SampleType iterateOneSample() {
@@ -66,9 +65,9 @@ namespace afv_native { namespace audio {
 
         SourceStatus getAudioFrame(SampleType *bufferOut) override {
             size_t ctrLeft = frameSizeSamples;
-                while (ctrLeft--) {
-                    *(bufferOut++) = iterateOneSample();
-                }
+            while (ctrLeft--) {
+                *(bufferOut++) = iterateOneSample();
+            }
             return SourceStatus::OK;
         }
 

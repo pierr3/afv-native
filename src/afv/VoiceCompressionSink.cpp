@@ -80,8 +80,8 @@ void VoiceCompressionSink::reset() {
 
 void VoiceCompressionSink::putAudioFrame(const audio::SampleType *bufferIn) {
     vector<unsigned char> outBuffer(audio::targetOutputFrameSizeBytes);
-    auto                  enc_len =
-        opus_encode_float(mEncoder, bufferIn, audio::frameSizeSamples, outBuffer.data(), outBuffer.size());
+    auto enc_len = opus_encode_float(mEncoder, bufferIn, audio::frameSizeSamples,
+                                     outBuffer.data(), outBuffer.size());
     if (enc_len < 0) {
         LOG("VoiceCompressionSink", "error encoding frame: %s", opus_strerror(enc_len));
         return;

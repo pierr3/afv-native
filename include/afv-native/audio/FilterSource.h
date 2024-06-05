@@ -61,8 +61,8 @@ namespace afv_native { namespace audio {
         bool getBypass() const;
 
       protected:
-        bool                           mBypass;
-        std::shared_ptr<ISampleSource> mUpstream;
+        bool                                  mBypass;
+        std::shared_ptr<ISampleSource>        mUpstream;
         std::vector<std::unique_ptr<IFilter>> mFilters;
     };
 }} // namespace afv_native::audio

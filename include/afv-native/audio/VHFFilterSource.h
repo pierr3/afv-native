@@ -69,9 +69,9 @@ namespace afv_native { namespace audio {
 
         chunkware_simple::SimpleComp  *compressor;
         chunkware_simple::SimpleLimit *limiter;
-        float compressorPostGain;
-        std::vector<BiQuadFilter> mFilters;
-        HardwareType hardware = HardwareType::Schmid_ED_137B;
+        float                          compressorPostGain;
+        std::vector<BiQuadFilter>      mFilters;
+        HardwareType                   hardware = HardwareType::Schmid_ED_137B;
     };
 }} // namespace afv_native::audio
 

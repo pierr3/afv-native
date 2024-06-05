@@ -41,7 +41,7 @@ namespace afv_native { namespace audio {
     class SourceFrameSizeAdjuster: public ISampleSource {
       protected:
         std::shared_ptr<ISampleSource> mOriginSource;
-        const unsigned int mDestinationFrameSize;
+        const unsigned int             mDestinationFrameSize;
 
         size_t      mSourceBufferOffset;
         SampleType *mSourceBuffer;

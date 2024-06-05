@@ -4,21 +4,19 @@
 #include <afv-native/audio/ISampleSource.h>
 #include <compressor/compressor.h>
 
-namespace afv_native::audio
-{
-    class SimpleCompressorEffect
-    {
-    public:
+namespace afv_native::audio {
+    class SimpleCompressorEffect {
+      public:
         explicit SimpleCompressorEffect();
         virtual ~SimpleCompressorEffect();
 
         void transformFrame(SampleType *bufferOut, SampleType const bufferIn[]);
 
-    private:
+      private:
         sf_compressor_state_st m_simpleCompressor;
-        sf_snd m_inputSound;
-        sf_snd m_outputSound;
+        sf_snd                 m_inputSound;
+        sf_snd                 m_outputSound;
     };
-}
+} // namespace afv_native::audio
 
 #endif // SIMPLECOMPRESSOREFFECT_H

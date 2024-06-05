@@ -69,7 +69,7 @@ static void setKey(unsigned char *key, const string &base64_key, size_t outputSi
         key_copy = base64_key;
     }
 
-    const size_t               key_buffer_len = Base64DecodeLen(key_copy.length());
+    const size_t key_buffer_len = Base64DecodeLen(key_copy.length());
     std::vector<unsigned char> key_buffer(key_buffer_len);
     size_t final_len = Base64Decode(key_copy, key_buffer.data(), key_buffer_len);
     ::memcpy(key, key_buffer.data(), min(final_len, outputSize));

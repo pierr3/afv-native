@@ -53,24 +53,24 @@ namespace afv_native { namespace audio {
      */
     class AudioDevice {
       protected:
-        std::shared_ptr<ISampleSink> mSink;
-        std::mutex                   mSinkPtrLock;
+        std::shared_ptr<ISampleSink>   mSink;
+        std::mutex                     mSinkPtrLock;
         std::shared_ptr<ISampleSource> mSource;
-        std::mutex mSourcePtrLock;
+        std::mutex                     mSourcePtrLock;
         std::function<void(std::string, int)> mNotificationFunc = std::function<void(std::string, int)>();
         std::mutex mNotificationFuncLock;
 
-        /** Ensures data within the abstract is zeroed. Should always be called via
-         * the initialiser chain of any subclasses.
+        /** Ensures data within the abstract is zeroed. Should always be called
+         * via the initialiser chain of any subclasses.
          */
         AudioDevice();
 
       public:
-        /** Abstract API ID type - it is up to the implementing driver to ensure that
-         * the mapping is uniform in any given session. Persistent mapping of values
-         * is not guaranteed between sound backends or successive executions of the
-         * code.  A uniform method for determining API ID should be provided by the
-         * driver.
+        /** Abstract API ID type - it is up to the implementing driver to ensure
+         * that the mapping is uniform in any given session. Persistent mapping
+         * of values is not guaranteed between sound backends or successive
+         * executions of the code.  A uniform method for determining API ID
+         * should be provided by the driver.
          */
         typedef unsigned int Api;
 
@@ -87,9 +87,9 @@ namespace afv_native { namespace audio {
 
         virtual ~AudioDevice();
 
-        /** open() should open and start the playback and capture of the nominated audio
-         * streams that this device is bound to. If the streams are already playing,
-         * then it should return success.
+        /** open() should open and start the playback and capture of the
+         * nominated audio streams that this device is bound to. If the streams
+         * are already playing, then it should return success.
          *
          * @return true if open() was successful, false otherwise.
          */
@@ -105,8 +105,8 @@ namespace afv_native { namespace audio {
          *
          * Any existing source will have it's pointer released.
          *
-         * This can be set to the invalid/empty pointer to disable the source, in which
-         * case the device should output silence.
+         * This can be set to the invalid/empty pointer to disable the source,
+         * in which case the device should output silence.
          *
          * @param newSrc a shared_ptr to the new source.
          */

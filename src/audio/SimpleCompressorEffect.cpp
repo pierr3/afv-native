@@ -2,30 +2,25 @@
 
 using namespace afv_native::audio;
 
-SimpleCompressorEffect::SimpleCompressorEffect()
-{
+SimpleCompressorEffect::SimpleCompressorEffect() {
     sf_defaultcomp(&m_simpleCompressor, sampleRateHz);
 }
 
-SimpleCompressorEffect::~SimpleCompressorEffect()
-{
-
+SimpleCompressorEffect::~SimpleCompressorEffect() {
 }
 
-void SimpleCompressorEffect::transformFrame(SampleType *bufferOut, const SampleType bufferIn[])
-{
+void SimpleCompressorEffect::transformFrame(SampleType *bufferOut, const SampleType bufferIn[]) {
     sf_snd output_snd = sf_snd_new(frameSizeSamples, sampleRateHz, true);
-    sf_snd input_snd = sf_snd_new(frameSizeSamples, sampleRateHz, true);
+    sf_snd input_snd  = sf_snd_new(frameSizeSamples, sampleRateHz, true);
 
-    for(int i = 0; i < frameSizeSamples; i++)
-    {
+    for (int i = 0; i < frameSizeSamples; i++) {
         input_snd->samples[i].L = bufferIn[i];
     }
 
-    sf_compressor_process(&m_simpleCompressor, frameSizeSamples, input_snd->samples, output_snd->samples);
+    sf_compressor_process(&m_simpleCompressor, frameSizeSamples, input_snd->samples,
+                          output_snd->samples);
 
-    for(int i = 0; i < frameSizeSamples; i++)
-    {
+    for (int i = 0; i < frameSizeSamples; i++) {
         bufferOut[i] = static_cast<SampleType>(output_snd->samples[i].L);
     }
 

@@ -80,7 +80,7 @@ void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio) {
     }
 
     auto currentTime = util::monotime_get();
-    if((currentTime - mLastActive) > 500) {
+    if ((currentTime - mLastActive) > 500) {
         flush();
     }
 
@@ -94,7 +94,7 @@ void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio) {
 
         jitter_buffer_put(mJitterBuffer, &newPacket);
         mSilentFrames = 0;
-        mLastActive = currentTime;
+        mLastActive   = currentTime;
     }
     mIsActive = true;
 }
@@ -129,8 +129,9 @@ SourceStatus RemoteVoiceSource::getAudioFrame(SampleType *bufferOut) {
                 break;
             case JITTER_BUFFER_OK:
                 mCurrentFrame = tsOut;
-                opus_res = opus_decode_float(mDecoder, reinterpret_cast<unsigned char *>(pktOut.data),
-                                             pktOut.len, bufferOut, frameSizeSamples, false);
+                opus_res      = opus_decode_float(
+                    mDecoder, reinterpret_cast<unsigned char *>(pktOut.data),
+                    pktOut.len, bufferOut, frameSizeSamples, false);
                 ::free(pktOut.data);
                 break;
             default:

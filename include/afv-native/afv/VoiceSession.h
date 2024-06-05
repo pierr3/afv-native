@@ -107,20 +107,20 @@ namespace afv_native { namespace afv {
 
         VoiceSessionError mLastError;
 
-        /** setupSession use the information in the PostCallsignResponse DTO to start up
-         * the UDP session and tasks
+        /** setupSession use the information in the PostCallsignResponse DTO to
+         * start up the UDP session and tasks
          *
          * @param cresp the DTO detailing the session encryption keys, endpoint
          *      address, and other details.
          * @returns true if successful, false if the session couldn't be set up
          *
-         * @note failures are usually caused by Network Socket problems - most other
-         *     causes can't fail until their callback fires.
+         * @note failures are usually caused by Network Socket problems - most
+         * other causes can't fail until their callback fires.
          */
         bool setupSession(const dto::PostCallsignResponse &cresp);
 
-        /** failSession tears down the voice session and it's UDP channel due to failure,
-         * timeout or explicit disconnect.
+        /** failSession tears down the voice session and it's UDP channel due to
+         * failure, timeout or explicit disconnect.
          */
         void failSession();
 

@@ -14,7 +14,7 @@
 #include <string>
 
 #ifdef _WIN32
-#include "windows.h"
+    #include "windows.h"
 #endif
 
 namespace afv_native { namespace audio {
@@ -38,8 +38,8 @@ namespace afv_native { namespace audio {
         static void maOutputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount);
         static void maInputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount);
         static void maNotificationCallback(const ma_device_notification *pNotification);
-        int outputCallback(void *outputBuffer, unsigned int nFrames);
-        int inputCallback(const void *inputBuffer, unsigned int nFrames);
+        int  outputCallback(void *outputBuffer, unsigned int nFrames);
+        int  inputCallback(const void *inputBuffer, unsigned int nFrames);
         void notificationCallback(const ma_device_notification *pNotification);
 
       private:
@@ -51,7 +51,7 @@ namespace afv_native { namespace audio {
         ma_context   context;
         ma_device    outputDev;
         ma_device    inputDev;
-        bool mStereo = false;
+        bool         mStereo = false;
         unsigned int mAudioApi;
         bool         mHasClosedManually = false;
     };

@@ -43,10 +43,10 @@ namespace afv_native { namespace audio {
     class SpeexPreprocessor: public ISampleSink {
       protected:
         std::shared_ptr<ISampleSink> mUpstreamSink;
-        SpeexPreprocessState *mPreprocessorState;
+        SpeexPreprocessState        *mPreprocessorState;
 
         spx_int16_t mSpeexFrame[frameSizeSamples];
-        SampleType mOutputFrame[frameSizeSamples];
+        SampleType  mOutputFrame[frameSizeSamples];
 
       public:
         explicit SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream);
