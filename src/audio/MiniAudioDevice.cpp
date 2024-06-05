@@ -6,7 +6,7 @@ using namespace std;
 void logger(void *pUserData, ma_uint32 logLevel, const char *message) {
     (void) pUserData;
     std::string msg(message);
-    msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.cend());
+    msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.end());
     LOG("MiniAudioAudioDevice", "%s: %s", ma_log_level_to_string(logLevel), msg.c_str());
 }
 
@@ -104,8 +104,8 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleInputDevices(un
                 // log detailed device info
                 {
                     ma_device_info detailedDeviceInfo;
-                    result =
-                        ma_context_get_device_info(&context, ma_device_type_capture, &devices[i].id, &detailedDeviceInfo);
+                    result = ma_context_get_device_info(&context, ma_device_type_capture,
+                                                        &devices[i].id, &detailedDeviceInfo);
                     if (result == MA_SUCCESS) {
                         LOG("MiniAudioAudioDevice", "Input: %s (Default: %s, Format Count: %d)",
                             devices[i].name, detailedDeviceInfo.isDefault ? "Yes" : "No",
@@ -167,8 +167,8 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleOutputDevices(u
                 // log detailed device info
                 {
                     ma_device_info detailedDeviceInfo;
-                    result =
-                        ma_context_get_device_info(&context, ma_device_type_playback, &devices[i].id, &detailedDeviceInfo);
+                    result = ma_context_get_device_info(&context, ma_device_type_playback,
+                                                        &devices[i].id, &detailedDeviceInfo);
                     if (result == MA_SUCCESS) {
                         LOG("MiniAudioAudioDevice", "Output: %s (Default: %s, Format Count: %d)",
                             devices[i].name, detailedDeviceInfo.isDefault ? "Yes" : "No",
@@ -210,15 +210,16 @@ bool MiniAudioAudioDevice::initOutput() {
 
     ma_device_id outputDeviceId;
     if (!getDeviceForName(mOutputDeviceName, false, outputDeviceId)) {
-        LOG("MiniAudioAudioDevice::initOutput()", "No device found for %s", mOutputDeviceName.c_str());
+        LOG("MiniAudioAudioDevice::initOutput()", "No device found for %s",
+            mOutputDeviceName.c_str());
         return false; // no device found
     }
 
-    ma_device_config cfg        = ma_device_config_init(ma_device_type_playback);
-    cfg.playback.pDeviceID      = &outputDeviceId;
-    cfg.playback.format         = ma_format_f32;
-    cfg.playback.channels       = mStereo ? 2 : 1;
-    cfg.playback.shareMode      = ma_share_mode_shared;
+    ma_device_config cfg   = ma_device_config_init(ma_device_type_playback);
+    cfg.playback.pDeviceID = &outputDeviceId;
+    cfg.playback.format    = ma_format_f32;
+    cfg.playback.channels  = mStereo ? 2 : 1;
+    cfg.playback.shareMode = ma_share_mode_shared;
 
     cfg.sampleRate         = sampleRateHz;
     cfg.periodSizeInFrames = frameSizeSamples;
@@ -255,7 +256,8 @@ bool MiniAudioAudioDevice::initInput() {
 
     ma_device_id inputDeviceId;
     if (!getDeviceForName(mInputDeviceName, true, inputDeviceId)) {
-        LOG("MiniAudioAudioDevice::initInput()", "No device found for %s", mInputDeviceName.c_str());
+        LOG("MiniAudioAudioDevice::initInput()", "No device found for %s",
+            mInputDeviceName.c_str());
         return false; // no device found
     }
 
@@ -315,8 +317,8 @@ int MiniAudioAudioDevice::outputCallback(void *outputBuffer, unsigned int nFrame
                     mSource.reset();
                 }
             } else {
-                // if there's no source, but there is an output buffer, zero it to avoid
-                // making horrible buzzing sounds.
+                // if there's no source, but there is an output buffer, zero it
+                // to avoid making horrible buzzing sounds.
                 ::memset(reinterpret_cast<float *>(outputBuffer) + i, 0, frameSizeBytes);
             }
         }
@@ -347,7 +349,8 @@ void MiniAudioAudioDevice::maInputCallback(ma_device *pDevice, void *pOutput, co
 }
 
 void MiniAudioAudioDevice::maNotificationCallback(const ma_device_notification *pNotification) {
-    auto device = reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
+    auto device =
+        reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
     device->notificationCallback(pNotification);
 };
 
@@ -409,7 +412,8 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
         return;
     }
 
-    if (!pNotification->pDevice || !pNotification->pDevice->pContext || pNotification->pDevice->pContext == NULL) {
+    if (!pNotification->pDevice || !pNotification->pDevice->pContext ||
+        pNotification->pDevice->pContext == NULL) {
         return;
     }
 
@@ -417,8 +421,8 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
 
     // if (pNotification->type == ma_device_notification_type_stopped) {
     //     if (mHasClosedManually) {
-    //         mHasClosedManually = false; // This is a clean exit, we don't emit anything
-    //         return;
+    //         mHasClosedManually = false; // This is a clean exit, we don't
+    //         emit anything return;
     //     }
 
     //     // mNotificationFunc(mUserStreamName, 0);
