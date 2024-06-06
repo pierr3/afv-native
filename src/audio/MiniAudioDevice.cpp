@@ -1,4 +1,7 @@
 #include "afv-native/audio/MiniAudioDevice.h"
+#include <algorithm>
+#include <memory>
+#include "afv-native/Log.h"
 
 using namespace afv_native::audio;
 using namespace std;
@@ -6,7 +9,12 @@ using namespace std;
 void logger(void *pUserData, ma_uint32 logLevel, const char *message) {
     (void) pUserData;
     std::string msg(message);
-    msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.end());
+    msg.erase(std::find_if(msg.rbegin(), msg.rend(),
+                           [](unsigned char ch) {
+                               return ch != '\n';
+                           })
+                  .base(),
+              msg.end());
     LOG("MiniAudioAudioDevice", "%s: %s", ma_log_level_to_string(logLevel), msg.c_str());
 }
 

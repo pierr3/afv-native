@@ -5,13 +5,13 @@
 #define MA_NO_WEBAUDIO
 #define MA_NO_NULL
 #define MA_NO_CUSTOM
-#include "afv-native/Log.h"
+
 #include "afv-native/audio/AudioDevice.h"
 #include "miniaudio.h"
 #include <cstring>
 #include <map>
-#include <memory>
 #include <string>
+
 
 #ifdef _WIN32
     #include "windows.h"
