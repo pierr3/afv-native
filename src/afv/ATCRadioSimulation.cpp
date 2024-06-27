@@ -69,6 +69,7 @@ ATCRadioSimulation::ATCRadioSimulation(struct event_base *evBase, std::shared_pt
 {
     setUDPChannel(channel);
     mMaintenanceTimer.enable(maintenanceTimerIntervalMs);
+    mVoiceTimeoutTimer.enable(voiceTimeoutIntervalMs);
 }
 
 ATCRadioSimulation::~ATCRadioSimulation() {
@@ -604,12 +605,14 @@ void ATCRadioSimulation::setUDPChannel(cryptodto::UDPChannel *newChannel) {
 void ATCRadioSimulation::maintainVoiceTimeout() {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
     std::map<unsigned int, AtcRadioState>::iterator it;
+
     for (it = mRadioState.begin(); it != mRadioState.end(); it++) {
         if (it->second.lastVoiceTime == 0) {
             continue;
         }
-
+        LOG("ATCRadioSimulation", "Potential VoiceTimeout..");
         if (time(0) - it->second.lastVoiceTime > voiceTimeoutIntervalMs) {
+            LOG("ATCRadioSimulation", "Found VoiceTimeout.. %i", it->second.Frequency);
             // Voice channel rx has timed out.. update things.
             it->second.lastVoiceTime = 0;
             for (const auto &c: it->second.liveTransmittingCallsigns) {
