@@ -610,8 +610,10 @@ void ATCRadioSimulation::maintainVoiceTimeout() {
         if (it->second.lastVoiceTime == 0) {
             continue;
         }
-        LOG("ATCRadioSimulation", "Potential VoiceTimeout..");
-        if (time(0) - it->second.lastVoiceTime > voiceTimeoutIntervalMs) {
+        LOG("ATCRadioSimulation", "Potential VoiceTimeout.. %i %i", it->second.lastVoiceTime,
+            time(0) - it->second.lastVoiceTime);
+
+        if (time(0) - it->second.lastVoiceTime >= voiceTimeoutIntervalS) {
             LOG("ATCRadioSimulation", "Found VoiceTimeout.. %i", it->second.Frequency);
             // Voice channel rx has timed out.. update things.
             it->second.lastVoiceTime = 0;

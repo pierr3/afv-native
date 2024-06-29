@@ -249,6 +249,7 @@ namespace afv_native { namespace afv {
          */
         static const int maintenanceTimerIntervalMs = 30 * 1000; /* every 30s */
         static const int voiceTimeoutIntervalMs     = 2 * 1000;
+        static const int voiceTimeoutIntervalS      = 2;
 
         util::ChainedCallback<void(ClientEventType, void *, void *)> *ClientEventCallback;
 
