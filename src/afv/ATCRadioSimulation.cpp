@@ -201,6 +201,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         return false;
     }
 
+    bool ignoreaudio = false;
     std::shared_ptr<OutputDeviceState> state = onHeadset ? mHeadsetState : mSpeakerState;
 
     ::memset(state->mChannelBuffer, 0, audio::frameSizeBytes);
@@ -208,7 +209,8 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         // don't analyze and mix-in the radios transmitting, but suppress the
         // effects.
         resetRadioFx(rxIter);
-        return true;
+        ignoreaudio = true;
+        // return true;
     }
     // now, find all streams that this applies to.
     float    crackleGain       = 0.0f;
@@ -268,9 +270,12 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         if (mUseStream) {
             // then include this stream.
             try {
-                mix_buffers(state->mChannelBuffer,
-                            sampleCache.at(srcPair.second.source.get()),
-                            voiceGain * mRadioState[rxIter].Gain);
+                if (!ignoreaudio) {
+                    mix_buffers(state->mChannelBuffer,
+                                sampleCache.at(srcPair.second.source.get()),
+                                voiceGain * mRadioState[rxIter].Gain);
+                }
+
                 concurrentStreams++;
             } catch (const std::out_of_range &) {
                 LOG("ATCRadioSimulation", "internal error:  Tried to mix uncached stream");
@@ -605,6 +610,8 @@ void ATCRadioSimulation::setUDPChannel(cryptodto::UDPChannel *newChannel) {
 void ATCRadioSimulation::maintainVoiceTimeout() {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
     std::map<unsigned int, AtcRadioState>::iterator it;
+
+    return;
 
     for (it = mRadioState.begin(); it != mRadioState.end(); it++) {
         if (it->second.lastVoiceTime == 0) {
