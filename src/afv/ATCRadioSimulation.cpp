@@ -208,7 +208,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
     if (mPtt.load() && mRadioState[rxIter].tx) {
         // don't analyze and mix-in the radios transmitting, but suppress the
         // effects.
-        resetRadioFx(rxIter);
+        resetRadioFx(rxIter, true);
         ignoreaudio = true;
         // return true;
     }
@@ -284,7 +284,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
     }
 
     if (concurrentStreams > 0) {
-        if (mRadioState[rxIter].mLastRxCount == 0) {
+        if (mRadioState[rxIter].mLastRxCount == 0 && !ignoreaudio) {
             // Post Begin Voice Receiving Notfication
             unsigned int freq = rxIter;
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting yet
@@ -349,6 +349,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", rxIter);
         }
     }
+
     mRadioState[rxIter].mLastRxCount = concurrentStreams;
 
     // if we have a pending click, play it.
@@ -610,6 +611,8 @@ void ATCRadioSimulation::setUDPChannel(cryptodto::UDPChannel *newChannel) {
 void ATCRadioSimulation::maintainVoiceTimeout() {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
     std::map<unsigned int, AtcRadioState>::iterator it;
+
+    return;
 
     for (it = mRadioState.begin(); it != mRadioState.end(); it++) {
         if (it->second.lastVoiceTime == 0) {
