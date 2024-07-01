@@ -359,17 +359,22 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
 
     // now, finally, mix the channel buffer into the mixing buffer.
     if (onHeadset) {
-        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left ||
-            mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
-            mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
+        if (!ignoreaudio) {
+            if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left ||
+                mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
+                mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
+            }
+
+            if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
+                mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
+                mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
+            }
         }
 
-        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
-            mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
-            mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
-        }
     } else {
-        mix_buffers(state->mMixingBuffer, state->mChannelBuffer);
+        if (!ignoreaudio) {
+            mix_buffers(state->mMixingBuffer, state->mChannelBuffer);
+        }
     }
 
     return false;
