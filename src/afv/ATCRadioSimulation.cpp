@@ -612,8 +612,6 @@ void ATCRadioSimulation::maintainVoiceTimeout() {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
     std::map<unsigned int, AtcRadioState>::iterator it;
 
-    return;
-
     for (it = mRadioState.begin(); it != mRadioState.end(); it++) {
         if (it->second.lastVoiceTime == 0) {
             continue;
