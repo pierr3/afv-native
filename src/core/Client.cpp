@@ -29,14 +29,16 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
+*/
 
 #include "afv-native/Client.h"
-#include "afv-native/Log.h"
-#include "afv-native/afv/VoiceSession.h"
-#include "afv-native/afv/params.h"
-#include <functional>
+
 #include <memory>
+#include <functional>
+
+#include "afv-native/Log.h"
+#include "afv-native/afv/params.h"
+#include "afv-native/afv/VoiceSession.h"
 
 using namespace afv_native;
 
@@ -44,8 +46,9 @@ Client::Client(
         struct event_base *evBase,
         unsigned int numRadios,
         const std::string &clientName,
-        std::string baseUrl):
-        mFxRes(std::make_shared<afv::EffectResources>()),
+        std::string baseUrl,
+        const std::string &resourceBasePath):
+        mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)),
         mEvBase(evBase),
         mTransferManager(mEvBase),
         mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName),
@@ -82,7 +85,8 @@ Client::Client(
     mRadioSim->setupDevices(&ClientEventCallback);
 }
 
-Client::~Client() {
+Client::~Client()
+{
     mVoiceSession.StateCallback.removeCallback(this);
     mAPISession.StateCallback.removeCallback(this);
     mAPISession.AliasUpdateCallback.removeCallback(this);
@@ -93,14 +97,16 @@ Client::~Client() {
     mRadioSim->setUDPChannel(nullptr);
 }
 
-void Client::setClientPosition(double lat, double lon, double amslm, double aglm) {
-    mClientLatitude     = lat;
-    mClientLongitude    = lon;
+void Client::setClientPosition(double lat, double lon, double amslm, double aglm)
+{
+    mClientLatitude = lat;
+    mClientLongitude = lon;
     mClientAltitudeMSLM = amslm;
-    mClientAltitudeGLM  = aglm;
+    mClientAltitudeGLM = aglm;
 }
 
-void Client::setRadioState(unsigned int radioNum, int freq) {
+void Client::setRadioState(unsigned int radioNum, int freq)
+{
     if (radioNum > mRadioState.size()) {
         return;
     }
@@ -116,11 +122,13 @@ void Client::setRadioState(unsigned int radioNum, int freq) {
     }
 }
 
-void Client::setTxRadio(unsigned int radioNum) {
+void Client::setTxRadio(unsigned int radioNum)
+{
     mRadioSim->setTxRadio(radioNum);
 }
 
-bool Client::connect() {
+bool Client::connect()
+{
     if (!isAPIConnected()) {
         if (mAPISession.getState() != afv::APISessionState::Disconnected) {
             return false;
@@ -132,7 +140,8 @@ bool Client::connect() {
     return true;
 }
 
-void Client::disconnect() {
+void Client::disconnect()
+{
     // voicesession must come first.
     if (isVoiceConnected()) {
         mVoiceSession.Disconnect(true);
@@ -141,7 +150,8 @@ void Client::disconnect() {
     }
 }
 
-void Client::setCredentials(const std::string &username, const std::string &password) {
+void Client::setCredentials(const std::string &username, const std::string &password)
+{
     if (mAPISession.getState() != afv::APISessionState::Disconnected) {
         return;
     }
@@ -149,7 +159,8 @@ void Client::setCredentials(const std::string &username, const std::string &pass
     mAPISession.setPassword(password);
 }
 
-void Client::setCallsign(std::string callsign) {
+void Client::setCallsign(std::string callsign)
+{
     if (isVoiceConnected()) {
         return;
     }
@@ -158,73 +169,75 @@ void Client::setCallsign(std::string callsign) {
     mCallsign = std::move(callsign);
 }
 
-void Client::voiceStateCallback(afv::VoiceSessionState state) {
+void Client::voiceStateCallback(afv::VoiceSessionState state)
+{
     afv::VoiceSessionError voiceError;
-    int                    channelErrno;
+    int channelErrno;
 
     switch (state) {
-        case afv::VoiceSessionState::Connected:
-            LOG("afv::Client", "Voice Session Connected");
-            startAudio();
-            queueTransceiverUpdate();
-            ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnected, nullptr, nullptr);
-            break;
-        case afv::VoiceSessionState::Disconnected:
-            LOG("afv::Client", "Voice Session Disconnected");
-            stopAudio();
-            stopTransceiverUpdate();
-            // bring down the API session too.
-            mAPISession.Disconnect();
-            mRadioSim->reset();
-            ClientEventCallback.invokeAll(ClientEventType::VoiceServerDisconnected, nullptr, nullptr);
-            break;
-        case afv::VoiceSessionState::Error:
-            LOG("afv::Client", "got error from voice session");
-            stopAudio();
-            stopTransceiverUpdate();
-            // bring down the API session too.
-            mAPISession.Disconnect();
-            mRadioSim->reset();
-            voiceError = mVoiceSession.getLastError();
-            if (voiceError == afv::VoiceSessionError::UDPChannelError) {
-                channelErrno = mVoiceSession.getUDPChannel().getLastErrno();
-                ClientEventCallback.invokeAll(ClientEventType::VoiceServerChannelError, &channelErrno, nullptr);
-            } else {
-                ClientEventCallback.invokeAll(ClientEventType::VoiceServerError, &voiceError, nullptr);
-            }
-            break;
+    case afv::VoiceSessionState::Connected:
+        LOG("afv::Client", "Voice Session Connected");
+        startAudio();
+        queueTransceiverUpdate();
+        ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnected, nullptr, nullptr);
+        break;
+    case afv::VoiceSessionState::Disconnected:
+        LOG("afv::Client", "Voice Session Disconnected");
+        stopAudio();
+        stopTransceiverUpdate();
+        // bring down the API session too.
+        mAPISession.Disconnect();
+        mRadioSim->reset();
+        ClientEventCallback.invokeAll(ClientEventType::VoiceServerDisconnected, nullptr, nullptr);
+        break;
+    case afv::VoiceSessionState::Error:
+        LOG("afv::Client", "got error from voice session");
+        stopAudio();
+        stopTransceiverUpdate();
+        // bring down the API session too.
+        mAPISession.Disconnect();
+        mRadioSim->reset();
+        voiceError = mVoiceSession.getLastError();
+        if (voiceError == afv::VoiceSessionError::UDPChannelError) {
+            channelErrno = mVoiceSession.getUDPChannel().getLastErrno();
+            ClientEventCallback.invokeAll(ClientEventType::VoiceServerChannelError, &channelErrno, nullptr);
+        } else {
+            ClientEventCallback.invokeAll(ClientEventType::VoiceServerError, &voiceError, nullptr);
+        }
+        break;
     }
 }
 
-void Client::sessionStateCallback(afv::APISessionState state) {
+void Client::sessionStateCallback(afv::APISessionState state)
+{
     afv::APISessionError sessionError;
     switch (state) {
-        case afv::APISessionState::Reconnecting:
-            LOG("afv_native::Client", "Reconnecting API Session");
-            break;
-        case afv::APISessionState::Running:
-            LOG("afv_native::Client", "Connected to AFV API Server");
-            if (!isVoiceConnected()) {
-                mVoiceSession.setCallsign(mCallsign);
-                mVoiceSession.Connect();
-                mAPISession.updateStationAliases();
-            }
-            ClientEventCallback.invokeAll(ClientEventType::APIServerConnected, nullptr, nullptr);
-            break;
-        case afv::APISessionState::Disconnected:
-            LOG("afv_native::Client", "Disconnected from AFV API Server.  Terminating sessions");
-            // because we only ever commence a normal API Session teardown from a voicesession hook,
-            // we don't need to call into voiceSession in this case only.
-            ClientEventCallback.invokeAll(ClientEventType::APIServerDisconnected, nullptr, nullptr);
-            break;
-        case afv::APISessionState::Error:
-            LOG("afv_native::Client", "Got error from AFV API Server.  Disconnecting session");
-            sessionError = mAPISession.getLastError();
-            ClientEventCallback.invokeAll(ClientEventType::APIServerError, &sessionError, nullptr);
-            break;
-        default:
-            // ignore the other transitions.
-            break;
+    case afv::APISessionState::Reconnecting:
+        LOG("afv_native::Client", "Reconnecting API Session");
+        break;
+    case afv::APISessionState::Running:
+        LOG("afv_native::Client", "Connected to AFV API Server");
+        if (!isVoiceConnected()) {
+            mVoiceSession.setCallsign(mCallsign);
+            mVoiceSession.Connect();
+            mAPISession.updateStationAliases();
+        }
+        ClientEventCallback.invokeAll(ClientEventType::APIServerConnected, nullptr, nullptr);
+        break;
+    case afv::APISessionState::Disconnected:
+        LOG("afv_native::Client", "Disconnected from AFV API Server.  Terminating sessions");
+        // because we only ever commence a normal API Session teardown from a voicesession hook,
+        // we don't need to call into voiceSession in this case only.
+        ClientEventCallback.invokeAll(ClientEventType::APIServerDisconnected, nullptr, nullptr);
+        break;
+    case afv::APISessionState::Error:
+        LOG("afv_native::Client", "Got error from AFV API Server.  Disconnecting session");
+        sessionError = mAPISession.getLastError();
+        ClientEventCallback.invokeAll(ClientEventType::APIServerError, &sessionError, nullptr);
+        break;
+    default:
+        // ignore the other transitions.
+        break;
     }
 }
 
@@ -252,7 +265,7 @@ void Client::stopAudio()
         mMicrophoneDevice.reset();
     }
 
-    if (mHeadsetDevice) {
+    if(mHeadsetDevice) {
         mHeadsetDevice->close();
         mHeadsetDevice.reset();
     }
@@ -362,41 +375,48 @@ void Client::startSpeaker()
     mSpeakerDevice->setSource(mRadioSim->speakerDevice());
 }
 
-std::vector<afv::dto::Transceiver> Client::makeTransceiverDto() {
+std::vector<afv::dto::Transceiver> Client::makeTransceiverDto()
+{
     std::vector<afv::dto::Transceiver> retSet;
     for (unsigned i = 0; i < mRadioState.size(); i++) {
-        retSet.emplace_back(i, mRadioState[i].mNextFreq, mClientLatitude, mClientLongitude, mClientAltitudeMSLM, mClientAltitudeGLM);
+        retSet.emplace_back(
+                i, mRadioState[i].mNextFreq, mClientLatitude,
+                mClientLongitude, mClientAltitudeMSLM, mClientAltitudeGLM);
     }
     return std::move(retSet);
 }
 
-void Client::sendTransceiverUpdate() {
+void Client::sendTransceiverUpdate()
+{
     mTransceiverUpdateTimer.disable();
     if (!isAPIConnected() || !isVoiceConnected()) {
         return;
     }
     auto transceiverDto = makeTransceiverDto();
-    mTxUpdatePending    = true;
+    mTxUpdatePending = true;
 
     /* ok - magic!
      *
      * so, in order to ensure that we flip the radio states to the CORRECT ONE
-     * when the callback fires, we copy capture the update message itself (which
-     * is all value copies) and use that to do the internal state update.
-     */
-    mVoiceSession.postTransceiverUpdate(transceiverDto, [this, transceiverDto](http::Request *r, bool success) {
-        if (success && r->getStatusCode() == 200) {
-            for (unsigned i = 0; i < this->mRadioState.size(); i++) {
-                this->mRadioState[i].mCurrentFreq = transceiverDto[i].Frequency;
-            }
-            this->mTxUpdatePending = false;
-            this->unguardPtt();
-        }
-    });
+     * when the callback fires, we copy capture the update message itself (which is
+     * all value copies) and use that to do the internal state update.
+    */
+    mVoiceSession.postTransceiverUpdate(
+            transceiverDto,
+            [this, transceiverDto](http::Request *r, bool success) {
+                if (success && r->getStatusCode() == 200) {
+                    for (unsigned i = 0; i < this->mRadioState.size(); i++) {
+                        this->mRadioState[i].mCurrentFreq = transceiverDto[i].Frequency;
+                    }
+                    this->mTxUpdatePending = false;
+                    this->unguardPtt();
+                }
+            });
     mTransceiverUpdateTimer.enable(afv::afvTransceiverUpdateIntervalMs);
 }
 
-void Client::queueTransceiverUpdate() {
+void Client::queueTransceiverUpdate()
+{
     mTransceiverUpdateTimer.disable();
     if (!isAPIConnected() || !isVoiceConnected()) {
         return;
@@ -404,7 +424,9 @@ void Client::queueTransceiverUpdate() {
     mTransceiverUpdateTimer.enable(0);
 }
 
-void Client::unguardPtt() {
+
+void Client::unguardPtt()
+{
     if (mWantPtt && !mPtt) {
         LOG("Client", "PTT was guarded - checking.");
         if (!areTransceiversSynced()) {
@@ -419,7 +441,8 @@ void Client::unguardPtt() {
     }
 }
 
-void Client::setPtt(bool pttState) {
+void Client::setPtt(bool pttState)
+{
     if (pttState) {
         mWantPtt = true;
         // if we're setting the Ptt, we have to check a few things.
@@ -448,7 +471,8 @@ void Client::setPtt(bool pttState) {
     }
 }
 
-bool Client::areTransceiversSynced() const {
+bool Client::areTransceiversSynced() const
+{
     for (const auto &iter: mRadioState) {
         if (iter.mNextFreq != iter.mCurrentFreq) {
             return false;
@@ -470,86 +494,99 @@ void Client::setHeadsetDevice(std::string headsetDevice) {
     mHeadsetDeviceName = headsetDevice;
 }
 
-bool Client::isAPIConnected() const {
+bool Client::isAPIConnected() const
+{
     auto sState = mAPISession.getState();
     return sState == afv::APISessionState::Running || sState == afv::APISessionState::Reconnecting;
 }
 
-bool Client::isVoiceConnected() const {
+bool Client::isVoiceConnected() const
+{
     return mVoiceSession.isConnected();
 }
 
-void Client::setBaseUrl(std::string newUrl) {
+void Client::setBaseUrl(std::string newUrl)
+{
     mAPISession.setBaseUrl(std::move(newUrl));
 }
 
-void Client::stopTransceiverUpdate() {
+void Client::stopTransceiverUpdate()
+{
     mTransceiverUpdateTimer.disable();
 }
 
-void Client::setAudioApi(audio::AudioDevice::Api api) {
+void Client::setAudioApi(audio::AudioDevice::Api api)
+{
     mAudioApi = api;
 }
 
-void Client::setRadioGain(unsigned int radioNum, float gain) {
+void Client::setRadioGain(unsigned int radioNum, float gain)
+{
     mRadioSim->setGain(radioNum, gain);
 }
 
-void Client::setMicrophoneVolume(float volume) {
-    if (volume > 18) {
-        volume = 18;
-    }
-    if (volume < -60) {
-        volume = -60;
-    }
-    volume = (float) pow(10, volume / 20);
+void Client::setMicrophoneVolume(float volume)
+{
+    if(volume > 18) volume = 18;
+    if(volume < -60) volume = -60;
+    volume = (float)pow(10, volume / 20);
     mRadioSim->setMicrophoneVolume(volume);
 }
 
-bool Client::getEnableInputFilters() const {
+bool Client::getEnableInputFilters() const
+{
     return mRadioSim->getEnableInputFilters();
 }
 
-void Client::setEnableInputFilters(bool enableInputFilters) {
+void Client::setEnableInputFilters(bool enableInputFilters)
+{
     mRadioSim->setEnableInputFilters(enableInputFilters);
 }
 
-double Client::getInputPeak() const {
+double Client::getInputPeak() const
+{
     if (mRadioSim) {
         return mRadioSim->getPeak();
     }
     return -INFINITY;
 }
 
-double Client::getInputVu() const {
+double Client::getInputVu() const
+{
     if (mRadioSim) {
         return mRadioSim->getVu();
     }
     return -INFINITY;
 }
 
-void Client::setEnableOutputEffects(bool enableEffects) {
+void Client::setEnableOutputEffects(bool enableEffects)
+{
     mRadioSim->setEnableOutputEffects(enableEffects);
 }
 
-void Client::setEnableHfSquelch(bool enableSquelch) {
+void Client::setEnableHfSquelch(bool enableSquelch)
+{
     mRadioSim->setEnableHfSquelch(enableSquelch);
 }
 
-void Client::setOnHeadset(unsigned int radio, bool onHeadset) {
+void Client::setOnHeadset(unsigned int radio, bool onHeadset)
+{
     mRadioSim->setOnHeadset(radio, onHeadset);
 }
 
-void Client::setSplitAudioChannels(bool split) {
+void Client::setSplitAudioChannels(bool split)
+{
     mSplitAudioChannels = split;
     mRadioSim->setSplitAudioChannels(split);
 }
 
-void Client::aliasUpdateCallback() {
+void Client::aliasUpdateCallback()
+{
     ClientEventCallback.invokeAll(ClientEventType::StationAliasesUpdated, nullptr, nullptr);
 }
 
-std::vector<afv::dto::Station> Client::getStationAliases() const {
+std::vector<afv::dto::Station> Client::getStationAliases() const
+{
     return std::move(mAPISession.getStationAliases());
 }
 

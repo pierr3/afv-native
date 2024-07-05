@@ -21,7 +21,7 @@ ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBaseP
     mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mEvBase,
                                                              mFxRes,
                                                              &mVoiceSession.getUDPChannel())),
-    mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
+    mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), ClientEventCallback() {
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
@@ -185,82 +185,135 @@ void ATCClient::sessionStateCallback(afv::APISessionState state) {
     }
 }
 
+void ATCClient::setMicrophoneDevice(std::string inputDevice)
+{
+    mMicrophoneDeviceName = inputDevice;
+}
+
+void ATCClient::setSpeakerDevice(std::string speakerDevice) {
+    mSpeakerDeviceName = speakerDevice;
+}
+
+void ATCClient::setHeadsetDevice(std::string headsetDevice) {
+    mHeadsetDeviceName = headsetDevice;
+}
+
 void ATCClient::startAudio() {
-    mAudioStoppedThroughCallback = false;
-    if (!mSpeakerDevice) {
-        LOG("afv::ATCClient", "Initialising Speaker Audio...");
-        mSpeakerDevice = audio::AudioDevice::makeDevice("afv::speaker", mAudioSpeakerDeviceName, mAudioInputDeviceName, mAudioApi);
-        LOG("afv::ATCClient", "Speaker Device %s created",
-            mAudioSpeakerDeviceName.c_str());
-        if (!mSpeakerDevice) {
-            LOG("afv::ATCClient", "Could not initiate speaker audio context.");
-            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
-        } else {
-            mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
-            LOG("afv::ATCClient", "Speaker Device %s notification setup",
-                mAudioSpeakerDeviceName.c_str());
+    if (mSpeakerDeviceName.empty() || mHeadsetDeviceName.empty() ||
+        mMicrophoneDeviceName.empty()) {
+        const char *error = "Your audio settings are not configured correctly. To utilize the voice communication features, ensure that your speaker, headset, and microphone devices are properly set up within the settings.";
+        if (!mInvalidDeviceConfig) {
+            ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
+            mInvalidDeviceConfig = true;
         }
-    } else {
-        LOG("afv::ATCClient", "Speaker device already exists, skipping creation");
+        LOG("afv::ATCClient", error);
+        return;
     }
-    mSpeakerDevice->setSink(nullptr);
-    mSpeakerDevice->setSource(mATCRadioStack->speakerDevice());
-    LOG("afv::ATCClient", "Speaker Device %s fully setup",
-        mAudioSpeakerDeviceName.c_str());
 
-    if (!mSpeakerDevice->openOutput()) {
-        LOG("afv::ATCClient", "Unable to open Speaker audio device.");
-        stopAudio();
-        ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
-    }
-    LOG("afv::ATCClient", "Speaker Device %s output opened",
-        mAudioSpeakerDeviceName.c_str());
-
-    if (!mAudioDevice) {
-        LOG("afv::ATCClient", "Initialising Headset Audio...");
-        mAudioDevice = audio::AudioDevice::makeDevice("afv::headset", mAudioOutputDeviceName, mAudioInputDeviceName, mAudioApi, true);
-        LOG("afv::ATCClient", "Headset Device %s created",
-            mAudioOutputDeviceName.c_str());
-        if (!mAudioDevice) {
-            LOG("afv::ATCClient", "Could not initiate headset audio context.");
-            ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
-        } else {
-            mAudioDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
-            LOG("afv::ATCClient", "Headset Device %s notification setup",
-                mAudioOutputDeviceName.c_str());
-        }
-    } else {
-        LOG("afv::ATCClient", "Headset device already exists, skipping creation");
-    }
-    mAudioDevice->setSink(mATCRadioStack);
-    mAudioDevice->setSource(mATCRadioStack->headsetDevice());
-    LOG("afv::ATCClient", "Headset Device %s fully setup",
-        mAudioOutputDeviceName.c_str());
-
-    if (mAudioDevice->openOutput()) {
-        LOG("afv::ATCClient", "Headset output device opened");
-        if (!mAudioDevice->openInput()) {
-            LOG("afv::ATCClient", "Couldn't initialize headset microphone device");
-            ClientEventCallback.invokeAll(ClientEventType::InputDeviceError, nullptr, nullptr);
-        } else {
-            LOG("afv::ATCClient", "Headset input device opened");
-        }
-    } else {
-        LOG("afv::ATCClient", "Unable to open Headset output device.");
-        stopAudio();
-        ClientEventCallback.invokeAll(ClientEventType::AudioError, nullptr, nullptr);
-    }
+    startMicrophone();
+    startHeadset();
+    startSpeaker();
 }
 
 void ATCClient::stopAudio() {
-    if (mAudioDevice) {
-        mAudioDevice->close();
-        mAudioDevice.reset();
+    if (mMicrophoneDevice) {
+        mMicrophoneDevice->close();
+        mMicrophoneDevice.reset();
     }
+
+    if (mHeadsetDevice) {
+        mHeadsetDevice->close();
+        mHeadsetDevice.reset();
+    }
+
     if (mSpeakerDevice) {
         mSpeakerDevice->close();
         mSpeakerDevice.reset();
     }
+}
+
+void ATCClient::startMicrophone() {
+    if (mMicrophoneDevice) {
+        mMicrophoneDevice->close();
+        mMicrophoneDevice.reset();
+    }
+
+    LOG("afv::ATCClient", "Initializing microphone device...");
+
+    mMicrophoneDevice = audio::AudioDevice::makeDevice("afv::microphone", mMicrophoneDeviceName, mAudioApi, mSplitAudioChannels);
+
+    if (!mMicrophoneDevice) {
+        const char *error = "Audio Error: Could not initialize microphone device context.";
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
+        LOG("afv::ATCClient", error);
+        return;
+    }
+
+    if (!mMicrophoneDevice->openInput()) {
+        const char *error = "Audio Error: Could not open microphone device. Please check audio settings and try again.";
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
+        LOG("afv::ATCClient", error);
+        return;
+    }
+
+    mMicrophoneDevice->setSink(mRadioSim);
+    mMicrophoneDevice->setSource(nullptr);
+}
+
+void ATCClient::startHeadset() {
+    if (mHeadsetDevice) {
+        mHeadsetDevice->close();
+        mHeadsetDevice.reset();
+    }
+
+    LOG("afv::ATCClient", "Initializing headset device...");
+
+    mHeadsetDevice = audio::AudioDevice::makeDevice("afv::headset", mHeadsetDeviceName, mAudioApi, mSplitAudioChannels);
+
+    if (!mHeadsetDevice) {
+        const char *error = "Audio Error: Could not initialize headset device context.";
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
+        LOG("afv::ATCClient", error);
+        return;
+    }
+
+    if (!mHeadsetDevice->openOutput()) {
+        const char *error = "Audio Error: Could not open headset device. Please check audio settings and try again.";
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
+        LOG("afv::ATCClient", error);
+        return;
+    }
+
+    mHeadsetDevice->setSink(nullptr);
+    mHeadsetDevice->setSource(mRadioSim->headsetDevice());
+}
+
+void ATCClient::startSpeaker() {
+    if (mSpeakerDevice) {
+        mSpeakerDevice->close();
+        mSpeakerDevice.reset();
+    }
+
+    LOG("afv::ATCClient", "Initializing speaker device...");
+
+    mSpeakerDevice = audio::AudioDevice::makeDevice("afv::speaker", mSpeakerDeviceName, mAudioApi, mSplitAudioChannels);
+
+    if (!mSpeakerDevice) {
+        const char *error = "Audio Error: Could not initialize speaker device context.";
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
+        LOG("afv::ATCClient", error);
+        return;
+    }
+
+    if (!mSpeakerDevice->openOutput()) {
+        const char *error = "Audio Error: Could not open speaker device. Please check audio settings and try again.";
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
+        LOG("afv::ATCClient", error);
+        return;
+    }
+
+    mSpeakerDevice->setSink(nullptr);
+    mSpeakerDevice->setSource(mRadioSim->speakerDevice());
 }
 
 std::vector<afv::dto::Transceiver> ATCClient::makeTransceiverDto() {
@@ -386,18 +439,6 @@ void ATCClient::setPtt(bool pttState) {
 
 void ATCClient::setRT(bool rtState) {
     // mATCRadioStack->setRT(rtState);
-}
-
-void ATCClient::setAudioInputDevice(std::string inputDevice) {
-    mAudioInputDeviceName = inputDevice;
-}
-
-void ATCClient::setAudioOutputDevice(std::string outputDevice) {
-    mAudioOutputDeviceName = outputDevice;
-}
-
-void ATCClient::setSpeakerOutputDevice(std::string outputDevice) {
-    mAudioSpeakerDeviceName = outputDevice;
 }
 
 bool ATCClient::isAPIConnected() const {

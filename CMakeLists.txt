@@ -85,7 +85,7 @@ target_sources(afv_native PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SpeexPreprocessor.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/WavFile.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/WavSampleStorage.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/MiniAudioDevice.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/MiniAudioAudioDevice.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/Client.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/Log.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/Channel.cpp
