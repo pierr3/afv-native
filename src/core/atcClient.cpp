@@ -21,7 +21,7 @@ ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBaseP
     mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mEvBase,
                                                              mFxRes,
                                                              &mVoiceSession.getUDPChannel())),
-    mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), ClientEventCallback() {
+    mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), ClientEventCallback() {
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
@@ -185,8 +185,7 @@ void ATCClient::sessionStateCallback(afv::APISessionState state) {
     }
 }
 
-void ATCClient::setMicrophoneDevice(std::string inputDevice)
-{
+void ATCClient::setMicrophoneDevice(std::string inputDevice) {
     mMicrophoneDeviceName = inputDevice;
 }
 
@@ -247,6 +246,8 @@ void ATCClient::startMicrophone() {
         ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         LOG("afv::ATCClient", error);
         return;
+    } else {
+        mMicrophoneDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     if (!mMicrophoneDevice->openInput()) {
@@ -256,7 +257,7 @@ void ATCClient::startMicrophone() {
         return;
     }
 
-    mMicrophoneDevice->setSink(mRadioSim);
+    mMicrophoneDevice->setSink(mATCRadioStack);
     mMicrophoneDevice->setSource(nullptr);
 }
 
@@ -275,6 +276,8 @@ void ATCClient::startHeadset() {
         ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         LOG("afv::ATCClient", error);
         return;
+    } else {
+        mHeadsetDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     if (!mHeadsetDevice->openOutput()) {
@@ -285,7 +288,7 @@ void ATCClient::startHeadset() {
     }
 
     mHeadsetDevice->setSink(nullptr);
-    mHeadsetDevice->setSource(mRadioSim->headsetDevice());
+    mHeadsetDevice->setSource(mATCRadioStack->headsetDevice());
 }
 
 void ATCClient::startSpeaker() {
@@ -303,6 +306,8 @@ void ATCClient::startSpeaker() {
         ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         LOG("afv::ATCClient", error);
         return;
+    } else {
+        mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     if (!mSpeakerDevice->openOutput()) {
@@ -313,7 +318,7 @@ void ATCClient::startSpeaker() {
     }
 
     mSpeakerDevice->setSink(nullptr);
-    mSpeakerDevice->setSource(mRadioSim->speakerDevice());
+    mSpeakerDevice->setSource(mATCRadioStack->speakerDevice());
 }
 
 std::vector<afv::dto::Transceiver> ATCClient::makeTransceiverDto() {
@@ -544,18 +549,26 @@ std::vector<afv::dto::Station> ATCClient::getStationAliases() const {
 }
 
 void ATCClient::logAudioStatistics() {
-    if (mAudioDevice) {
+    if (mHeadsetDevice && mSpeakerDevice && mMicrophoneDevice) {
         LOG("ATCClient", "Headset Buffer Underflows: %d",
-            mAudioDevice->OutputUnderflows.load());
+            mHeadsetDevice->OutputUnderflows.load());
         LOG("ATCClient", "Speaker Buffer Underflows: %d",
             mSpeakerDevice->OutputUnderflows.load());
         LOG("ATCClient", "Input Buffer Overflows: %d",
-            mAudioDevice->InputOverflows.load());
+            mMicrophoneDevice->InputOverflows.load());
     }
 }
 
-std::shared_ptr<const audio::AudioDevice> ATCClient::getAudioDevice() const {
-    return mAudioDevice;
+std::shared_ptr<const audio::AudioDevice> ATCClient::getHeadsetOutputDevice() const {
+    return mHeadsetDevice;
+}
+
+std::shared_ptr<const audio::AudioDevice> ATCClient::getMicrophoneInputDevice() const {
+    return mMicrophoneDevice;
+}
+
+std::shared_ptr<const audio::AudioDevice> ATCClient::getSpeakerOutputDevice() const {
+    return mSpeakerDevice;
 }
 
 bool ATCClient::getRxActive(unsigned int freq) {

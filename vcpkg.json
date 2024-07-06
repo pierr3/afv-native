@@ -6,7 +6,10 @@
         "opus",
         "speexdsp",
         "cpp-jwt",
-        "msgpack",
+        {
+            "name": "msgpack",
+            "features": ["boost"]
+        },
         "curl",
         "nlohmann-json",
         "openssl",
