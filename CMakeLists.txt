@@ -52,7 +52,7 @@ if (WIN32)
 	add_library(afv_native SHARED)
 endif()
 
-
+target_compile_options(afv_native PUBLIC "-g")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 
@@ -112,6 +112,7 @@ target_sources(afv_native PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atcClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atisClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientWrapper.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientFlat.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleComp.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleEnvelope.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleGate.cpp

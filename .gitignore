@@ -1,5 +1,7 @@
 cmake-build-**
 build/
+build_arm64/
+build_x64/
 .DS_Store
 .cache
 .vscode
@@ -9,3 +11,4 @@ example/
 
 afv_native.h
 atcClientWrapper_edit.h
+imgui.ini

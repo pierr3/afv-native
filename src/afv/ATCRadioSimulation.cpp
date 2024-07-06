@@ -65,10 +65,11 @@ audio::SourceStatus AtcOutputAudioDevice::getAudioFrame(audio::SampleType *buffe
 }
 
 ATCRadioSimulation::ATCRadioSimulation(struct event_base *evBase, std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel):
-    IncomingAudioStreams(0), mEvBase(evBase), mResources(std::move(resources)), mChannel(), mStreamMapLock(), mHeadsetIncomingStreams(), mSpeakerIncomingStreams(), mRadioStateLock(), mPtt(false), mLastFramePtt(false), mTxSequence(0), mVoiceSink(std::make_shared<VoiceCompressionSink>(*this)), mVoiceFilter(std::make_shared<audio::SpeexPreprocessor>(mVoiceSink)), mMaintenanceTimer(mEvBase, std::bind(&ATCRadioSimulation::maintainIncomingStreams, this)), mVuMeter(300 / audio::frameLengthMs) // VU is a 300ms zero to peak response...
+    IncomingAudioStreams(0), mEvBase(evBase), mResources(std::move(resources)), mChannel(), mStreamMapLock(), mHeadsetIncomingStreams(), mSpeakerIncomingStreams(), mRadioStateLock(), mPtt(false), mLastFramePtt(false), mTxSequence(0), mVoiceSink(std::make_shared<VoiceCompressionSink>(*this)), mVoiceFilter(std::make_shared<audio::SpeexPreprocessor>(mVoiceSink)), mMaintenanceTimer(mEvBase, std::bind(&ATCRadioSimulation::maintainIncomingStreams, this)), mVoiceTimeoutTimer(mEvBase, std::bind(&ATCRadioSimulation::maintainVoiceTimeout, this)), mVuMeter(300 / audio::frameLengthMs) // VU is a 300ms zero to peak response...
 {
     setUDPChannel(channel);
     mMaintenanceTimer.enable(maintenanceTimerIntervalMs);
+    mVoiceTimeoutTimer.enable(voiceTimeoutIntervalMs);
 }
 
 ATCRadioSimulation::~ATCRadioSimulation() {
@@ -200,14 +201,16 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         return false;
     }
 
+    bool ignoreaudio = false;
     std::shared_ptr<OutputDeviceState> state = onHeadset ? mHeadsetState : mSpeakerState;
 
     ::memset(state->mChannelBuffer, 0, audio::frameSizeBytes);
     if (mPtt.load() && mRadioState[rxIter].tx) {
         // don't analyze and mix-in the radios transmitting, but suppress the
         // effects.
-        resetRadioFx(rxIter);
-        return true;
+        resetRadioFx(rxIter, true);
+        ignoreaudio = true;
+        // return true;
     }
     // now, find all streams that this applies to.
     float    crackleGain       = 0.0f;
@@ -267,9 +270,12 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         if (mUseStream) {
             // then include this stream.
             try {
-                mix_buffers(state->mChannelBuffer,
-                            sampleCache.at(srcPair.second.source.get()),
-                            voiceGain * mRadioState[rxIter].Gain);
+                if (!ignoreaudio) {
+                    mix_buffers(state->mChannelBuffer,
+                                sampleCache.at(srcPair.second.source.get()),
+                                voiceGain * mRadioState[rxIter].Gain);
+                }
+
                 concurrentStreams++;
             } catch (const std::out_of_range &) {
                 LOG("ATCRadioSimulation", "internal error:  Tried to mix uncached stream");
@@ -278,7 +284,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
     }
 
     if (concurrentStreams > 0) {
-        if (mRadioState[rxIter].mLastRxCount == 0) {
+        if (mRadioState[rxIter].mLastRxCount == 0 && !ignoreaudio) {
             // Post Begin Voice Receiving Notfication
             unsigned int freq = rxIter;
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting yet
@@ -339,9 +345,11 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
 
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting anymore
             ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &rxIter, nullptr);
+            mRadioState[rxIter].lastVoiceTime = 0;
             LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", rxIter);
         }
     }
+
     mRadioState[rxIter].mLastRxCount = concurrentStreams;
 
     // if we have a pending click, play it.
@@ -351,17 +359,22 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
 
     // now, finally, mix the channel buffer into the mixing buffer.
     if (onHeadset) {
-        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left ||
-            mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
-            mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
+        if (!ignoreaudio) {
+            if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left ||
+                mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
+                mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
+            }
+
+            if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
+                mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
+                mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
+            }
         }
 
-        if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
-            mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
-            mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
-        }
     } else {
-        mix_buffers(state->mMixingBuffer, state->mChannelBuffer);
+        if (!ignoreaudio) {
+            mix_buffers(state->mMixingBuffer, state->mChannelBuffer);
+        }
     }
 
     return false;
@@ -455,6 +468,7 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
         }
 
         mRadioState[trans.Frequency].lastTransmitCallsign = pkt.Callsign;
+        mRadioState[trans.Frequency].lastVoiceTime        = time(0);
 
         if (pkt.LastPacket) {
             bool hasBeenDeleted = afv_native::util::removeIfExists(
@@ -462,9 +476,9 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
             if (hasBeenDeleted) {
                 // There is a risk that the pointer to lastTransmitCallsign might already change
                 // or be invalid by the event handler receives it, needs to be checked in real conditions
-                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd,
-                                               &trans.Frequency,
-                                               &mRadioState[trans.Frequency].lastTransmitCallsign);
+                ClientEventCallback->invokeAll(
+                    ClientEventType::StationRxEnd, &trans.Frequency,
+                    (void *) mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
                 LOG("ATCRadioSimulation", "StationRxEnd event: %i: %s", trans.Frequency,
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
             }
@@ -475,9 +489,9 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
 
                 // Need to emit that we have a new pilot that started transmitting
-                ClientEventCallback->invokeAll(ClientEventType::StationRxBegin,
-                                               &trans.Frequency,
-                                               &mRadioState[trans.Frequency].lastTransmitCallsign);
+                ClientEventCallback->invokeAll(
+                    ClientEventType::StationRxBegin, &trans.Frequency,
+                    (void *) mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
 
                 mRadioState[trans.Frequency].liveTransmittingCallsigns.emplace_back(pkt.Callsign);
             }
@@ -597,6 +611,38 @@ void ATCRadioSimulation::setUDPChannel(cryptodto::UDPChannel *newChannel) {
             }
         });
     }
+}
+
+void ATCRadioSimulation::maintainVoiceTimeout() {
+    std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
+    std::map<unsigned int, AtcRadioState>::iterator it;
+
+    for (it = mRadioState.begin(); it != mRadioState.end(); it++) {
+        if (it->second.lastVoiceTime == 0) {
+            continue;
+        }
+        LOG("ATCRadioSimulation", "Potential VoiceTimeout.. %i %i", it->second.lastVoiceTime,
+            time(0) - it->second.lastVoiceTime);
+
+        if (time(0) - it->second.lastVoiceTime >= voiceTimeoutIntervalS) {
+            LOG("ATCRadioSimulation", "Found VoiceTimeout.. %i", it->second.Frequency);
+            // Voice channel rx has timed out.. update things.
+            it->second.lastVoiceTime = 0;
+            for (const auto &c: it->second.liveTransmittingCallsigns) {
+                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd,
+                                               &it->second.Frequency, (void *) c.c_str());
+                LOG("ATCRadioSimulation", "StationRxEnd TIMEOUT event: %i: %s",
+                    it->second.Frequency, c.c_str());
+            }
+
+            ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd,
+                                           &it->second.Frequency, nullptr);
+            LOG("ATCRadioSimulation", "FrequencyRxEnd TIMEOUT event: %i",
+                it->second.Frequency);
+        }
+    }
+
+    mVoiceTimeoutTimer.enable(voiceTimeoutIntervalMs);
 }
 
 void ATCRadioSimulation::maintainIncomingStreams() {
@@ -723,11 +769,13 @@ void afv_native::afv::ATCRadioSimulation::setRx(unsigned int freq, bool rx) {
         ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &freq, nullptr);
         LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", freq);
         for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
-            ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq, &callsign);
+            ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq,
+                                           (void *) callsign.c_str());
             LOG("ATCRadioSimulation", "SetRx false StationRxEnd event: %i: %s", freq,
                 callsign.c_str());
         }
         mRadioState[freq].liveTransmittingCallsigns = {};
+        mRadioState[freq].lastVoiceTime             = 0;
     }
     mRadioState[freq].rx = rx;
     LOG("ATCRadioSimulation", "setRxRadio: %i", freq);
@@ -956,7 +1004,8 @@ void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
     ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &freq, nullptr);
     LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", freq);
     for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
-        ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq, &callsign);
+        ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq,
+                                       (void *) callsign.c_str());
         LOG("ATCRadioSimulation", "removeFrequency StationRxEnd event: %i: %s", freq,
             callsign.c_str());
     }
