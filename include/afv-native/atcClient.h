@@ -11,7 +11,6 @@
 #include "afv-native/afv/APISession.h"
 #include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/afv/EffectResources.h"
-#include "afv-native/afv/RadioSimulation.h"
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
@@ -142,6 +141,10 @@ namespace afv_native {
          */
         void setAudioApi(audio::AudioDevice::Api api);
 
+        void setAudioInputDevice(std::string inputDevice);
+        void setAudioOutputDevice(std::string outputDevice);
+        void setSpeakerOutputDevice(std::string outputDevice);
+
         /** isAPIConnected() indicates if the API Server connection is up.
          *
          * @return true if the API server connection is good or in the middle of
@@ -173,10 +176,6 @@ namespace afv_native {
         void setEnableInputFilters(bool enableInputFilters);
         void setEnableOutputEffects(bool enableEffects);
 
-        void setMicrophoneDevice(std::string inputDevice);
-        void setSpeakerDevice(std::string speakerDevice);
-        void setHeadsetDevice(std::string headsetDevice);
-
         /** ClientEventCallback provides notifications when certain client events occur.  These can be used to
          * provide feedback within the client itself without needing to poll Client's methods.
          *
@@ -200,10 +199,6 @@ namespace afv_native {
         std::string lastTransmitOnFreq(unsigned int freq);
         void        startAudio();
         void        stopAudio();
-
-        void startMicrophone();
-        void startHeadset();
-        void startSpeaker();
 
         int getTransceiverCountForFrequency(unsigned int freq);
 
@@ -269,9 +264,6 @@ namespace afv_native {
         std::shared_ptr<afv::ATCRadioSimulation> mATCRadioStack;
         std::shared_ptr<audio::AudioDevice>      mSpeakerDevice;
 
-        std::shared_ptr<audio::AudioDevice> mMicrophoneDevice;
-        std::shared_ptr<audio::AudioDevice> mHeadsetDevice;
-
         std::string mCallsign;
 
         void sessionStateCallback(afv::APISessionState state);
@@ -310,18 +302,16 @@ namespace afv_native {
 
         std::string             mClientName;
         audio::AudioDevice::Api mAudioApi;
-        std::string             mMicrophoneDeviceName;
-        std::string             mHeadsetDeviceName;
-        std::string             mSpeakerDeviceName;
-        bool                    mInvalidDeviceConfig = false;
-        bool                    mSplitAudioChannels;
+        std::string             mAudioInputDeviceName;
+        std::string             mAudioOutputDeviceName;
+        std::string             mAudioSpeakerDeviceName;
 
         int linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
 
         HardwareType activeHardware;
 
-        std::shared_ptr<afv::ATCRadioSimulation> mRadioSim;
+      public:
     };
 } // namespace afv_native
 

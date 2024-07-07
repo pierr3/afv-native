@@ -138,17 +138,17 @@ std::map<unsigned int, std::string> afv_native::api::atcClient::GetAudioApis() {
 
 void afv_native::api::atcClient::SetAudioInputDevice(std::string inputDevice) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->setMicrophoneDevice(inputDevice);
+    client->setAudioInputDevice(inputDevice);
 }
 
 void afv_native::api::atcClient::SetAudioOutputDevice(std::string outputDevice) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->setHeadsetDevice(outputDevice);
+    client->setAudioOutputDevice(outputDevice);
 }
 
 void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(std::string outputDevice) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->setSpeakerDevice(outputDevice);
+    client->setSpeakerOutputDevice(outputDevice);
 }
 
 void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
@@ -164,30 +164,30 @@ void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
 
 std::string afv_native::api::atcClient::GetDefaultAudioInputDevice(unsigned int mAudioApi) {
     auto devices = afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(mAudioApi);
-    // auto it = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
-    //     //return device.isDefault;
-    // });
+    auto it = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
+        return kv.second.isDefault;
+    });
 
-    // if (it != devices.end()) {
-    //     return it->second.name;
-    // } else if (devices.size() > 0) {
-    //     return devices.begin()->second.name;
-    // }
+    if (it != devices.end()) {
+        return it->second.name;
+    } else if (devices.size() > 0) {
+        return devices.begin()->second.name;
+    }
 
     return std::string();
 }
 
 std::string afv_native::api::atcClient::GetDefaultAudioOutputDevice(unsigned int mAudioApi) {
     auto devices = afv_native::audio::AudioDevice::getCompatibleOutputDevicesForApi(mAudioApi);
-    // auto it = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
-    //     //return kv.second.isDefault;
-    // });
+    auto it = std::find_if(devices.begin(), devices.end(), [](auto &kv) {
+        return kv.second.isDefault;
+    });
 
-    // if (it != devices.end()) {
-    //     return it->second.name;
-    // } else if (devices.size() > 0) {
-    //     return devices.begin()->second.name;
-    // }
+    if (it != devices.end()) {
+        return it->second.name;
+    } else if (devices.size() > 0) {
+        return devices.begin()->second.name;
+    }
 
     return std::string();
 }
@@ -196,9 +196,9 @@ std::vector<afv_native::api::AudioInterface> afv_native::api::atcClient::GetAudi
     std::vector<afv_native::api::AudioInterface> out;
     auto devices = afv_native::audio::AudioDevice::getCompatibleInputDevicesForApi(mAudioApi);
 
-    // std::transform(devices.begin(), devices.end(), std::back_inserter(out), [](auto &kv) -> afv_native::api::AudioInterface {
-    //     return {kv.second.id, kv.second.name, kv.second.isDefault};
-    // });
+    std::transform(devices.begin(), devices.end(), std::back_inserter(out), [](auto &kv) -> afv_native::api::AudioInterface {
+        return {kv.second.id, kv.second.name, kv.second.isDefault};
+    });
 
     return out;
 }
@@ -207,9 +207,9 @@ std::vector<afv_native::api::AudioInterface> afv_native::api::atcClient::GetAudi
     std::vector<afv_native::api::AudioInterface> out;
     auto devices = afv_native::audio::AudioDevice::getCompatibleOutputDevicesForApi(mAudioApi);
 
-    // std::transform(devices.begin(), devices.end(), std::back_inserter(out), [](auto &kv) -> afv_native::api::AudioInterface {
-    //     return {kv.second.id, kv.second.name, kv.second.isDefault};
-    // });
+    std::transform(devices.begin(), devices.end(), std::back_inserter(out), [](auto &kv) -> afv_native::api::AudioInterface {
+        return {kv.second.id, kv.second.name, kv.second.isDefault};
+    });
 
     return out;
 }
