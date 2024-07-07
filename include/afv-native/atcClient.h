@@ -314,7 +314,7 @@ namespace afv_native {
         std::string             mHeadsetDeviceName;
         std::string             mSpeakerDeviceName;
         bool                    mInvalidDeviceConfig = false;
-        bool                    mSplitAudioChannels = true;
+        bool                    mSplitAudioChannels;
 
         int linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
