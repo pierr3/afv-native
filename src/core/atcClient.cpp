@@ -501,8 +501,7 @@ void ATCClient::aliasUpdateCallback() {
 }
 
 void ATCClient::stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs) {
-    ClientEventCallback.invokeAll(ClientEventType::VccsReceived,
-                                  (void *) stationName.c_str(), &vccs);
+    ClientEventCallback.invokeAll(ClientEventType::VccsReceived, &stationName, &vccs);
 }
 
 void ATCClient::stationSearchCallback(bool found, std::pair<std::string, unsigned int> data) {
@@ -531,8 +530,7 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
         mATCRadioStack->stationTransceiverUpdateCallback(stationName, transceivers);
     }
 
-    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated,
-                                  (void *) stationName.c_str(), nullptr);
+    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, &stationName, nullptr);
 }
 
 std::map<std::string, std::vector<afv::dto::StationTransceiver>> ATCClient::getStationTransceivers() const {
@@ -634,13 +632,6 @@ void ATCClient::setHardware(HardwareType hardware) {
     this->activeHardware = hardware;
 }
 
-void ATCClient::setManualTransceivers(unsigned int freq, std::vector<afv::dto::StationTransceiver> transceivers) {
-    if (transceivers.size() > 0) {
-        mATCRadioStack->setTransceivers(freq, transceivers);
-        queueTransceiverUpdate();
-    }
-}
-
 void ATCClient::linkTransceivers(std::string callsign, unsigned int freq) {
     auto transceivers = getStationTransceivers();
     if (transceivers[callsign].size() > 0) {
@@ -667,8 +658,7 @@ void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName, int er
         "use, etc)",
         deviceName.c_str());
 
-    ClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError,
-                                  (void *) deviceName.c_str(), nullptr);
+    ClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError, &deviceName, nullptr);
 }
 
 void afv_native::ATCClient::setPlaybackChannel(unsigned int freq, PlaybackChannel channel) {
