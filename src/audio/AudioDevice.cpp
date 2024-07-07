@@ -35,6 +35,9 @@
 
 #include <memory>
 #include <cstring>
+#include <algorithm>
+
+#include "afv-native/Log.h"
 
 using namespace afv_native::audio;
 using namespace std;
@@ -74,9 +77,3 @@ AudioDevice::DeviceInfo::DeviceInfo(std::string newName, std::string newId, bool
         id = name;
     }
 }
-
-void AudioDevice::setNotificationFunc(std::function<void(std::string, int)> newFunc) {
-    std::lock_guard<std::mutex> funcGuard(mNotificationFuncLock);
-
-    mNotificationFunc = newFunc;
-};

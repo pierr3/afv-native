@@ -213,9 +213,7 @@ namespace afv_native {
          */
         void logAudioStatistics();
 
-        std::shared_ptr<const audio::AudioDevice> getHeadsetOutputDevice() const;
-        std::shared_ptr<const audio::AudioDevice> getMicrophoneInputDevice() const;
-        std::shared_ptr<const audio::AudioDevice> getSpeakerOutputDevice() const;
+        std::shared_ptr<const audio::AudioDevice> getAudioDevice() const;
 
         /** getRxActive returns if the nominated radio is currently Receiving
          * voice, irrespective as to if it's audiable or not.
@@ -261,9 +259,7 @@ namespace afv_native {
 
         void getStation(std::string callsign);
 
-        std::shared_ptr<audio::AudioDevice> mSpeakerDevice;
-        std::shared_ptr<audio::AudioDevice> mMicrophoneDevice;
-        std::shared_ptr<audio::AudioDevice> mHeadsetDevice;
+        std::shared_ptr<audio::AudioDevice> mAudioDevice;
 
       protected:
         struct event_base                    *mEvBase;
@@ -273,6 +269,10 @@ namespace afv_native {
         afv::APISession                          mAPISession;
         afv::VoiceSession                        mVoiceSession;
         std::shared_ptr<afv::ATCRadioSimulation> mATCRadioStack;
+        std::shared_ptr<audio::AudioDevice>      mSpeakerDevice;
+
+        std::shared_ptr<audio::AudioDevice> mMicrophoneDevice;
+        std::shared_ptr<audio::AudioDevice> mHeadsetDevice;
 
         std::string mCallsign;
 
@@ -316,12 +316,14 @@ namespace afv_native {
         std::string             mHeadsetDeviceName;
         std::string             mSpeakerDeviceName;
         bool                    mInvalidDeviceConfig = false;
-        bool                    mSplitAudioChannels  = true;
+        bool                    mSplitAudioChannels = true;
 
         int linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
 
         HardwareType activeHardware;
+
+        std::shared_ptr<afv::ATCRadioSimulation> mRadioSim;
     };
 } // namespace afv_native
 
