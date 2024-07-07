@@ -57,7 +57,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 
 # Link the test client if available
-if(EXISTS "${PROJECT_SOURCE_DIR}/test/afv-native-testclient/CMakeLists.txt")
+if(EXISTS "${PROJECT_SOURCE_DIR}/test/afv-native-testclient/CMakeLists.txt" AND DEFINED BUILD_TEST_CLIENT)
 	add_subdirectory(test/afv-native-testclient)
 endif()
 
