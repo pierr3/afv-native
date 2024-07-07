@@ -186,6 +186,12 @@ void ATCClient::sessionStateCallback(afv::APISessionState state) {
 }
 
 void ATCClient::startAudio() {
+    if (mAudioSpeakerDeviceName.empty() || mAudioOutputDeviceName.empty() ||
+        mAudioInputDeviceName.empty() || mAudioApi == -1) {
+        LOG("afv::ATCClient", "Audio device and API not set, cannot start audio");
+        return;
+    }
+
     mAudioStoppedThroughCallback = false;
     if (!mSpeakerDevice) {
         LOG("afv::ATCClient", "Initialising Speaker Audio...");

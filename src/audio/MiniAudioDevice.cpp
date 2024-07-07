@@ -1,4 +1,5 @@
 #include "afv-native/audio/MiniAudioDevice.h"
+#include <stdexcept>
 
 using namespace afv_native::audio;
 using namespace std;
@@ -25,7 +26,9 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, co
     ma_result result;
 
     if (audioApi == -1) {
-        result = ma_context_init(NULL, 0, &contextConfig, &context);
+        LOG("MiniAudioAudioDevice", "Cannot initialize audio device with unknown audio api.");
+        throw new std::runtime_error("MiniAudioAudioDevice: Cannot initialize audio device with unknown audio api.");
+        return;
     } else {
         try {
             ma_backend backends[1] = {static_cast<ma_backend>(audioApi)};
