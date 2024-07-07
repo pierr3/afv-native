@@ -12,6 +12,7 @@
 #include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/afv/EffectResources.h"
 #include "afv-native/afv/VoiceSession.h"
+#include "afv-native/afv/dto/StationTransceiver.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
 #include "afv-native/audio/ITick.h"
@@ -240,6 +241,7 @@ namespace afv_native {
         bool addFrequency(unsigned int freq, bool onHeadset, std::string stationName = "");
         void removeFrequency(unsigned int freq);
         bool isFrequencyActive(unsigned int freq);
+        void setManualTransceivers(unsigned int freq, std::vector<afv::dto::StationTransceiver> transceivers);
         void linkTransceivers(std::string callsign, unsigned int freq);
 
         std::map<unsigned int, afv::AtcRadioState> getRadioState();

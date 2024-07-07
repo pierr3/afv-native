@@ -58,8 +58,7 @@ VoiceServerConnectionData::VoiceServerConnectionData():
 }
 
 VoiceServerConnectionData::VoiceServerConnectionData(const VoiceServerConnectionData &cpysrc):
-    AddressIpV4(cpysrc.AddressIpV4), AddressIpV6(cpysrc.AddressIpV6),
-    ChannelConfig(cpysrc.ChannelConfig) {
+    AddressIpV4(cpysrc.AddressIpV4), AddressIpV6(cpysrc.AddressIpV6), ChannelConfig(cpysrc.ChannelConfig) {
 }
 
 VoiceServerConnectionData::VoiceServerConnectionData(VoiceServerConnectionData &&movesrc) noexcept:

@@ -47,7 +47,7 @@ namespace afv_native { namespace audio {
         auto cosw0 = cos(w0);
         auto sinw0 = sin(w0);
         auto alpha = sinw0 / (2 * q);
-        auto a = pow(10, dbGain / 40); // TODO: should we square root this value?
+        auto a     = pow(10, dbGain / 40); // TODO: should we square root this value?
 
         auto b0  = 1 + alpha * a;
         auto b1  = -2 * cosw0;
@@ -64,7 +64,7 @@ namespace afv_native { namespace audio {
         auto cosw0 = cos(w0);
         auto sinw0 = sin(w0);
         auto alpha = sinw0 / (2 * q);
-        auto A = pow(10, dbGain / 40); // TODO: should we square root this value?
+        auto A     = pow(10, dbGain / 40); // TODO: should we square root this value?
 
         auto b0  = A * ((A + 1) - (A - 1) * cos(w0) + 2 * sqrt(A) * alpha);
         auto b1  = 2 * A * ((A - 1) - (A + 1) * cos(w0));
@@ -81,7 +81,7 @@ namespace afv_native { namespace audio {
         auto cosw0 = cos(w0);
         auto sinw0 = sin(w0);
         auto alpha = sinw0 / (2 * q);
-        auto A = pow(10, dbGain / 40); // TODO: should we square root this value?
+        auto A     = pow(10, dbGain / 40); // TODO: should we square root this value?
 
         auto b0  = A * ((A + 1) + (A - 1) * cos(w0) + 2 * sqrt(A) * alpha);
         auto b1  = -2 * A * ((A - 1) + (A + 1) * cos(w0));

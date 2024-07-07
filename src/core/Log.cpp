@@ -60,8 +60,7 @@ static void defaultLogger(std::string subsystem, std::string file, int line, std
     }
     if (nullptr != gLoggerFh) {
 #ifdef NDEBUG
-        fprintf(gLoggerFh, "%s: %s: %s\n", dateTimeBuf, subsystem.c_str(),
-                outputLine.c_str());
+        fprintf(gLoggerFh, "%s: %s: %s\n", dateTimeBuf, subsystem.c_str(), outputLine.c_str());
 #else
         fprintf(gLoggerFh, "%s: %s: %s(%d): %s\n", dateTimeBuf, subsystem.c_str(), file.c_str(), line,
                 outputLine.c_str());
@@ -89,7 +88,7 @@ void afv_native::__Log(const char *file, int line, const char *subsystem, const 
     {
         std::lock_guard<std::mutex> logLock(gLoggerLock);
 
-        if (gLogger) {
+        if(gLogger) {
             gLogger(subsystem, file, line, outBuffer.data());
         }
     }

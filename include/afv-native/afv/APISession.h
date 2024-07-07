@@ -76,10 +76,10 @@ namespace afv_native { namespace afv {
 
         APISessionError getLastError() const;
 
-        void updateStationAliases();
-        void requestStationTransceivers(std::string stationName);
-        void requestStationVccs(std::string stationName);
-        void getStation(std::string stationName);
+        void                      updateStationAliases();
+        void                      requestStationTransceivers(std::string stationName);
+        void                      requestStationVccs(std::string stationName);
+        void                      getStation(std::string stationName);
         std::vector<dto::Station> getStationAliases() const;
         std::map<std::string, std::vector<dto::StationTransceiver>> getStationTransceivers() const;
 
@@ -88,7 +88,7 @@ namespace afv_native { namespace afv {
          */
         util::ChainedCallback<void(APISessionState)> StateCallback;
         util::ChainedCallback<void(void)>            AliasUpdateCallback;
-        util::ChainedCallback<void(std::string)> StationTransceiversUpdateCallback;
+        util::ChainedCallback<void(std::string)>     StationTransceiversUpdateCallback;
         util::ChainedCallback<void(std::string, std::map<std::string, unsigned int>)> StationVccsCallback;
         util::ChainedCallback<void(bool, std::pair<std::string, unsigned int>)> StationSearchCallback;
 
@@ -116,11 +116,11 @@ namespace afv_native { namespace afv {
 
         APISessionError mLastError;
 
-        http::RESTRequest         mStationAliasRequest;
-        http::RESTRequest         mStationTransceiversRequest;
-        http::RESTRequest         mGetStationRequest;
-        http::RESTRequest         mVccsRequest;
-        std::vector<dto::Station> mAliasedStations;
+        http::RESTRequest                                           mStationAliasRequest;
+        http::RESTRequest                                           mStationTransceiversRequest;
+        http::RESTRequest                                           mGetStationRequest;
+        http::RESTRequest                                           mVccsRequest;
+        std::vector<dto::Station>                                   mAliasedStations;
         std::map<std::string, std::vector<dto::StationTransceiver>> mStationTransceivers;
 
       private:

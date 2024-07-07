@@ -43,8 +43,8 @@ namespace afv_native { namespace audio {
      */
     class ISampleStorage {
       public:
-        virtual SampleType *data() const            = 0;
-        virtual size_t      lengthInSamples() const = 0;
+        virtual SampleType *data() const = 0;
+        virtual size_t lengthInSamples() const = 0;
     };
 }} // namespace afv_native::audio
 

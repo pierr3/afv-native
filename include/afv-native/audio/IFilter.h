@@ -40,7 +40,7 @@ namespace afv_native { namespace audio {
     class IFilter {
       public:
         virtual SampleType TransformOne(SampleType sampleIn) = 0;
-        virtual ~IFilter()                                   = default;
+        virtual ~IFilter() = default;
     };
 }} // namespace afv_native::audio
 

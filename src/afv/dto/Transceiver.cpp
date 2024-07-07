@@ -52,11 +52,7 @@ void afv_native::afv::dto::from_json(const json &j, Transceiver &ar) {
 
 void afv_native::afv::dto::to_json(json &j, const Transceiver &ar) {
     j = nlohmann::json {
-        {"ID", ar.ID},
-        {"Frequency", ar.Frequency},
-        {"LatDeg", ar.LatDeg},
-        {"LonDeg", ar.LonDeg},
-        {"HeightMslM", ar.HeightMslM},
-        {"HeightAglM", ar.HeightAglM},
+        {"ID", ar.ID},         {"Frequency", ar.Frequency},   {"LatDeg", ar.LatDeg},
+        {"LonDeg", ar.LonDeg}, {"HeightMslM", ar.HeightMslM}, {"HeightAglM", ar.HeightAglM},
     };
 }

@@ -114,6 +114,7 @@ namespace afv_native { namespace afv {
 
         std::string              lastTransmitCallsign      = "";
         std::vector<std::string> liveTransmittingCallsigns = {};
+        time_t                   lastVoiceTime;
     };
 
     /** CallsignMeta is the per-packetstream metadata stored within the ATCRadioSimulation object.
@@ -247,6 +248,8 @@ namespace afv_native { namespace afv {
          * without causing performance issues.
          */
         static const int maintenanceTimerIntervalMs = 30 * 1000; /* every 30s */
+        static const int voiceTimeoutIntervalMs     = 2 * 1000;
+        static const int voiceTimeoutIntervalS      = 2;
 
         util::ChainedCallback<void(ClientEventType, void *, void *)> *ClientEventCallback;
 
@@ -287,6 +290,7 @@ namespace afv_native { namespace afv {
         std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
 
         event::EventCallbackTimer mMaintenanceTimer;
+        event::EventCallbackTimer mVoiceTimeoutTimer;
         RollingAverage<double>    mVuMeter;
 
         void resetRadioFx(unsigned int radio, bool except_click = false);
@@ -301,6 +305,7 @@ namespace afv_native { namespace afv {
         void instDtoHandler(const std::string &dtoName, const unsigned char *bufIn, size_t bufLen);
 
         void maintainIncomingStreams();
+        void maintainVoiceTimeout();
 
       private:
         bool _process_radio(const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache, unsigned int rxIter, bool onHeadset);

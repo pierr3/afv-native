@@ -43,8 +43,8 @@ typedef SampleType (*fetchSample)(const void *base, size_t stride, size_t offset
 
 SampleType convert8bit(const void *base, size_t stride, size_t offset, int channels) {
     auto *sampleStart = reinterpret_cast<const uint8_t *>(base) + (stride * offset);
-    float sampleOut = 0.0f;
-    sampleOut       = (static_cast<float>(sampleStart[0]) - 128.0f) / 128.0f;
+    float sampleOut   = 0.0f;
+    sampleOut         = (static_cast<float>(sampleStart[0]) - 128.0f) / 128.0f;
     if (channels == 2) {
         sampleOut += (static_cast<float>(sampleStart[1]) - 128.0f) / 128.0f;
         sampleOut /= 2;

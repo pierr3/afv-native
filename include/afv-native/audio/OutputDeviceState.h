@@ -4,8 +4,8 @@
 namespace afv_native {
     class OutputDeviceState {
       public:
-        /** mChannelBuffer is our single-radio/channel workbuffer - we do our
-         * per-channel fx mixing in here before we mix into the mMixingBuffer
+        /** mChannelBuffer is our single-radio/channel workbuffer - we do our per-channel fx mixing
+         * in here before we mix into the mMixingBuffer
          */
         audio::SampleType *mChannelBuffer;
 

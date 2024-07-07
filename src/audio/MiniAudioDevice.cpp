@@ -1,7 +1,4 @@
 #include "afv-native/audio/MiniAudioDevice.h"
-#include <algorithm>
-#include <memory>
-#include "afv-native/Log.h"
 
 using namespace afv_native::audio;
 using namespace std;
@@ -9,12 +6,7 @@ using namespace std;
 void logger(void *pUserData, ma_uint32 logLevel, const char *message) {
     (void) pUserData;
     std::string msg(message);
-    msg.erase(std::find_if(msg.rbegin(), msg.rend(),
-                           [](unsigned char ch) {
-                               return ch != '\n';
-                           })
-                  .base(),
-              msg.end());
+    msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.cend());
     LOG("MiniAudioAudioDevice", "%s: %s", ma_log_level_to_string(logLevel), msg.c_str());
 }
 
@@ -159,7 +151,7 @@ std::map<int, ma_device_info> MiniAudioAudioDevice::getCompatibleOutputDevices(u
 
             result = ma_context_init(backends, 1, NULL, &context);
         } catch (std::exception &e) {
-            LOG("MiniAudioAudioDevice", "Error querying input devices due to wrong audio api: %s", e.what());
+            LOG("MiniAudioAudioDevice", "Error querying output devices due to wrong audio api: %s", e.what());
 
             return deviceList;
         }
@@ -303,6 +295,10 @@ bool MiniAudioAudioDevice::getDeviceForName(const std::string &deviceName, bool 
 
     if (!allDevices.empty()) {
         for (const auto &devicePair: allDevices) {
+            if (devicePair.second.id.coreaudio == deviceName) {
+                deviceId = devicePair.second.id;
+                return true;
+            }
             if (devicePair.second.name == deviceName) {
                 deviceId = devicePair.second.id;
                 return true;
@@ -393,7 +389,8 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(A
     auto allDevices = MiniAudioAudioDevice::getCompatibleInputDevices(api);
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
-        returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false));
+        returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
+                                                               p.second.id.coreaudio));
     }
     return returnDevices;
 }
@@ -402,7 +399,8 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleOutputDevicesForApi(
     auto allDevices = MiniAudioAudioDevice::getCompatibleOutputDevices(api);
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
-        returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false));
+        returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
+                                                               p.second.id.coreaudio));
     }
     return returnDevices;
 }

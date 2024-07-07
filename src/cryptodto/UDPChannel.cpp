@@ -183,8 +183,7 @@ bool UDPChannel::open() {
         }
         if (::connect(mUDPSocket, reinterpret_cast<struct sockaddr *>(&saddr), saddr_len)) {
             mLastErrno = evutil_socket_geterror(mUDPSocket);
-            LOG("udpchannel", "couldn't connect to endpoint address \"%s\": %s",
-                mAddress.c_str(), evutil_socket_error_to_string(errno));
+            LOG("udpchannel", "couldn't connect to endpoint address \"%s\": %s", mAddress.c_str(), evutil_socket_error_to_string(errno));
             close();
             return false;
         }

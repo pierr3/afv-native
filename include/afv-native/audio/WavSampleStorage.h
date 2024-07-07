@@ -57,7 +57,7 @@ namespace afv_native { namespace audio {
         WavSampleStorage &operator=(WavSampleStorage &&copySrc) noexcept;
 
         SampleType *data() const override;
-        size_t      lengthInSamples() const override;
+        size_t lengthInSamples() const override;
     };
 }} // namespace afv_native::audio
 

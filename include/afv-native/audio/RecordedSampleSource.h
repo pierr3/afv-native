@@ -42,10 +42,10 @@ namespace afv_native { namespace audio {
     class RecordedSampleSource: public ISampleSource {
       protected:
         const std::shared_ptr<ISampleStorage> mSampleSource;
-        size_t                                mCurPosition;
-        bool                                  mLoop;
-        bool                                  mPlay;
-        bool                                  mFirstFrame;
+        size_t mCurPosition;
+        bool   mLoop;
+        bool   mPlay;
+        bool   mFirstFrame;
 
       public:
         RecordedSampleSource(std::shared_ptr<ISampleStorage> src, bool loop);

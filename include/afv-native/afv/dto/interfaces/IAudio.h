@@ -34,7 +34,6 @@
 #ifndef AFV_NATIVE_IAUDIO_H
 #define AFV_NATIVE_IAUDIO_H
 
-#include <cstdint>
 #include <string>
 #include <vector>
 

@@ -62,16 +62,16 @@ namespace afv_native { namespace audio {
 
         SourceStatus getAudioFrame(SampleType *bufferOut) override {
             size_t ctrLeft = frameSizeSamples;
-            while (ctrLeft--) {
-                *(bufferOut++) = iterateOneSample();
-            }
+                while (ctrLeft--) {
+                    *(bufferOut++) = iterateOneSample();
+                }
             return SourceStatus::OK;
         }
 
       protected:
-        int32_t                mX1;
-        int32_t                mX2;
-        float                  mLevel;
+        int32_t mX1;
+        int32_t mX2;
+        float   mLevel;
         static constexpr float sScale = 2.0f / static_cast<float>(0xffffffff);
     };
 }} // namespace afv_native::audio

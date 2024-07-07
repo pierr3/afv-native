@@ -29,8 +29,8 @@
 #include <memory>
 
 namespace afv_native {
-    /** ATCClient provides a fully functional ATC Client that can be integrated
-     * into an application.
+    /** ATCClient provides a fully functional ATC Client that can be integrated into
+     * an application.
      */
     class ATISClient: public audio::ISampleSink, public afv::ICompressedFrameSink, public std::enable_shared_from_this<ATISClient>, public audio::ITick {
       public:
@@ -46,10 +46,10 @@ namespace afv_native {
          * (It's used for some tear-down operations which must run to completion
          * after the client is shut-down if possible.)
          *
-         * @param evBase an initialised libevent event_base to register the
-         * client's asynchronous IO and deferred operations against.
-         * @param resourceBasePath A relative or absolute path to where the
-         * AFV-native resource files are located.
+         * @param evBase an initialised libevent event_base to register the client's
+         *      asynchronous IO and deferred operations against.
+         * @param resourceBasePath A relative or absolute path to where the AFV-native
+         *      resource files are located.
          * @param baseUrl The baseurl for the AFV API server to connect to.  The
          *      default should be used in most cases.
          * @param clientName The name of this client to advertise to the
@@ -61,8 +61,8 @@ namespace afv_native {
 
         /** setBaseUrl is used to change the API URL.
          *
-         * @note This affects all future API requests, but any in flight will
-         * not be cancelled and resent.
+         * @note This affects all future API requests, but any in flight will not
+         * be cancelled and resent.
          *
          * @param newUrl the new URL (without at trailing slash).
          */
@@ -138,7 +138,7 @@ namespace afv_native {
          * The callbacks take two paremeters-  the first is the ClientEventType which informs the client what type
          * of event occured.
          *
-         * The second argument is a pointer to data relevant to the callback. The memory it points to is only
+         * The second argument is a pointer to data relevant to the callback.  The memory it points to is only
          * guaranteed to be available for the duration of the callback.
          */
         util::ChainedCallback<void(ClientEventType, void *)> ClientEventCallback;
@@ -176,10 +176,10 @@ namespace afv_native {
 
         std::vector<afv::dto::Transceiver> makeTransceiverDto();
         /* sendTransceiverUpdate sends the update now, in process.
-         * queueTransceiverUpdate schedules it for the next eventloop.  This is
-         * a critical difference as it prevents bad reentrance as the
-         * transceiver update callback can trigger a second update if the
-         * desired state is out of sync! */
+         * queueTransceiverUpdate schedules it for the next eventloop.  This is a
+         * critical difference as it prevents bad reentrance as the transceiver
+         * update callback can trigger a second update if the desired state is
+         * out of sync! */
         void sendTransceiverUpdate();
         void queueTransceiverUpdate();
         void stopTransceiverUpdate();

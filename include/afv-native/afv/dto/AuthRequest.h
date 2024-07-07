@@ -53,5 +53,5 @@ namespace afv_native { namespace afv { namespace dto {
 
     void from_json(const nlohmann::json &j, AuthRequest &ar);
     void to_json(nlohmann::json &j, const AuthRequest &ar);
-}}} // namespace afv_native::afv::dto
+}}}    // namespace afv_native::afv::dto
 #endif // AFV_NATIVE_AUTHREQUEST_H
