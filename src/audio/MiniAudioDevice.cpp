@@ -6,7 +6,12 @@ using namespace std;
 void logger(void *pUserData, ma_uint32 logLevel, const char *message) {
     (void) pUserData;
     std::string msg(message);
-    msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.cend());
+    msg.erase(std::find_if(msg.rbegin(), msg.rend(),
+                           [](unsigned char ch) {
+                               return ch != '\n';
+                           })
+                  .base(),
+              msg.end());
     LOG("MiniAudioAudioDevice", "%s: %s", ma_log_level_to_string(logLevel), msg.c_str());
 }
 
@@ -295,10 +300,10 @@ bool MiniAudioAudioDevice::getDeviceForName(const std::string &deviceName, bool 
 
     if (!allDevices.empty()) {
         for (const auto &devicePair: allDevices) {
-            if (devicePair.second.id.coreaudio == deviceName) {
-                deviceId = devicePair.second.id;
-                return true;
-            }
+            // if (devicePair.second.id.coreaudio == deviceName) {
+            //     deviceId = devicePair.second.id;
+            //     return true;
+            // }
             if (devicePair.second.name == deviceName) {
                 deviceId = devicePair.second.id;
                 return true;
