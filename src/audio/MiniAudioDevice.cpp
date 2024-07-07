@@ -395,7 +395,7 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(A
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
         returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
-                                                               p.second.id.coreaudio));
+                                                               p.second.name));
     }
     return returnDevices;
 }
@@ -405,7 +405,7 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleOutputDevicesForApi(
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
         returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
-                                                               p.second.id.coreaudio));
+                                                               p.second.name));
     }
     return returnDevices;
 }
