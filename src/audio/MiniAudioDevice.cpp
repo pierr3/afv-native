@@ -398,7 +398,7 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(A
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
         returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
-                                                               p.second.name));
+                                                               MiniAudioAudioDevice::getDeviceId(p.second.id, api, p.second.name)));
     }
     return returnDevices;
 }
@@ -407,8 +407,10 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleOutputDevicesForApi(
     auto allDevices = MiniAudioAudioDevice::getCompatibleOutputDevices(api);
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
-        returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
-                                                               p.second.name));
+        returnDevices.emplace(
+            p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
+                                             MiniAudioAudioDevice::getDeviceId(
+                                                 p.second.id, api, p.second.name)));
     }
     return returnDevices;
 }
@@ -441,4 +443,84 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
 
     //     // mNotificationFunc(mUserStreamName, 0);
     // }
+}
+std::string afv_native::audio::MiniAudioAudioDevice::getDeviceId(const ma_device_id &deviceId, const AudioDevice::Api &api, const std::string &deviceName) {
+    if (api >= MA_BACKEND_COUNT || api < 0) {
+        LOG("MiniAudioAudioDevice", "Error getting device ID for audio api, api unknown: %d", api);
+        return deviceName;
+    }
+
+    const auto miniAudioApi = static_cast<ma_backend>(api);
+
+    if (miniAudioApi == ma_backend_wasapi) {
+#ifdef WIN32
+        // Determine the length of the converted string
+        int length = WideCharToMultiByte(CP_UTF8, 0, deviceId.wasapi, -1, nullptr, 0, nullptr, nullptr);
+        if (length == 0) {
+            // Conversion failed
+            return "";
+        }
+
+        // Allocate a buffer to hold the converted string
+        std::string result(length - 1, '\0'); // Length includes the null terminator, which we don't need
+
+        // Perform the conversion
+        WideCharToMultiByte(CP_UTF8, 0, deviceId.wasapi, -1, &result[0], length, nullptr, nullptr);
+        return result;
+#endif
+    }
+
+    if (miniAudioApi == ma_backend_dsound) {
+        return deviceName;
+    }
+
+    if (miniAudioApi == ma_backend_winmm) {
+        return std::to_string(deviceId.winmm);
+    }
+
+    if (miniAudioApi == ma_backend_coreaudio) {
+        return deviceId.coreaudio;
+    }
+
+    if (miniAudioApi == ma_backend_sndio) {
+        return deviceId.sndio;
+    }
+
+    if (miniAudioApi == ma_backend_audio4) {
+        return deviceId.audio4;
+    }
+
+    if (miniAudioApi == ma_backend_oss) {
+        return deviceId.oss;
+    }
+
+    if (miniAudioApi == ma_backend_pulseaudio) {
+        return deviceId.pulse;
+    }
+
+    if (miniAudioApi == ma_backend_alsa) {
+        return deviceId.alsa;
+    }
+
+    if (miniAudioApi == ma_backend_jack) {
+        return std::to_string(deviceId.jack);
+    }
+
+    if (miniAudioApi == ma_backend_aaudio) {
+        return std::to_string(deviceId.aaudio);
+    }
+
+    if (miniAudioApi == ma_backend_opensl) {
+        return std::to_string(deviceId.opensl);
+    }
+
+    if (miniAudioApi == ma_backend_webaudio) {
+        return deviceId.webaudio;
+    }
+
+    if (miniAudioApi == ma_backend_null) {
+        return std::to_string(deviceId.nullbackend);
+    }
+
+    return deviceName;
 }
