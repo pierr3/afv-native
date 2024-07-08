@@ -304,9 +304,9 @@ namespace afv_native {
 
         std::string             mClientName;
         audio::AudioDevice::Api mAudioApi;
-        std::string             mAudioInputDeviceName;
-        std::string             mAudioOutputDeviceName;
-        std::string             mAudioSpeakerDeviceName;
+        std::string             mAudioInputDeviceId;
+        std::string             mAudioOutputDeviceId;
+        std::string             mAudioSpeakerDeviceId;
 
         int linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;

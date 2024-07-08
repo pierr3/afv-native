@@ -21,7 +21,7 @@ ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBaseP
     mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mEvBase,
                                                              mFxRes,
                                                              &mVoiceSession.getUDPChannel())),
-    mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), mAudioInputDeviceName(), mAudioOutputDeviceName(), ClientEventCallback() {
+    mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), mAudioInputDeviceId(), mAudioOutputDeviceId(), ClientEventCallback() {
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));
@@ -186,8 +186,8 @@ void ATCClient::sessionStateCallback(afv::APISessionState state) {
 }
 
 void ATCClient::startAudio() {
-    if (mAudioSpeakerDeviceName.empty() || mAudioOutputDeviceName.empty() ||
-        mAudioInputDeviceName.empty() || mAudioApi == -1) {
+    if (mAudioSpeakerDeviceId.empty() || mAudioOutputDeviceId.empty() ||
+        mAudioInputDeviceId.empty() || mAudioApi == -1) {
         LOG("afv::ATCClient", "Audio device and API not set, cannot start audio");
         return;
     }
@@ -195,9 +195,8 @@ void ATCClient::startAudio() {
     mAudioStoppedThroughCallback = false;
     if (!mSpeakerDevice) {
         LOG("afv::ATCClient", "Initialising Speaker Audio...");
-        mSpeakerDevice = audio::AudioDevice::makeDevice("afv::speaker", mAudioSpeakerDeviceName, mAudioInputDeviceName, mAudioApi);
-        LOG("afv::ATCClient", "Speaker Device %s created",
-            mAudioSpeakerDeviceName.c_str());
+        mSpeakerDevice = audio::AudioDevice::makeDevice("afv::speaker", mAudioSpeakerDeviceId, mAudioInputDeviceId, mAudioApi);
+        LOG("afv::ATCClient", "Speaker Device %s created", mAudioSpeakerDeviceId.c_str());
         if (!mSpeakerDevice) {
             LOG("afv::ATCClient", "Could not initiate speaker audio context.");
             const char *error = "Could not initiate speaker audio context.";
@@ -205,15 +204,14 @@ void ATCClient::startAudio() {
         } else {
             mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
             LOG("afv::ATCClient", "Speaker Device %s notification setup",
-                mAudioSpeakerDeviceName.c_str());
+                mAudioSpeakerDeviceId.c_str());
         }
     } else {
         LOG("afv::ATCClient", "Speaker device already exists, skipping creation");
     }
     mSpeakerDevice->setSink(nullptr);
     mSpeakerDevice->setSource(mATCRadioStack->speakerDevice());
-    LOG("afv::ATCClient", "Speaker Device %s fully setup",
-        mAudioSpeakerDeviceName.c_str());
+    LOG("afv::ATCClient", "Speaker Device %s fully setup", mAudioSpeakerDeviceId.c_str());
 
     if (!mSpeakerDevice->openOutput()) {
         LOG("afv::ATCClient", "Unable to open Speaker audio device.");
@@ -222,13 +220,12 @@ void ATCClient::startAudio() {
         ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
     }
     LOG("afv::ATCClient", "Speaker Device %s output opened",
-        mAudioSpeakerDeviceName.c_str());
+        mAudioSpeakerDeviceId.c_str());
 
     if (!mAudioDevice) {
         LOG("afv::ATCClient", "Initialising Headset Audio...");
-        mAudioDevice = audio::AudioDevice::makeDevice("afv::headset", mAudioOutputDeviceName, mAudioInputDeviceName, mAudioApi, true);
-        LOG("afv::ATCClient", "Headset Device %s created",
-            mAudioOutputDeviceName.c_str());
+        mAudioDevice = audio::AudioDevice::makeDevice("afv::headset", mAudioOutputDeviceId, mAudioInputDeviceId, mAudioApi, true);
+        LOG("afv::ATCClient", "Headset Device %s created", mAudioOutputDeviceId.c_str());
         if (!mAudioDevice) {
             LOG("afv::ATCClient", "Could not initiate headset audio context.");
             const char *error = "Could not initiate headset audio context.";
@@ -236,15 +233,14 @@ void ATCClient::startAudio() {
         } else {
             mAudioDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
             LOG("afv::ATCClient", "Headset Device %s notification setup",
-                mAudioOutputDeviceName.c_str());
+                mAudioOutputDeviceId.c_str());
         }
     } else {
         LOG("afv::ATCClient", "Headset device already exists, skipping creation");
     }
     mAudioDevice->setSink(mATCRadioStack);
     mAudioDevice->setSource(mATCRadioStack->headsetDevice());
-    LOG("afv::ATCClient", "Headset Device %s fully setup",
-        mAudioOutputDeviceName.c_str());
+    LOG("afv::ATCClient", "Headset Device %s fully setup", mAudioOutputDeviceId.c_str());
 
     if (mAudioDevice->openOutput()) {
         LOG("afv::ATCClient", "Headset output device opened");
@@ -399,15 +395,15 @@ void ATCClient::setRT(bool rtState) {
 }
 
 void ATCClient::setAudioInputDevice(std::string inputDevice) {
-    mAudioInputDeviceName = inputDevice;
+    mAudioInputDeviceId = inputDevice;
 }
 
 void ATCClient::setAudioOutputDevice(std::string outputDevice) {
-    mAudioOutputDeviceName = outputDevice;
+    mAudioOutputDeviceId = outputDevice;
 }
 
 void ATCClient::setSpeakerOutputDevice(std::string outputDevice) {
-    mAudioSpeakerDeviceName = outputDevice;
+    mAudioSpeakerDeviceId = outputDevice;
 }
 
 bool ATCClient::isAPIConnected() const {

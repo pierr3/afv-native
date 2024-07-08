@@ -16,8 +16,8 @@ void logger(void *pUserData, ma_uint32 logLevel, const char *message) {
     LOG("MiniAudioAudioDevice", "%s: %s", ma_log_level_to_string(logLevel), msg.c_str());
 }
 
-MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceName, const std::string &inputDeviceName, AudioDevice::Api audioApi, bool makeStereo):
-    AudioDevice(), mUserStreamName(userStreamName), mOutputDeviceName(outputDeviceName), mInputDeviceName(inputDeviceName), mInputInitialized(false), mOutputInitialized(false), mAudioApi(audioApi), mStereo(makeStereo) {
+MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, const std::string &outputDeviceId, const std::string &inputDeviceId, AudioDevice::Api audioApi, bool makeStereo):
+    AudioDevice(), mUserStreamName(userStreamName), mOutputDeviceId(outputDeviceId), mInputDeviceId(inputDeviceId), mInputInitialized(false), mOutputInitialized(false), mAudioApi(audioApi), mStereo(makeStereo) {
     ma_context_config contextConfig      = ma_context_config_init();
     contextConfig.threadPriority         = ma_thread_priority_normal;
     contextConfig.jack.pClientName       = mUserStreamName.c_str();
@@ -211,15 +211,15 @@ bool MiniAudioAudioDevice::initOutput() {
         ma_device_uninit(&outputDev);
     }
 
-    if (mOutputDeviceName.empty()) {
+    if (mOutputDeviceId.empty()) {
         LOG("MiniAudioAudioDevice::initOutput()", "Device name is empty");
         return false; // bail early if the device name is empty
     }
 
     ma_device_id outputDeviceId;
-    if (!getDeviceForName(mOutputDeviceName, false, outputDeviceId)) {
+    if (!getDeviceForId(mOutputDeviceId, false, outputDeviceId)) {
         LOG("MiniAudioAudioDevice::initOutput()", "No device found for %s",
-            mOutputDeviceName.c_str());
+            mOutputDeviceId.c_str());
         return false; // no device found
     }
 
@@ -257,15 +257,15 @@ bool MiniAudioAudioDevice::initInput() {
         ma_device_uninit(&inputDev);
     }
 
-    if (mInputDeviceName.empty()) {
+    if (mInputDeviceId.empty()) {
         LOG("MiniAudioAudioDevice::initInput()", "Device name is empty");
         return false; // bail early if the device name is empty
     }
 
     ma_device_id inputDeviceId;
-    if (!getDeviceForName(mInputDeviceName, true, inputDeviceId)) {
+    if (!getDeviceForId(mInputDeviceId, true, inputDeviceId)) {
         LOG("MiniAudioAudioDevice::initInput()", "No device found for %s",
-            mInputDeviceName.c_str());
+            mInputDeviceId.c_str());
         return false; // no device found
     }
 
@@ -303,11 +303,22 @@ bool MiniAudioAudioDevice::getDeviceForName(const std::string &deviceName, bool 
 
     if (!allDevices.empty()) {
         for (const auto &devicePair: allDevices) {
-            // if (devicePair.second.id.coreaudio == deviceName) {
-            //     deviceId = devicePair.second.id;
-            //     return true;
-            // }
             if (devicePair.second.name == deviceName) {
+                deviceId = devicePair.second.id;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool MiniAudioAudioDevice::getDeviceForId(const std::string &inDeviceId, bool forInput, ma_device_id &deviceId) {
+    auto allDevices = forInput ? getCompatibleInputDevices(mAudioApi) : getCompatibleOutputDevices(mAudioApi);
+
+    if (!allDevices.empty()) {
+        for (const auto &devicePair: allDevices) {
+            if (getDeviceId(devicePair.second.id, mAudioApi, devicePair.second.name) == inDeviceId) {
                 deviceId = devicePair.second.id;
                 return true;
             }
@@ -397,8 +408,10 @@ map<int, AudioDevice::DeviceInfo> AudioDevice::getCompatibleInputDevicesForApi(A
     auto allDevices = MiniAudioAudioDevice::getCompatibleInputDevices(api);
     map<int, AudioDevice::DeviceInfo> returnDevices;
     for (const auto &p: allDevices) {
-        returnDevices.emplace(p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
-                                                               MiniAudioAudioDevice::getDeviceId(p.second.id, api, p.second.name)));
+        returnDevices.emplace(
+            p.first, AudioDevice::DeviceInfo(p.second.name, p.second.isDefault ? true : false,
+                                             MiniAudioAudioDevice::getDeviceId(
+                                                 p.second.id, api, p.second.name)));
     }
     return returnDevices;
 }
