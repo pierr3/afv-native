@@ -37,6 +37,7 @@ namespace afv_native { namespace audio {
         bool initOutput();
         bool initInput();
         bool getDeviceForName(const std::string &deviceName, bool forInput, ma_device_id &deviceId);
+        bool getDeviceForId(const std::string &inDeviceId, bool forInput, ma_device_id &deviceId);
         static void maOutputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount);
         static void maInputCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount);
         static void maNotificationCallback(const ma_device_notification *pNotification);
@@ -46,8 +47,8 @@ namespace afv_native { namespace audio {
 
       private:
         std::string  mUserStreamName;
-        std::string  mOutputDeviceName;
-        std::string  mInputDeviceName;
+        std::string  mOutputDeviceId;
+        std::string  mInputDeviceId;
         bool         mOutputInitialized;
         bool         mInputInitialized;
         ma_context   context;
