@@ -3,6 +3,7 @@
 #include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/afv/dto/StationTransceiver.h"
 #include "afv-native/atcClient.h"
+#include "afv-native/atcClientFlat.h"
 #include "afv-native/hardwareType.h"
 #include <algorithm>
 #include <atomic>
@@ -78,7 +79,7 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
     isInitialized = true;
 }
 
-afv_native::api::atcClient::atcClient(char *clientName, char *resourcePath, char *baseURL):
+afv_native::api::atcClient::atcClient(const char *clientName, const char *resourcePath, const char *baseURL):
     atcClient(std::string(clientName), std::string(resourcePath), std::string(baseURL)) {
 }
 
@@ -104,7 +105,7 @@ void afv_native::api::atcClient::SetCredentials(std::string username, std::strin
     client->setCredentials(std::string(username), std::string(password));
 }
 
-void afv_native::api::atcClient::SetCredentials(char *username, char *password) {
+void afv_native::api::atcClient::SetCredentials(const char *username, const char *password) {
     SetCredentials(std::string(username), std::string(password));
 }
 
@@ -113,7 +114,7 @@ void afv_native::api::atcClient::SetCallsign(std::string callsign) {
     client->setCallsign(std::string(callsign));
 }
 
-void afv_native::api::atcClient::SetCallsign(char *callsign) {
+void afv_native::api::atcClient::SetCallsign(const char *callsign) {
     SetCallsign(std::string(callsign));
 }
 
@@ -170,7 +171,7 @@ void afv_native::api::atcClient::SetAudioInputDevice(std::string inputDevice) {
     client->setAudioInputDevice(inputDevice);
 }
 
-void afv_native::api::atcClient::SetAudioInputDevice(char *inputDevice) {
+void afv_native::api::atcClient::SetAudioInputDevice(const char *inputDevice) {
     SetAudioInputDevice(std::string(inputDevice));
 }
 
@@ -179,7 +180,7 @@ void afv_native::api::atcClient::SetAudioOutputDevice(std::string outputDevice) 
     client->setAudioOutputDevice(outputDevice);
 }
 
-void afv_native::api::atcClient::SetAudioOutputDevice(char *outputDevice) {
+void afv_native::api::atcClient::SetAudioOutputDevice(const char *outputDevice) {
     SetAudioOutputDevice(std::string(outputDevice));
 }
 
@@ -188,7 +189,7 @@ void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(std::string output
     client->setSpeakerOutputDevice(outputDevice);
 }
 
-void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(char *outputDevice) {
+void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(const char *outputDevice) {
     SetAudioSpeakersOutputDevice(std::string(outputDevice));
 }
 
@@ -382,7 +383,7 @@ void afv_native::api::atcClient::UseTransceiversFromStation(std::string station,
     client->linkTransceivers(station, freq);
 };
 
-void afv_native::api::atcClient::UseTransceiversFromStation(char *station, unsigned int freq) {
+void afv_native::api::atcClient::UseTransceiversFromStation(const char *station, unsigned int freq) {
     UseTransceiversFromStation(std::string(station), freq);
 }
 
@@ -394,7 +395,7 @@ int afv_native::api::atcClient::GetTransceiverCountForStation(std::string statio
     return 0;
 };
 
-int afv_native::api::atcClient::GetTransceiverCountForStation(char *station) {
+int afv_native::api::atcClient::GetTransceiverCountForStation(const char *station) {
     return GetTransceiverCountForStation(std::string(station));
 }
 
@@ -406,7 +407,7 @@ void afv_native::api::atcClient::FetchTransceiverInfo(std::string station) {
     client->requestStationTransceivers(station);
 }
 
-void afv_native::api::atcClient::FetchTransceiverInfo(char *station) {
+void afv_native::api::atcClient::FetchTransceiverInfo(const char *station) {
     FetchTransceiverInfo(std::string(station));
 }
 
@@ -414,7 +415,7 @@ void afv_native::api::atcClient::GetStation(std::string station) {
     client->getStation(station);
 }
 
-void afv_native::api::atcClient::GetStation(char *station) {
+void afv_native::api::atcClient::GetStation(const char *station) {
     GetStation(std::string(station));
 }
 
@@ -422,7 +423,7 @@ void afv_native::api::atcClient::FetchStationVccs(std::string station) {
     client->requestStationVccs(station);
 }
 
-void afv_native::api::atcClient::FetchStationVccs(char *station) {
+void afv_native::api::atcClient::FetchStationVccs(const char *station) {
     FetchStationVccs(std::string(station));
 }
 
@@ -444,7 +445,7 @@ bool afv_native::api::atcClient::AddFrequency(unsigned int freq, std::string sta
     return client->addFrequency(freq, true, stationName);
 }
 
-bool afv_native::api::atcClient::AddFrequency(unsigned int freq, char *stationName) {
+bool afv_native::api::atcClient::AddFrequency(unsigned int freq, const char *stationName) {
     return AddFrequency(freq, std::string(stationName));
 }
 
@@ -480,7 +481,7 @@ void afv_native::api::atcClient::StartAtisPlayback(std::string callsign, unsigne
     client->startAtisPlayback(callsign, freq);
 }
 
-void afv_native::api::atcClient::StartAtisPlayback(char *callsign, unsigned int freq) {
+void afv_native::api::atcClient::StartAtisPlayback(const char *callsign, unsigned int freq) {
     StartAtisPlayback(std::string(callsign), freq);
 }
 
@@ -505,9 +506,11 @@ void afv_native::api::atcClient::RaiseClientEvent(std::function<void(afv_native:
     });
 }
 
-void afv_native::api::atcClient::RaiseClientEvent(void *handle, void (*callback)(afv_native::ClientEventType, void *, void *)) {
+void afv_native::api::atcClient::RaiseClientEvent(void *handle, void (*callback)(ClientEventType_t, void *, void *)) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->ClientEventCallback.addCallback(handle, std::function(callback));
+    client->ClientEventCallback.addCallback(handle, [callback](afv_native::ClientEventType evt, void *data, void *data2) {
+        callback(static_cast<ClientEventType_t>(evt), data, data2);
+    });
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetRadioGainAll(float gain) {

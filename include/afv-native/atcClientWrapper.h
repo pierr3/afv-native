@@ -1,5 +1,6 @@
 #pragma once
 #include "afv-native/afv/dto/StationTransceiver.h"
+#include "afv-native/atcClientFlat.h"
 #include "afv_native_export.h"
 #include "event.h"
 #include "hardwareType.h"
@@ -48,16 +49,16 @@ namespace afv_native::api {
     class atcClient {
       public:
         AFV_NATIVE_API atcClient(std::string clientName, std::string resourcePath = "", std::string baseURL = "https://voice1.vatsim.net");
-        AFV_NATIVE_API atcClient(char *clientName, char *resourcePath, char *baseURL);
+        AFV_NATIVE_API atcClient(const char *clientName, const char *resourcePath, const char *baseURL);
         AFV_NATIVE_API ~atcClient();
 
         AFV_NATIVE_API bool IsInitialized();
 
         AFV_NATIVE_API void SetCredentials(std::string username, std::string password);
-        AFV_NATIVE_API void SetCredentials(char *username, char *password);
+        AFV_NATIVE_API void SetCredentials(const char *username, const char *password);
 
         AFV_NATIVE_API void SetCallsign(std::string callsign);
-        AFV_NATIVE_API void SetCallsign(char *callsign);
+        AFV_NATIVE_API void SetCallsign(const char *callsign);
 
         AFV_NATIVE_API void SetClientPosition(double lat, double lon, double amslm, double aglm);
 
@@ -73,16 +74,16 @@ namespace afv_native::api {
         AFV_NATIVE_API void FreeAudioApis(char **apis);
 
         AFV_NATIVE_API void SetAudioInputDevice(std::string inputDevice);
-        AFV_NATIVE_API void SetAudioInputDevice(char *inputDevice);
+        AFV_NATIVE_API void SetAudioInputDevice(const char *inputDevice);
         AFV_NATIVE_API std::vector<AudioInterface> GetAudioInputDevices(unsigned int mAudioApi);
         AFV_NATIVE_API AudioInterfaceNative **GetAudioInputDevicesNative(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioInputDevice(unsigned int mAudioApi);
         AFV_NATIVE_API const char *GetDefaultAudioInputDeviceNative(unsigned int mAudioApi);
 
         AFV_NATIVE_API void SetAudioOutputDevice(std::string outputDevice);
-        AFV_NATIVE_API void SetAudioOutputDevice(char *outputDevice);
+        AFV_NATIVE_API void SetAudioOutputDevice(const char *outputDevice);
         AFV_NATIVE_API void SetAudioSpeakersOutputDevice(std::string outputDevice);
-        AFV_NATIVE_API void SetAudioSpeakersOutputDevice(char *outputDevice);
+        AFV_NATIVE_API void SetAudioSpeakersOutputDevice(const char *outputDevice);
         AFV_NATIVE_API std::vector<AudioInterface> GetAudioOutputDevices(unsigned int mAudioApi);
         AFV_NATIVE_API AudioInterfaceNative **GetAudioOutputDevicesNative(unsigned int mAudioApi);
         AFV_NATIVE_API std::string GetDefaultAudioOutputDevice(unsigned int mAudioApi);
@@ -118,19 +119,19 @@ namespace afv_native::api {
 
         // Use this to set the current transceivers to the transceivers from this station, pulled from the AFV database, only one at a time can be active
         AFV_NATIVE_API void UseTransceiversFromStation(std::string station, unsigned int freq);
-        AFV_NATIVE_API void UseTransceiversFromStation(char *station, unsigned int freq);
+        AFV_NATIVE_API void UseTransceiversFromStation(const char *station, unsigned int freq);
 
         AFV_NATIVE_API void SetManualTransceivers(unsigned int freq, std::vector<afv_native::afv::dto::StationTransceiver> transceivers);
 
         AFV_NATIVE_API void FetchTransceiverInfo(std::string station);
-        AFV_NATIVE_API void FetchTransceiverInfo(char *station);
+        AFV_NATIVE_API void FetchTransceiverInfo(const char *station);
         AFV_NATIVE_API void FetchStationVccs(std::string station);
-        AFV_NATIVE_API void FetchStationVccs(char *station);
+        AFV_NATIVE_API void FetchStationVccs(const char *station);
         AFV_NATIVE_API void GetStation(std::string station);
-        AFV_NATIVE_API void GetStation(char *station);
+        AFV_NATIVE_API void GetStation(const char *station);
 
         AFV_NATIVE_API int GetTransceiverCountForStation(std::string station);
-        AFV_NATIVE_API int GetTransceiverCountForStation(char *station);
+        AFV_NATIVE_API int GetTransceiverCountForStation(const char *station);
         AFV_NATIVE_API int GetTransceiverCountForFrequency(unsigned int freq);
 
         AFV_NATIVE_API void SetPtt(bool pttState);
@@ -142,7 +143,7 @@ namespace afv_native::api {
         AFV_NATIVE_API bool IsAtisListening();
 
         AFV_NATIVE_API void StartAtisPlayback(std::string callsign, unsigned int freq);
-        AFV_NATIVE_API void StartAtisPlayback(char *callsign, unsigned int freq);
+        AFV_NATIVE_API void StartAtisPlayback(const char *callsign, unsigned int freq);
         AFV_NATIVE_API void StopAtisPlayback();
         AFV_NATIVE_API bool IsAtisPlayingBack();
 
@@ -159,7 +160,7 @@ namespace afv_native::api {
         AFV_NATIVE_API int GetPlaybackChannel(unsigned int freq);
 
         AFV_NATIVE_API bool AddFrequency(unsigned int freq, std::string stationName = "");
-        AFV_NATIVE_API bool AddFrequency(unsigned int freq, char *stationName);
+        AFV_NATIVE_API bool AddFrequency(unsigned int freq, const char *stationName);
         AFV_NATIVE_API void RemoveFrequency(unsigned int freq);
         AFV_NATIVE_API bool IsFrequencyActive(unsigned int freq);
         AFV_NATIVE_API std::map<unsigned int, SimpleAtcRadioState> getRadioState();
@@ -172,7 +173,7 @@ namespace afv_native::api {
         AFV_NATIVE_API void SetHardware(afv_native::HardwareType hardware);
 
         AFV_NATIVE_API void RaiseClientEvent(std::function<void(afv_native::ClientEventType, void *, void *)> callback);
-        AFV_NATIVE_API void RaiseClientEvent(void *handle, void (*callback)(afv_native::ClientEventType, void *, void *));
+        AFV_NATIVE_API void RaiseClientEvent(void *handle, void (*callback)(ClientEventType_t, void *, void *));
 
         //
         // Deprecated functions

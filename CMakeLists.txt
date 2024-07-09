@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.29.2)
 
 # Setup vcpkg
-set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
+if (DEFINED ENV{VCPKG_ROOT})
+	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+else()
+	set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
+endif()
 
 if (DEFINED CMAKE_BUILD_ARM64_LINUX)
 	# arm64-linux-gnu.toolchain.cmake
@@ -112,6 +116,7 @@ target_sources(afv_native PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atcClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atisClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientWrapper.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientFlat.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleComp.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleEnvelope.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource/SimpleGate.cpp
