@@ -1,8 +1,6 @@
 #ifndef atcClientFlat_h
 #define atcClientFlat_h
 
-#include "afv-native/event.h"
-#include "afv-native/hardwareType.h"
 #include "afv_native_export.h"
 
 #include <stdbool.h>

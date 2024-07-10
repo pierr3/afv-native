@@ -65,7 +65,7 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/test/afv-native-testclient/CMakeLists.txt" AND 
 	add_subdirectory(test/afv-native-testclient)
 endif()
 
-target_sources(afv_native PRIVATE 
+target_sources(afv_native PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/APISession.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/EffectResources.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/RadioSimulation.cpp
@@ -152,7 +152,7 @@ if (WIN32)
 	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
 endif()
 
-set(LIBRARIES 
+set(LIBRARIES
 		OpenSSL::SSL OpenSSL::Crypto
 		cpp-jwt::cpp-jwt
 		CURL::libcurl
@@ -204,7 +204,7 @@ set_target_properties(afv_native PROPERTIES DEBUG_POSTFIX "d")
 
 # generates header to provide export macros for library
 include(GenerateExportHeader)
-generate_export_header(afv_native 
+generate_export_header(afv_native
 						EXPORT_MACRO_NAME AFV_NATIVE_API
 						EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/afv_native_export.h)
 
@@ -223,12 +223,12 @@ install(
     NAMESPACE afv_native::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/afv_native)
 
-install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/afv_native/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/afv_native)
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/afv-native/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/afv-native)
 
 # copy the generated export file to the include install location
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/afv_native_export.h
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/afv_native)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/afv-native)
 
 if (WIN32)
 	file(COPY ${SPEEXDSP_LIBRARY}
