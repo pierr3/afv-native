@@ -67,8 +67,8 @@ namespace afv_native::api {
         AFV_NATIVE_API bool Connect();
         AFV_NATIVE_API void Disconnect();
 
-        AFV_NATIVE_API void SetAudioApi(unsigned int api);
-        AFV_NATIVE_API std::map<unsigned int, std::string> GetAudioApis();
+        AFV_NATIVE_API void SetAudioApi(int api);
+        AFV_NATIVE_API std::map<int, std::string> GetAudioApis();
         AFV_NATIVE_API const char                        **GetAudioApisNative();
         AFV_NATIVE_API void FreeAudioApis(char **apis);
 

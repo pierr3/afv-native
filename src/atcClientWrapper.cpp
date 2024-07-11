@@ -140,17 +140,17 @@ void afv_native::api::atcClient::Disconnect() {
     return client->disconnect();
 }
 
-void afv_native::api::atcClient::SetAudioApi(unsigned int api) {
+void afv_native::api::atcClient::SetAudioApi(int api) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setAudioApi(api);
 }
 
-std::map<unsigned int, std::string> afv_native::api::atcClient::GetAudioApis() {
+std::map<int, std::string> afv_native::api::atcClient::GetAudioApis() {
     return afv_native::audio::AudioDevice::getAPIs();
 }
 
 const char **afv_native::api::atcClient::GetAudioApisNative() {
-    typedef std::map<unsigned int, std::string> MapType;
+    typedef std::map<int, std::string> MapType;
     std::vector<std::string>                    v;
     auto                                        m = GetAudioApis();
     for (MapType::iterator it = m.begin(); it != m.end(); ++it) {

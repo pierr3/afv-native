@@ -72,7 +72,7 @@ namespace afv_native { namespace audio {
          * code.  A uniform method for determining API ID should be provided by the
          * driver.
          */
-        typedef unsigned int Api;
+        typedef int Api;
 
         /** DeviceInfo is a uniform structure by which API implementations can return
          * information about known devices.  The "id" value should be used as an

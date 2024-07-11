@@ -377,11 +377,11 @@ void MiniAudioAudioDevice::maNotificationCallback(const ma_device_notification *
     device->notificationCallback(pNotification);
 };
 
-std::map<unsigned int, std::string> MiniAudioAudioDevice::getAvailableBackends() {
+std::map<int, std::string> MiniAudioAudioDevice::getAvailableBackends() {
     ma_backend enabledBackends[MA_BACKEND_COUNT];
     size_t     enabledBackendCount;
 
-    std::map<unsigned int, std::string> output;
+    std::map<int, std::string> output;
 
     ma_result result = ma_get_enabled_backends(enabledBackends, MA_BACKEND_COUNT, &enabledBackendCount);
     if (result != MA_SUCCESS) {
@@ -458,7 +458,7 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
     // }
 }
 std::string afv_native::audio::MiniAudioAudioDevice::getDeviceId(const ma_device_id &deviceId, const AudioDevice::Api &api, const std::string &deviceName) {
-    if (api >= MA_BACKEND_COUNT || api < 0) {
+    if (api >= MA_BACKEND_COUNT || api == -1) {
         LOG("MiniAudioAudioDevice", "Error getting device ID for audio api, api unknown: %d", api);
         return deviceName;
     }

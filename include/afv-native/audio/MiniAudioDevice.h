@@ -30,7 +30,7 @@ namespace afv_native { namespace audio {
 
         static std::map<int, ma_device_info> getCompatibleInputDevices(unsigned int api);
         static std::map<int, ma_device_info> getCompatibleOutputDevices(unsigned int api);
-        static std::map<unsigned int, std::string> getAvailableBackends();
+        static std::map<int, std::string> getAvailableBackends();
         static std::string getDeviceId(const ma_device_id &deviceId, const AudioDevice::Api &api, const std::string &deviceName);
 
       private:
