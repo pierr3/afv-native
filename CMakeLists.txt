@@ -137,7 +137,6 @@ find_package(msgpack-cxx CONFIG REQUIRED)
 find_package(Opus CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Threads REQUIRED)
-find_package(fmt CONFIG REQUIRED)
 
 # Speexdsp does not have find_package
 if (UNIX)
@@ -158,7 +157,6 @@ set(LIBRARIES
 		Opus::opus
 		nlohmann_json::nlohmann_json
 		Threads::Threads
-		fmt::fmt-header-only
 		${SPEEXDSP_LIBRARY})
 
 target_link_libraries(afv_native

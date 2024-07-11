@@ -1,6 +1,4 @@
 #include "afv-native/audio/MiniAudioDevice.h"
-#include <fmt/core.h>
-#include <fmt/xchar.h>
 #include <stdexcept>
 
 using namespace afv_native::audio;
@@ -460,7 +458,7 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
     // }
 }
 std::string afv_native::audio::MiniAudioAudioDevice::getDeviceId(const ma_device_id &deviceId, const AudioDevice::Api &api, const std::string &deviceName) {
-    if (api >= MA_BACKEND_COUNT || api < 0) {
+    if (api >= MA_BACKEND_COUNT || api == -1) {
         LOG("MiniAudioAudioDevice", "Error getting device ID for audio api, api unknown: %d", api);
         return deviceName;
     }
@@ -468,7 +466,21 @@ std::string afv_native::audio::MiniAudioAudioDevice::getDeviceId(const ma_device
     const auto miniAudioApi = static_cast<ma_backend>(api);
 
     if (miniAudioApi == ma_backend_wasapi) {
-        return fmt::format("{}", deviceId.wasapi);
+#ifdef WIN32
+        // Determine the length of the converted string
+        int length = WideCharToMultiByte(CP_UTF8, 0, deviceId.wasapi, -1, nullptr, 0, nullptr, nullptr);
+        if (length == 0) {
+            // Conversion failed
+            return "";
+        }
+
+        // Allocate a buffer to hold the converted string
+        std::string result(length - 1, '\0'); // Length includes the null terminator, which we don't need
+
+        // Perform the conversion
+        WideCharToMultiByte(CP_UTF8, 0, deviceId.wasapi, -1, &result[0], length, nullptr, nullptr);
+        return result;
+#endif
     }
 
     if (miniAudioApi == ma_backend_dsound) {
