@@ -61,7 +61,7 @@ AFV_NATIVE_API void ATCClient_SetAudioApi(ATCClientHandle handle, unsigned int a
 }
 
 AFV_NATIVE_API void ATCClient_GetAudioApis(ATCClientHandle handle, AudioApisCallback callback) {
-    typedef std::map<unsigned int, std::string> MapType;
+    typedef std::map<int, std::string> MapType;
     std::vector<std::string>                    v;
     auto m = handle->impl->GetAudioApis();
     for (MapType::iterator it = m.begin(); it != m.end(); ++it) {
