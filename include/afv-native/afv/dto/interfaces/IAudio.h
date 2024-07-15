@@ -36,6 +36,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace afv_native { namespace afv { namespace dto {
     class IAudio {

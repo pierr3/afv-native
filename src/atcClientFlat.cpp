@@ -1,11 +1,10 @@
-#include "afv-native/atcClientFlat.h"
 #include "afv-native/atcClient.h"
 #include "afv-native/atcClientWrapper.h"
 
 struct ATCClientHandle_ {
     afv_native::api::atcClient *impl;
 
-    ATCClientHandle_(char *clientName, char *resourcePath, char *baseURL) {
+    ATCClientHandle_(const char *clientName, const char *resourcePath, const char *baseURL) {
         impl = new afv_native::api::atcClient(clientName, resourcePath, baseURL);
     }
 
@@ -16,7 +15,7 @@ struct ATCClientHandle_ {
     }
 };
 
-AFV_NATIVE_API ATCClientHandle ATCClient_Create(char *clientName, char *resourcePath, char *baseURL) {
+AFV_NATIVE_API ATCClientHandle ATCClient_Create(const char *clientName, const char *resourcePath, const char *baseURL) {
     return new ATCClientHandle_(clientName, resourcePath, baseURL);
 }
 
@@ -28,11 +27,11 @@ AFV_NATIVE_API bool ATCClient_IsInitialized(ATCClientHandle handle) {
     return handle->impl->IsInitialized();
 }
 
-AFV_NATIVE_API void ATCClient_SetCredentials(ATCClientHandle handle, char *username, char *password) {
+AFV_NATIVE_API void ATCClient_SetCredentials(ATCClientHandle handle, const char *username, const char *password) {
     handle->impl->SetCredentials(username, password);
 }
 
-AFV_NATIVE_API void ATCClient_SetCallsign(ATCClientHandle handle, char *callsign) {
+AFV_NATIVE_API void ATCClient_SetCallsign(ATCClientHandle handle, const char *callsign) {
     handle->impl->SetCallsign(callsign);
 }
 
@@ -74,7 +73,7 @@ AFV_NATIVE_API void ATCClient_FreeAudioApis(ATCClientHandle handle, char **apis)
     handle->impl->FreeAudioApis(apis);
 }
 
-AFV_NATIVE_API void ATCClient_SetAudioInputDevice(ATCClientHandle handle, char *inputDevice) {
+AFV_NATIVE_API void ATCClient_SetAudioInputDevice(ATCClientHandle handle, const char *inputDevice) {
     handle->impl->SetAudioInputDevice(inputDevice);
 }
 
@@ -91,11 +90,11 @@ AFV_NATIVE_API const char *ATCClient_GetDefaultAudioInputDevice(ATCClientHandle 
     return handle->impl->GetDefaultAudioInputDeviceNative(mAudioApi);
 }
 
-AFV_NATIVE_API void ATCClient_SetAudioOutputDevice(ATCClientHandle handle, char *outputDevice) {
+AFV_NATIVE_API void ATCClient_SetAudioOutputDevice(ATCClientHandle handle, const char *outputDevice) {
     handle->impl->SetAudioOutputDevice(outputDevice);
 }
 
-AFV_NATIVE_API void ATCClient_SetAudioSpeakersOutputDevice(ATCClientHandle handle, char *outputDevice) {
+AFV_NATIVE_API void ATCClient_SetAudioSpeakersOutputDevice(ATCClientHandle handle, const char *outputDevice) {
     handle->impl->SetAudioSpeakersOutputDevice(outputDevice);
 }
 
@@ -196,23 +195,23 @@ AFV_NATIVE_API bool ATCClient_GetCrossCoupleAcrossState(ATCClientHandle handle, 
     return handle->impl->GetCrossCoupleAcrossState(freq);
 }
 
-AFV_NATIVE_API void ATCClient_UseTransceiversFromStation(ATCClientHandle handle, char *station, unsigned int freq) {
+AFV_NATIVE_API void ATCClient_UseTransceiversFromStation(ATCClientHandle handle, const char *station, unsigned int freq) {
     handle->impl->UseTransceiversFromStation(station, freq);
 }
 
-AFV_NATIVE_API void ATCClient_FetchTransceiverInfo(ATCClientHandle handle, char *station) {
+AFV_NATIVE_API void ATCClient_FetchTransceiverInfo(ATCClientHandle handle, const char *station) {
     handle->impl->FetchTransceiverInfo(station);
 }
 
-AFV_NATIVE_API void ATCClient_FetchStationVccs(ATCClientHandle handle, char *station) {
+AFV_NATIVE_API void ATCClient_FetchStationVccs(ATCClientHandle handle, const char *station) {
     handle->impl->FetchStationVccs(station);
 }
 
-AFV_NATIVE_API void ATCClient_GetStation(ATCClientHandle handle, char *station) {
+AFV_NATIVE_API void ATCClient_GetStation(ATCClientHandle handle, const char *station) {
     handle->impl->GetStation(station);
 }
 
-AFV_NATIVE_API int ATCClient_GetTransceiverCountForStation(ATCClientHandle handle, char *station) {
+AFV_NATIVE_API int ATCClient_GetTransceiverCountForStation(ATCClientHandle handle, const char *station) {
     return handle->impl->GetTransceiverCountForStation(station);
 }
 
@@ -248,7 +247,7 @@ AFV_NATIVE_API int ATCClient_GetPlaybackChannel(ATCClientHandle handle, unsigned
     return handle->impl->GetPlaybackChannel(freq);
 }
 
-AFV_NATIVE_API bool ATCClient_AddFrequency(ATCClientHandle handle, unsigned int freq, char *stationName) {
+AFV_NATIVE_API bool ATCClient_AddFrequency(ATCClientHandle handle, unsigned int freq, const char *stationName) {
     return handle->impl->AddFrequency(freq, stationName);
 }
 
@@ -278,11 +277,11 @@ AFV_NATIVE_API void ATCClient_FreeString(ATCClientHandle handle, char *in) {
     handle->impl->FreeString(in);
 }
 
-AFV_NATIVE_API void ATCClient_SetHardware(ATCClientHandle handle, afv_native::HardwareType hardware) {
-    handle->impl->SetHardware(hardware);
+AFV_NATIVE_API void ATCClient_SetHardware(ATCClientHandle handle, HardwareType_t hardware) {
+    handle->impl->SetHardware(static_cast<afv_native::HardwareType>(hardware));
 }
 
-AFV_NATIVE_API void ATCClient_RaiseClientEvent(ATCClientHandle handle, void (*callback)(afv_native::ClientEventType, void *, void *)) {
+AFV_NATIVE_API void ATCClient_RaiseClientEvent(ATCClientHandle handle, void (*callback)(ClientEventType_t, void *, void *)) {
     handle->impl->RaiseClientEvent(handle, callback);
 }
 
