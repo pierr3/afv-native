@@ -6,11 +6,17 @@
         "opus",
         "speexdsp",
         "cpp-jwt",
-        "msgpack",
+        {
+            "name": "msgpack",
+            "features": [
+                "boost"
+            ]
+        },
         "curl",
         "nlohmann-json",
         "openssl",
         "libevent",
-        "sdl2"
+        "sdl2",
+        "poco"
     ]
-  }
+}

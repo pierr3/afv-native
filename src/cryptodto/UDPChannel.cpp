@@ -33,6 +33,7 @@
 
 #include "afv-native/cryptodto/UDPChannel.h"
 #include "afv-native/cryptodto/dto/ChannelConfig.h"
+#include <Poco/Net/IPAddress.h>
 #include <cerrno>
 #include <event2/util.h>
 
@@ -57,12 +58,15 @@ using namespace afv_native::cryptodto;
 using namespace std;
 
 UDPChannel::UDPChannel(struct event_base *evBase, int receiveSequenceHistorySize):
-    Channel(), mAddress(), mDatagramRxBuffer(nullptr), mUDPSocket(-1), mEvBase(evBase), mSocketEvent(nullptr), mTxSequence(0), receiveSequence(0, receiveSequenceHistorySize), mAcceptableCiphers(1U << cryptodto::CryptoDtoMode::CryptoModeChaCha20Poly1305), mDtoHandlers(), mLastErrno(0) {
+    Channel(), mAddress(), mDatagramRxBuffer(nullptr), mPocoUDPSocket(), mPocoSocketReactor(), mReactorThread("UDP Socket Reactor Thread"), mEvBase(evBase), mTxSequence(0), receiveSequence(0, receiveSequenceHistorySize), mAcceptableCiphers(1U << cryptodto::CryptoDtoMode::CryptoModeChaCha20Poly1305), mDtoHandlers(), mLastErrno(0) {
     mDatagramRxBuffer = new unsigned char[maxPermittedDatagramSize];
+    mReactorThread.start(mPocoSocketReactor);
 }
 
 UDPChannel::~UDPChannel() {
     close();
+    mPocoSocketReactor.stop();
+    mReactorThread.join();
     delete[] mDatagramRxBuffer;
     mDatagramRxBuffer = nullptr;
 }
@@ -71,22 +75,23 @@ void UDPChannel::registerDtoHandler(const string &dtoName, std::function<void(co
     mDtoHandlers[dtoName] = callback;
 }
 
-void UDPChannel::evReadCallback(evutil_socket_t fd, short events, void *arg) {
-    auto *channel = reinterpret_cast<UDPChannel *>(arg);
-    channel->readCallback();
-}
+void UDPChannel::readCallback(const Poco::AutoPtr<Poco::Net::ReadableNotification> &notification) {
+    Poco::Net::SocketAddress sender;
+    int dgSize = mPocoUDPSocket.receiveFrom(mDatagramRxBuffer, maxPermittedDatagramSize, sender);
 
-void UDPChannel::readCallback() {
-    int dgSize = ::recv(mUDPSocket, reinterpret_cast<char *>(mDatagramRxBuffer), maxPermittedDatagramSize, 0);
-    if (dgSize < 0) {
-        mLastErrno = evutil_socket_geterror(mUDPSocket);
-        LOG("udpchannel:readCallback", "recv error: %s", evutil_socket_error_to_string(mLastErrno));
-        return;
-    }
     if (dgSize > maxPermittedDatagramSize) {
         LOG("udpchannel:readCallback", "recv'd datagram %d bytes, exceeding configured maximum of %d", dgSize, maxPermittedDatagramSize);
         return;
     }
+    if (dgSize == 0) {
+        LOG("udpchannel:readCallback", "recv'd zero-length datagram.  Discarding");
+        return;
+    }
+    if (dgSize < 0) {
+        LOG("udpchannel:readCallback", "recv failed: %s", mPocoUDPSocket.impl()->socketError());
+        return;
+    }
+
     std::string      channelTag, dtoName;
     sequence_t       seq;
     msgpack::sbuffer dtoBuf;
@@ -139,77 +144,45 @@ void UDPChannel::readCallback() {
 }
 
 bool UDPChannel::open() {
+    mIsOpen = false;
     if (mAddress.empty()) {
         LOG("udpchannel", "tried to open without address set");
         return false;
     }
-    struct sockaddr_storage saddr;
-    int                     saddr_len = sizeof(saddr);
+    Poco::Net::SocketAddress socketAddress(mAddress.c_str());
+    std::string              ipAddress = socketAddress.host().toString();
+    Poco::UInt16             port      = socketAddress.port();
 
-    if (!evutil_parse_sockaddr_port(mAddress.c_str(), reinterpret_cast<struct sockaddr *>(&saddr), &saddr_len)) {
-        mUDPSocket = ::socket(saddr.ss_family, SOCK_DGRAM, 0);
-        if (mUDPSocket < 0) {
-            mLastErrno = EVUTIL_SOCKET_ERROR();
-            LOG("udpchannel", "Couldn't create UDP socket: %s", evutil_socket_error_to_string(errno));
-            close();
-            return false;
-        }
-        evutil_make_socket_nonblocking(mUDPSocket);
+    Poco::Net::SocketAddress bindAddress(Poco::Net::IPAddress(), 0);
 
-        if (saddr.ss_family == AF_INET6) {
-            struct sockaddr_in6 baddr = {};
-            baddr.sin6_family         = AF_INET6;
-            baddr.sin6_addr           = IN6ADDR_ANY_INIT;
-
-            if (::bind(mUDPSocket, reinterpret_cast<struct sockaddr *>(&baddr), sizeof(baddr))) {
-                mLastErrno = evutil_socket_geterror(mUDPSocket);
-                LOG("udpchannel", "couldn't bind IPv6 port: %s", evutil_socket_error_to_string(errno));
-                close();
-                return false;
-            }
-        } else {
-            // IPV4.
-            struct sockaddr_in baddr = {
-                AF_INET,
-                0,
-                INADDR_ANY,
-            };
-            if (::bind(mUDPSocket, reinterpret_cast<struct sockaddr *>(&baddr), sizeof(baddr))) {
-                mLastErrno = evutil_socket_geterror(mUDPSocket);
-                LOG("udpchannel", "couldn't bind IPv4 port: %s", evutil_socket_error_to_string(errno));
-                close();
-                return false;
-            }
-        }
-        if (::connect(mUDPSocket, reinterpret_cast<struct sockaddr *>(&saddr), saddr_len)) {
-            mLastErrno = evutil_socket_geterror(mUDPSocket);
-            LOG("udpchannel", "couldn't connect to endpoint address \"%s\": %s", mAddress.c_str(), evutil_socket_error_to_string(errno));
-            close();
-            return false;
-        }
-
-        // bind up the libevent handling
-        mSocketEvent = event_new(mEvBase, mUDPSocket, EV_READ | EV_PERSIST, UDPChannel::evReadCallback, this);
-        event_add(mSocketEvent, nullptr);
-        return true;
+    // Check if port is within the valid range
+    if (port < 1 || port > 65535) {
+        LOG("udpchannel", "Invalid port number");
+        return false;
     }
+
+    try {
+        mPocoUDPSocket = Poco::Net::DatagramSocket();
+        mPocoUDPSocket.bind(bindAddress, true);
+        mPocoUDPSocket.setBlocking(false);
+        mPocoUDPSocket.connect(socketAddress);
+        mPocoSocketReactor.addEventHandler(mPocoUDPSocket, Poco::NObserver<UDPChannel, Poco::Net::ReadableNotification>(*this, &UDPChannel::readCallback));
+        mIsOpen = true;
+        return true;
+    } catch (const Poco::Exception &e) {
+        LOG("udpchannel", "Couldn't create UDP socket: %s", e.displayText().c_str());
+        return false;
+    }
+
     return false;
 }
 
 void UDPChannel::close() {
-    if (mSocketEvent != nullptr) {
-        event_del(mSocketEvent);
-        event_free(mSocketEvent);
-        mSocketEvent = nullptr;
+    if (mPocoUDPSocket.impl()) {
+        mPocoSocketReactor.removeEventHandler(mPocoUDPSocket, Poco::NObserver<UDPChannel, Poco::Net::ReadableNotification>(*this, &UDPChannel::readCallback));
+        mPocoUDPSocket.close();
     }
-    if (mUDPSocket >= 0) {
-#ifdef WIN32
-        ::closesocket(mUDPSocket);
-#else
-        ::close(mUDPSocket);
-#endif
-        mUDPSocket = -1;
-    }
+    mIsOpen = false;
     receiveSequence.reset();
 }
 
@@ -218,7 +191,7 @@ void UDPChannel::setAddress(const std::string &address) {
 }
 
 bool UDPChannel::isOpen() const {
-    return (mUDPSocket >= 0);
+    return mIsOpen && mPocoUDPSocket.impl();
 }
 
 void UDPChannel::enableRxMode(CryptoDtoMode mode) {

@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace afv_native { namespace afv { namespace dto {
     class StationTransceiver {

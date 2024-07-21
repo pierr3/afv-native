@@ -37,6 +37,13 @@
 #include "afv-native/Log.h"
 #include "afv-native/cryptodto/Channel.h"
 #include "afv-native/cryptodto/dto/ICryptoDTO.h"
+#include <Poco/NObserver.h>
+#include <Poco/Net/DatagramSocket.h>
+#include <Poco/Net/NetException.h>
+#include <Poco/Net/SocketAddress.h>
+#include <Poco/Net/SocketNotification.h>
+#include <Poco/Net/SocketReactor.h>
+#include <Poco/Thread.h>
 #include <atomic>
 #include <event2/event.h>
 #include <functional>
@@ -51,21 +58,23 @@ namespace afv_native { namespace cryptodto {
 
         /** mDatagramRxBuffer is the channel-internal holding buffer for a
          * freshly received datagram.  By storing it initially in a pre-reserved
-         * buffer, we can avoid reallocation hell which is worse than just having
-         * to copy the payload out one extra time.
+         * buffer, we can avoid reallocation hell which is worse than just
+         * having to copy the payload out one extra time.
          */
         unsigned char *mDatagramRxBuffer;
 
-        evutil_socket_t         mUDPSocket;
-        struct event_base      *mEvBase;
-        struct event           *mSocketEvent;
-        std::atomic<sequence_t> mTxSequence;
-        SequenceTest            receiveSequence;
+        // evutil_socket_t         mUDPSocket;
+        Poco::Net::DatagramSocket mPocoUDPSocket;
+        Poco::Net::SocketReactor  mPocoSocketReactor;
+        Poco::Thread              mReactorThread;
+        bool mIsOpen = false;
+        struct event_base        *mEvBase;
+        std::atomic<sequence_t>   mTxSequence;
+        SequenceTest              receiveSequence;
 
         unsigned int mAcceptableCiphers;
 
-        static void evReadCallback(evutil_socket_t fd, short events, void *arg);
-        void readCallback();
+        void readCallback(const Poco::AutoPtr<Poco::Net::ReadableNotification> &notification);
 
       protected:
         std::unordered_map<std::string, std::function<void(const unsigned char *data, size_t len)>> mDtoHandlers;
@@ -85,34 +94,33 @@ namespace afv_native { namespace cryptodto {
         void close();
         bool isOpen() const;
 
-        template <class T>
+        template <typename T>
         void sendDto(const T &pkt) {
-                if (mUDPSocket < 0) {
-                    LOG("UDPChannel", "tried to send on closed socket");
-                    return;
+            if (!mPocoUDPSocket.impl()) {
+                LOG("UDPChannel", "tried to send on closed socket");
+                return;
             }
             std::vector<unsigned char> dgBuffer(maxPermittedDatagramSize);
             sequence_t thisSeq = std::atomic_fetch_add(&mTxSequence, static_cast<sequence_t>(1));
 
-            size_t dgSize =
-                Encapsulate<T>(dgBuffer.data(), maxPermittedDatagramSize, thisSeq, CryptoDtoMode::CryptoModeChaCha20Poly1305, pkt);
+            size_t dgSize = Encapsulate<T>(dgBuffer.data(), maxPermittedDatagramSize, thisSeq, CryptoDtoMode::CryptoModeChaCha20Poly1305, pkt);
             dgBuffer.resize(dgSize);
-                if (dgSize > 0) {
-                    auto sent =
-                        ::send(mUDPSocket,
-                               reinterpret_cast<char *>(
-                                   dgBuffer.data()),
-                               dgBuffer.size(), 0);
-                        if (sent < 0) {
-                                if (errno == EWOULDBLOCK) {
-                                    LOG("udpchannel", "UDP packet dropped on send due to TxBuffer being full");
-                                } else {
-                                    LOG("udpchannel", "error sending datagram: %s", evutil_socket_error_to_string(evutil_socket_geterror(mUDPSocket)));
-                                }
-                        } else if (sent < dgBuffer.size()) {
-                            LOG("udpchannel", "short write sending datagram - sent %d of %d bytes", send,
-                                dgBuffer.size());
+            if (dgSize > 0) {
+                try {
+                    int sent = mPocoUDPSocket.sendBytes(
+                        reinterpret_cast<char *>(dgBuffer.data()), dgBuffer.size());
+                    if (sent < dgBuffer.size()) {
+                        LOG("udpchannel", "short write sending datagram - sent %d of %d bytes", sent,
+                            dgBuffer.size());
                     }
+                } catch (const Poco::Exception &ex) {
+                    if (ex.code() == POCO_EWOULDBLOCK) {
+                        LOG("udpchannel", "UDP packet dropped on send due to TxBuffer being full");
+                    } else {
+                        LOG("udpchannel", "error sending datagram: %s",
+                            ex.displayText().c_str());
+                    }
+                }
             }
         }
 
