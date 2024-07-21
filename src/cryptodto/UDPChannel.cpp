@@ -32,33 +32,17 @@
  */
 
 #include "afv-native/cryptodto/UDPChannel.h"
+#include "afv-native/Log.h"
 #include "afv-native/cryptodto/dto/ChannelConfig.h"
 #include <Poco/Net/IPAddress.h>
 #include <cerrno>
 #include <event2/util.h>
 
-#ifdef WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <afv-native/cryptodto/dto/ChannelConfig.h>
-    #include <winsock.h>
-    #include <ws2ipdef.h>
-
-#else
-    #include <netinet/in.h>
-    #include <netinet/ip.h>
-    #include <netinet/ip6.h>
-    #include <sys/socket.h>
-    #include <unistd.h>
-#endif
-
-#include "afv-native/Log.h"
-
 using namespace afv_native::cryptodto;
 using namespace std;
 
-UDPChannel::UDPChannel(struct event_base *evBase, int receiveSequenceHistorySize):
-    Channel(), mAddress(), mDatagramRxBuffer(nullptr), mPocoUDPSocket(), mPocoSocketReactor(), mReactorThread("UDP Socket Reactor Thread"), mEvBase(evBase), mTxSequence(0), receiveSequence(0, receiveSequenceHistorySize), mAcceptableCiphers(1U << cryptodto::CryptoDtoMode::CryptoModeChaCha20Poly1305), mDtoHandlers(), mLastErrno(0) {
+UDPChannel::UDPChannel(int receiveSequenceHistorySize):
+    Channel(), mAddress(), mDatagramRxBuffer(nullptr), mPocoUDPSocket(), mPocoSocketReactor(), mReactorThread("UDP Socket Reactor Thread"), mTxSequence(0), receiveSequence(0, receiveSequenceHistorySize), mAcceptableCiphers(1U << cryptodto::CryptoDtoMode::CryptoModeChaCha20Poly1305), mDtoHandlers(), mLastErrno(0) {
     mDatagramRxBuffer = new unsigned char[maxPermittedDatagramSize];
     mReactorThread.start(mPocoSocketReactor);
 }

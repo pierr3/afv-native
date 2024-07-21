@@ -36,7 +36,6 @@
 
 #include "afv-native/Log.h"
 #include "afv-native/cryptodto/Channel.h"
-#include "afv-native/cryptodto/dto/ICryptoDTO.h"
 #include <Poco/NObserver.h>
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/NetException.h>
@@ -63,12 +62,10 @@ namespace afv_native { namespace cryptodto {
          */
         unsigned char *mDatagramRxBuffer;
 
-        // evutil_socket_t         mUDPSocket;
         Poco::Net::DatagramSocket mPocoUDPSocket;
         Poco::Net::SocketReactor  mPocoSocketReactor;
         Poco::Thread              mReactorThread;
         bool mIsOpen = false;
-        struct event_base        *mEvBase;
         std::atomic<sequence_t>   mTxSequence;
         SequenceTest              receiveSequence;
 
@@ -87,7 +84,7 @@ namespace afv_native { namespace cryptodto {
         bool RxModeEnabled(CryptoDtoMode mode) const;
 
       public:
-        explicit UDPChannel(struct event_base *evBase, int receiveSequenceHistorySize = 10);
+        explicit UDPChannel(int receiveSequenceHistorySize = 10);
         virtual ~UDPChannel();
 
         bool open();
