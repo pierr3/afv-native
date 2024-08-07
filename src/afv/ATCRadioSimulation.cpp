@@ -343,6 +343,12 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             mRadioState[rxIter].Click =
                 std::make_shared<audio::RecordedSampleSource>(mResources->mClick, false);
 
+            for (const auto &c: mRadioState[rxIter].liveTransmittingCallsigns) {
+                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &rxIter,
+                                               (void *) c.c_str());
+                LOG("ATCRadioSimulation", "StationRxEnd Forced event: %i: %s", rxIter, c.c_str());
+            }
+
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting anymore
             ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &rxIter, nullptr);
             mRadioState[rxIter].lastVoiceTime = 0;
