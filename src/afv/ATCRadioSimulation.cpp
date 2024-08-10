@@ -627,8 +627,8 @@ void ATCRadioSimulation::maintainVoiceTimeout() {
         if (it->second.lastVoiceTime == 0) {
             continue;
         }
-        LOG("ATCRadioSimulation", "Potential VoiceTimeout.. %i %i", it->second.lastVoiceTime,
-            time(0) - it->second.lastVoiceTime);
+        // LOG("ATCRadioSimulation", "Potential VoiceTimeout.. %i %i", it->second.lastVoiceTime,
+        //     time(0) - it->second.lastVoiceTime);
 
         if (time(0) - it->second.lastVoiceTime >= voiceTimeoutIntervalS) {
             LOG("ATCRadioSimulation", "Found VoiceTimeout.. %i", it->second.Frequency);
