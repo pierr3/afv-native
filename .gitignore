@@ -8,6 +8,7 @@ build_x64/
 debug_copy.sh
 
 example/
-
+test/
+afv-native-testclient/
 afv_native.h
 atcClientWrapper_edit.h
