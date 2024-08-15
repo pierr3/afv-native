@@ -32,18 +32,6 @@
  * End of licensed code
  */
 
-namespace atcapi {
-    struct event_base *ev_base;
-
-    std::mutex                             afvMutex;
-    std::unique_ptr<afv_native::ATCClient> client;
-    std::unique_ptr<std::thread>           eventThread;
-    std::atomic<bool>                      isInitialized {false};
-    std::atomic<bool>                      requestLoopExit {false};
-} // namespace atcapi
-
-using namespace atcapi;
-
 void afv_native::api::atcClient::setLogger(afv_native::log_fn gLogger) {
     afv_native::setLegacyLogger(gLogger);
 }
@@ -73,7 +61,7 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
 #endif
         }
-    });
+        });
 
     isInitialized = true;
 }
@@ -151,8 +139,8 @@ std::map<int, std::string> afv_native::api::atcClient::GetAudioApis() {
 
 const char **afv_native::api::atcClient::GetAudioApisNative() {
     typedef std::map<int, std::string> MapType;
-    std::vector<std::string>                    v;
-    auto                                        m = GetAudioApis();
+    std::vector<std::string>           v;
+    auto                               m = GetAudioApis();
     for (MapType::iterator it = m.begin(); it != m.end(); ++it) {
         v.push_back(it->second);
     }

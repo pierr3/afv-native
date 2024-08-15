@@ -29,6 +29,7 @@ ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBaseP
     mAPISession.StationSearchCallback.addCallback(this, std::bind(&ATCClient::stationSearchCallback, this, std::placeholders::_1, std::placeholders::_2));
     mVoiceSession.StateCallback.addCallback(this, std::bind(&ATCClient::voiceStateCallback, this, std::placeholders::_1));
     mATCRadioStack->setupDevices(&ClientEventCallback);
+    LOG("ATCClient", "Event Base is %ld", evBase);
 }
 
 ATCClient::~ATCClient() {
@@ -72,6 +73,7 @@ void afv_native::ATCClient::setCrossCoupleAcross(unsigned int freq, bool active)
 }
 
 bool ATCClient::connect() {
+    LOG("afv::ATCClient", "Attempting to connect");
     if (!isAPIConnected()) {
         if (mAPISession.getState() != afv::APISessionState::Disconnected) {
             LOG("afv::ATCClient",
@@ -80,8 +82,10 @@ bool ATCClient::connect() {
                 static_cast<int>(mAPISession.getState()));
             return false;
         }
+        LOG("afv::ATCClient", "Connecting to API Session");
         mAPISession.Connect();
     } else {
+        LOG("afv::ATCClient", "API Is Connected.. attempting Voice Session Connect");
         mVoiceSession.Connect();
     }
     return true;
@@ -267,6 +271,7 @@ void ATCClient::stopAudio() {
         mSpeakerDevice->close();
         mSpeakerDevice.reset();
     }
+    LOG("afv::ATCClient", "Audio Stopped");
 }
 
 std::vector<afv::dto::Transceiver> ATCClient::makeTransceiverDto() {

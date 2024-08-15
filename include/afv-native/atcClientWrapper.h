@@ -1,5 +1,6 @@
 #pragma once
 #include "afv-native/afv/dto/StationTransceiver.h"
+#include "afv-native/atcClient.h"
 #include "afv_native_export.h"
 #include "event.h"
 #include "hardwareType.h"
@@ -69,8 +70,8 @@ namespace afv_native::api {
 
         AFV_NATIVE_API void SetAudioApi(int api);
         AFV_NATIVE_API std::map<int, std::string> GetAudioApis();
-        AFV_NATIVE_API const char                        **GetAudioApisNative();
-        AFV_NATIVE_API void FreeAudioApis(char **apis);
+        AFV_NATIVE_API const char               **GetAudioApisNative();
+        AFV_NATIVE_API void                       FreeAudioApis(char **apis);
 
         AFV_NATIVE_API void SetAudioInputDevice(std::string inputDevice);
         AFV_NATIVE_API void SetAudioInputDevice(char *inputDevice);
@@ -180,5 +181,14 @@ namespace afv_native::api {
         [[deprecated("Use SetPlaybackChannelAll instead")]] AFV_NATIVE_DEPRECATED void SetHeadsetOutputChannel(int channel);
         [[deprecated("Use SetRadioGainAll instead")]] AFV_NATIVE_DEPRECATED void SetRadiosGain(float gain);
         [[deprecated("Use modern afv_native::api::setLogger() instead")]] AFV_NATIVE_DEPRECATED static void setLogger(afv_native::log_fn gLogger);
+
+      private:
+        struct event_base *ev_base;
+
+        std::mutex                             afvMutex;
+        std::unique_ptr<afv_native::ATCClient> client;
+        std::unique_ptr<std::thread>           eventThread;
+        std::atomic<bool>                      isInitialized {false};
+        std::atomic<bool>                      requestLoopExit {false};
     };
 } // namespace afv_native::api

@@ -20,28 +20,6 @@ typedef void (*CharStarCallback)(const char *);
 typedef void (*AudioApisCallback)(unsigned int id, const char *);
 typedef void (*AudioInterfaceNativeCallback)(char *id, char *name, bool isDefault);
 
-/*
-struct AFV_NATIVE_API AudioInterfaceNative {
-        char *id;
-        char *name;
-        bool  isDefault;
-    };
-
-    enum class HardwareType {
-        Schmid_ED_137B,
-        Rockwell_Collins_2100,
-        Garex_220
-    };
-
-    enum class PlaybackChannel {
-        Both,
-        Left,
-        Right
-    };
-
-
-*/
-
 extern "C" {
 
     AFV_NATIVE_API ATCClientHandle ATCClient_Create(char *clientName, char *resourcePath, char *baseURL);
