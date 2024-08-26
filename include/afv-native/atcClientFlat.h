@@ -30,7 +30,8 @@ struct AFV_NATIVE_API AudioInterfaceNative {
     enum class HardwareType {
         Schmid_ED_137B,
         Rockwell_Collins_2100,
-        Garex_220
+        Garex_220,
+        No_Hardware
     };
 
     enum class PlaybackChannel {
