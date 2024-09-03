@@ -57,8 +57,8 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 
 # Link the test client if available
-if(EXISTS "${PROJECT_SOURCE_DIR}/test/afv-native-testclient/CMakeLists.txt" AND DEFINED BUILD_TEST_CLIENT)
-	add_subdirectory(test/afv-native-testclient)
+if(EXISTS "${PROJECT_SOURCE_DIR}/afv-native-testclient/CMakeLists.txt")
+	add_subdirectory(afv-native-testclient)
 endif()
 
 target_sources(afv_native PRIVATE 
@@ -137,6 +137,7 @@ find_package(msgpack-cxx CONFIG REQUIRED)
 find_package(Opus CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Poco REQUIRED COMPONENTS Foundation Net)
 
 # Speexdsp does not have find_package
 if (UNIX)
@@ -157,6 +158,7 @@ set(LIBRARIES
 		Opus::opus
 		nlohmann_json::nlohmann_json
 		Threads::Threads
+		Poco::Foundation Poco::Net
 		${SPEEXDSP_LIBRARY})
 
 target_link_libraries(afv_native
