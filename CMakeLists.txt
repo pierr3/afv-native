@@ -52,15 +52,16 @@ if (WIN32)
 	add_library(afv_native SHARED)
 endif()
 
+
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
+
 # Link the test client if available
 if(EXISTS "${PROJECT_SOURCE_DIR}/afv-native-testclient/CMakeLists.txt")
 	add_subdirectory(afv-native-testclient)
 endif()
 
-target_include_directories(afv_native PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/compressor)
-target_include_directories(afv_native PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/simpleSource)
-
-target_sources(afv_native PRIVATE
+target_sources(afv_native PRIVATE 
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/APISession.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/EffectResources.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/afv/RadioSimulation.cpp
@@ -148,7 +149,7 @@ if (WIN32)
 	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
 endif()
 
-set(LIBRARIES
+set(LIBRARIES 
 		OpenSSL::SSL OpenSSL::Crypto
 		cpp-jwt::cpp-jwt
 		CURL::libcurl
@@ -201,7 +202,7 @@ set_target_properties(afv_native PROPERTIES DEBUG_POSTFIX "d")
 
 # generates header to provide export macros for library
 include(GenerateExportHeader)
-generate_export_header(afv_native
+generate_export_header(afv_native 
 						EXPORT_MACRO_NAME AFV_NATIVE_API
 						EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/afv_native_export.h)
 
@@ -239,3 +240,5 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT DEFINED AFV_STATIC)
 		COMMENT "Running compile_licenses.py"
 	)
 endif()
+
+
