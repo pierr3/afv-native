@@ -22,6 +22,7 @@ ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBaseP
                                                              mFxRes,
                                                              &mVoiceSession.getUDPChannel())),
     mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), mAudioInputDeviceId(), mAudioOutputDeviceId(), ClientEventCallback() {
+    LOG("ATCClient", "Entry");
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));

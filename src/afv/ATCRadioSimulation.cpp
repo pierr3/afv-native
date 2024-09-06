@@ -746,6 +746,7 @@ void ATCRadioSimulation::setEnableHfSquelch(bool enableSquelch) {
 }
 
 void ATCRadioSimulation::setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback) {
+    LOG("ATCRadioSimulation", "Setting up Devices...");
     mHeadsetDevice = std::make_shared<AtcOutputAudioDevice>(shared_from_this(), true);
     mSpeakerDevice = std::make_shared<AtcOutputAudioDevice>(shared_from_this(), false);
 
