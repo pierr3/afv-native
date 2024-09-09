@@ -18,6 +18,7 @@ struct ATCClientHandle_ {
 };
 
 AFV_NATIVE_API ATCClientHandle ATCClient_Create(char *clientName, char *resourcePath, char *baseURL) {
+    LOG("FLAT", "ATC Create");
     return new ATCClientHandle_(clientName, resourcePath, baseURL);
 }
 
