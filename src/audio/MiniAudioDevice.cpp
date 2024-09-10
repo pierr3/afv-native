@@ -1,5 +1,10 @@
 #include "afv-native/audio/MiniAudioDevice.h"
+#include "afv-native/Log.h"
+#include <algorithm>
+#include <cctype>
+#include <memory>
 #include <stdexcept>
+#include <string>
 
 using namespace afv_native::audio;
 using namespace std;
