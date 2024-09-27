@@ -377,6 +377,7 @@ void MiniAudioAudioDevice::maInputCallback(ma_device *pDevice, void *pOutput, co
 }
 
 void MiniAudioAudioDevice::maNotificationCallback(const ma_device_notification *pNotification) {
+    LOG("MiniAudioAudioDevice", "Notification Callback!");
     auto device =
         reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
     device->notificationCallback(pNotification);
@@ -451,16 +452,17 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
         return;
     }
 
-    // auto device = reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
+    auto device =
+        reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
 
-    // if (pNotification->type == ma_device_notification_type_stopped) {
-    //     if (mHasClosedManually) {
-    //         mHasClosedManually = false; // This is a clean exit, we don't
-    //         emit anything return;
-    //     }
+    if (pNotification->type == ma_device_notification_type_stopped) {
+        if (mHasClosedManually) {
+            mHasClosedManually = false; // This is a clean exit, we don't emit anything
+            return;
+        }
 
-    //     // mNotificationFunc(mUserStreamName, 0);
-    // }
+        mNotificationFunc(mUserStreamName, 0);
+    }
 }
 std::string afv_native::audio::MiniAudioAudioDevice::getDeviceId(const ma_device_id &deviceId, const AudioDevice::Api &api, const std::string &deviceName) {
     if (api >= MA_BACKEND_COUNT || api == -1) {
