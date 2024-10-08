@@ -51,13 +51,16 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
 
     ev_base = event_base_new();
     LOG("ATCWRAPPER","Event Base Created");
+    LOG("ATCWRAPPER","Creating client named: %s resource: %s baseURL: %s",clientName,resourcePath,baseURL);
 
     try {
         client = std::make_unique<afv_native::ATCClient>(ev_base, resourcePath, clientName, baseURL);
         LOG("ATCWRAPPER","Client Created");
     }
     catch (std::exception &e) {
-        LOG("ATCWRAPPER","Client Create Exception: %s",e.what());        
+        LOG("ATCWRAPPER","Client Create Exception: %s",e.what()); 
+        
+        throw;
     }
 
     
