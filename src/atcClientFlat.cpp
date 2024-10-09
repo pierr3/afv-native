@@ -6,7 +6,7 @@ struct ATCClientHandle_ {
     afv_native::api::atcClient *impl;
 
     ATCClientHandle_(char *clientName, char *resourcePath, char *baseURL) {
-        impl = new afv_native::api::atcClient(std::string(clientName), std::string(resourcePath), std::string(baseURL));
+        impl = new afv_native::api::atcClient(clientName, resourcePath, baseURL);
     }
 
     ~ATCClientHandle_() {
@@ -19,7 +19,7 @@ struct ATCClientHandle_ {
 
 AFV_NATIVE_API ATCClientHandle ATCClient_Create(char *clientName, char *resourcePath, char *baseURL) {
     LOG("FLAT", "ATC Create client %s resource %s base %s",clientName, resourcePath, baseURL);
-    return new ATCClientHandle_(clientName, strdup(resourcePath), strdup(baseURL));
+    return new ATCClientHandle_(clientName, resourcePath, baseURL);
 }
 
 AFV_NATIVE_API void ATCClient_Destroy(ATCClientHandle handle) {

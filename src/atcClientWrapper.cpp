@@ -83,6 +83,7 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
 
 afv_native::api::atcClient::atcClient(char *clientName, char *resourcePath, char *baseURL):
     atcClient(std::string(clientName), std::string(resourcePath), std::string(baseURL)) {
+        LOG("ATCWRAPPER","STUB: Creating client named: %s resource: %s baseURL: %s",clientName,resourcePath,baseURL);
 }
 
 afv_native::api::atcClient::~atcClient() {
