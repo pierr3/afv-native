@@ -33,6 +33,7 @@
 
 #include "afv-native/http/RESTRequest.h"
 #include "afv-native/http/http.h"
+#include "afv-native/Log.h"
 #include <nlohmann/json.hpp>
 #include <string>
 
@@ -41,8 +42,9 @@ using namespace afv_native::http;
 using json = nlohmann::json;
 
 RESTRequest::RESTRequest(string path, Method method, const nlohmann::json &request):
-    Request(path, method) {
+    Request(path, method) {    
     setRequestBody(request);
+    LOG("RESTRequest","Created");
 }
 
 nlohmann::json RESTRequest::getResponse() const {
