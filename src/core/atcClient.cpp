@@ -16,7 +16,8 @@
 
 using namespace afv_native;
 
-ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName, std::string baseUrl):
+ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName, std::string baseUrl) 
+try :
     mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)), mEvBase(evBase), mTransferManager(mEvBase), mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession),
     mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mEvBase,
                                                              mFxRes,
@@ -31,6 +32,9 @@ ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBaseP
     mVoiceSession.StateCallback.addCallback(this, std::bind(&ATCClient::voiceStateCallback, this, std::placeholders::_1));
     mATCRadioStack->setupDevices(&ClientEventCallback);
     LOG("ATCClient", "Event Base is %ld", evBase);
+}
+catch (std::exception &e) {
+    LOG("ATCClient","Exception in Constructor: %s",e.what());
 }
 
 ATCClient::~ATCClient() {
