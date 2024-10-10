@@ -35,6 +35,7 @@ try :
 }
 catch (std::exception &e) {
     LOG("ATCClient","Exception in Constructor: %s",e.what());
+    throw;
 }
 
 ATCClient::~ATCClient() {
