@@ -48,8 +48,8 @@ using json = nlohmann::json;
 
 VoiceSession::VoiceSession(APISession &session, const std::string &callsign) try:
     mSession(session), 
-    mCallsign(callsign), 
-    mBaseUrl(""), 
+    // mCallsign(callsign), 
+    // mBaseUrl(""), 
     mVoiceSessionSetupRequest("", http::Method::POST, json()), 
     mVoiceSessionTeardownRequest("", http::Method::DEL, json()), 
     mTransceiverUpdateRequest("", http::Method::POST, json()), 
