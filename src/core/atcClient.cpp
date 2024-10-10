@@ -212,7 +212,7 @@ void ATCClient::startAudio() {
             const char *error = "Could not initiate speaker audio context.";
             ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         } else {
-            mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
+            mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             LOG("afv::ATCClient", "Speaker Device %s notification setup",
                 mAudioSpeakerDeviceId.c_str());
         }
@@ -241,7 +241,7 @@ void ATCClient::startAudio() {
             const char *error = "Could not initiate headset audio context.";
             ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         } else {
-            mAudioDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
+            mAudioDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             LOG("afv::ATCClient", "Headset Device %s notification setup",
                 mAudioOutputDeviceId.c_str());
         }
@@ -633,7 +633,7 @@ void ATCClient::setTick(std::shared_ptr<audio::ITick> tick) {
     mATCRadioStack->setTick(tick);
 }
 
-void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName, int errorCode) {
+void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName, int errorCode, std::string deviceId) {
     if (errorCode != 0) {
         return;
     }

@@ -294,7 +294,7 @@ namespace afv_native {
 
         void stationSearchCallback(bool found, std::pair<std::string, unsigned int> data);
 
-        void deviceStoppedCallback(std::string deviceName, int errorCode);
+        void deviceStoppedCallback(std::string deviceName, int errorCode, std::string deviceId);
 
       private:
         void unguardPtt();

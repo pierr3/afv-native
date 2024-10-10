@@ -452,8 +452,8 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
         return;
     }
 
-    auto device =
-        reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
+    // auto device =
+    //     reinterpret_cast<MiniAudioAudioDevice *>(pNotification->pDevice->pUserData);
 
     if (pNotification->type == ma_device_notification_type_stopped) {
         if (mHasClosedManually) {
@@ -461,7 +461,7 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
             return;
         }
 
-        mNotificationFunc(mUserStreamName, 0);
+        mNotificationFunc(mUserStreamName, 0, mOutputDeviceId);
     }
 }
 std::string afv_native::audio::MiniAudioAudioDevice::getDeviceId(const ma_device_id &deviceId, const AudioDevice::Api &api, const std::string &deviceName) {

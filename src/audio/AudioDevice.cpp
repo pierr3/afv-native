@@ -66,7 +66,7 @@ AudioDevice::DeviceInfo::DeviceInfo(std::string newName, bool newIsDefault, std:
     }
 }
 
-void afv_native::audio::AudioDevice::setNotificationFunc(std::function<void(std::string, int)> newFunc) {
+void afv_native::audio::AudioDevice::setNotificationFunc(std::function<void(std::string, int, std::string)> newFunc) {
     std::lock_guard<std::mutex> funcGuard(mNotificationFuncLock);
 
     mNotificationFunc = newFunc;

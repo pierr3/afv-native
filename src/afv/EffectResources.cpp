@@ -34,6 +34,7 @@
 #include "afv-native/afv/EffectResources.h"
 #include "afv-native/audio/WavFile.h"
 #include "afv-native/audio/WavSampleStorage.h"
+#include "afv-native/Log.h"
 
 using namespace afv_native;
 using namespace afv_native::afv;
@@ -62,4 +63,5 @@ EffectResources::EffectResources(const string &file_path) {
     mAcBus         = try_load(file_path + "/AC_Bus_f32.wav");
     mVhfWhiteNoise = try_load(file_path + "/WhiteNoise_f32.wav");
     mHfWhiteNoise  = try_load(file_path + "/HF_WhiteNoise_f32.wav");
+    LOG("EffectResources","Effect Resources Loaded");
 };
