@@ -34,6 +34,7 @@
 #include "afv-native/http/EventTransferManager.h"
 #include "afv-native/http/Request.h"
 #include "afv-native/http/TransferManager.h"
+#include "afv-native/Log.h"
 #include <iostream>
 
 using namespace afv_native::http;
@@ -45,6 +46,7 @@ EventTransferManager::EventTransferManager(struct event_base *evBase):
     curl_multi_setopt(mCurlMultiHandle, CURLMOPT_SOCKETDATA, this);
     curl_multi_setopt(mCurlMultiHandle, CURLMOPT_TIMERFUNCTION, EventTransferManager::curlTimerCallback);
     curl_multi_setopt(mCurlMultiHandle, CURLMOPT_TIMERDATA, this);
+    LOG("EventTransferManager","Loaded");
 }
 
 EventTransferManager::~EventTransferManager() {

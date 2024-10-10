@@ -52,6 +52,7 @@ VoiceSession::VoiceSession(APISession &session, const std::string &callsign):
     mHeartbeatTimeout(mSession.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)), mLastError(VoiceSessionError::NoError) {
     mSessionType = VoiceSessionType::Pilot;
     updateBaseUrl();
+    LOG("VoiceSession","Created");
 }
 
 VoiceSession::~VoiceSession() {
