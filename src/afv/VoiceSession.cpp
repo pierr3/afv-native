@@ -46,20 +46,21 @@ using namespace afv_native::afv;
 using namespace afv_native;
 using json = nlohmann::json;
 
-VoiceSession::VoiceSession(APISession &session, const std::string &callsign) try:
-    mSession(session), 
-    // mCallsign(callsign), 
-    // mBaseUrl(""), 
+VoiceSession::VoiceSession(APISession &session, const std::string &callsign) try:    
+    mCallsign(callsign), 
+    mBaseUrl(""), 
     mVoiceSessionSetupRequest("", http::Method::POST, json()), 
     mVoiceSessionTeardownRequest("", http::Method::DEL, json()), 
     mTransceiverUpdateRequest("", http::Method::POST, json()), 
     mCrossCoupleGroupUpdateRequest("", http::Method::POST, json()),
     mChannel(), 
-    mHeartbeatTimer(mSession.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)), 
+    mHeartbeatTimer(session.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)), 
     mLastHeartbeatReceived(0),
-    mHeartbeatTimeout(mSession.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)), 
+    mHeartbeatTimeout(session.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)), 
+    mSession(session), 
     mLastError(VoiceSessionError::NoError) {
     LOG("VoiceSession","Entry");
+    
     mSessionType = VoiceSessionType::Pilot;
     updateBaseUrl();
     LOG("VoiceSession","Created");
