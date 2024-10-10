@@ -102,6 +102,7 @@ void VoiceSession::voiceSessionSetupRequestCallback(http::Request *req, bool suc
     } else {
         LOG("voicesession", "request for voice session failed: got internal error %s",
             req->getCurlError().c_str());
+        LOG("voicesession","Request: %s",req->getUrl().c_str());
         mLastError = VoiceSessionError::BadResponseFromAPIServer;
         failSession();
     }
