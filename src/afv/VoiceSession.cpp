@@ -66,7 +66,7 @@ VoiceSession::VoiceSession(APISession &session, const std::string &callsign) try
     LOG("VoiceSession","Created");
 }
 catch (std::exception &e) {
-    LOG("VoiceSession","Exception: %s",e.what());
+    LOG("VoiceSession","Exception: %s type: %s",e.what(),typeid(e).name());
 }
 
 VoiceSession::~VoiceSession() {
