@@ -47,6 +47,7 @@ using namespace afv_native;
 using json = nlohmann::json;
 
 VoiceSession::VoiceSession(APISession &session, const std::string &callsign) try:    
+    mSession(session), 
     mCallsign(callsign), 
     mBaseUrl(""), 
     mVoiceSessionSetupRequest("", http::Method::POST, json()), 
@@ -54,10 +55,10 @@ VoiceSession::VoiceSession(APISession &session, const std::string &callsign) try
     mTransceiverUpdateRequest("", http::Method::POST, json()), 
     mCrossCoupleGroupUpdateRequest("", http::Method::POST, json()),
     mChannel(), 
-    mHeartbeatTimer(session.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)), 
+    mHeartbeatTimer(mSession.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)), 
     mLastHeartbeatReceived(0),
-    mHeartbeatTimeout(session.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)), 
-    mSession(session), 
+    mHeartbeatTimeout(mSession.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)), 
+    
     mLastError(VoiceSessionError::NoError) {
     LOG("VoiceSession","Entry");
     
