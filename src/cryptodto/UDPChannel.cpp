@@ -42,13 +42,15 @@ using namespace afv_native::cryptodto;
 using namespace std;
 
 UDPChannel::UDPChannel(int receiveSequenceHistorySize) try :
-    Channel(), mAddress(), mDatagramRxBuffer(nullptr), mPocoUDPSocket(), mPocoSocketReactor(), mReactorThread("UDP Socket Reactor Thread"), mTxSequence(0), receiveSequence(0, receiveSequenceHistorySize), mAcceptableCiphers(1U << cryptodto::CryptoDtoMode::CryptoModeChaCha20Poly1305), mDtoHandlers(), mLastErrno(0) {
+    //mPocoUDPSocket(), mPocoSocketReactor(),
+    Channel(), mAddress(), mDatagramRxBuffer(nullptr), mReactorThread("UDP Socket Reactor Thread"), mTxSequence(0), receiveSequence(0, receiveSequenceHistorySize), mAcceptableCiphers(1U << cryptodto::CryptoDtoMode::CryptoModeChaCha20Poly1305), mDtoHandlers(), mLastErrno(0) {
     LOG("udpchannel","Entry");
     mDatagramRxBuffer = new unsigned char[maxPermittedDatagramSize];
     mReactorThread.start(mPocoSocketReactor);
 }
 catch (Poco::Net::ServiceNotFoundException & e) {
     LOG("updchannel","Service Not Found Exception: %s %s",e.displayText().c_str(),e.message().c_str());
+    throw;
 }
 
 UDPChannel::~UDPChannel() {
