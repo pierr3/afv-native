@@ -662,17 +662,18 @@ void afv_native::ATCClient::reset() {
 
 void afv_native::ATCClient::useAllActiveTransceivers(unsigned int freq) {
     std::vector<afv::dto::StationTransceiver> newTransceivers;
+    const auto availableTransceivers = getStationTransceivers();
 
     for (const auto &[stateFreq, state]: mATCRadioStack->getRadioState()) {
         if (stateFreq == freq || !state.rx) {
             continue;
         }
 
-        if (mAPISession.getStationTransceivers().find(state.stationName) != mAPISession.getStationTransceivers().end()) {
-            newTransceivers.insert(
-                newTransceivers.end(),
-                mAPISession.getStationTransceivers()[state.stationName].begin(),
-                mAPISession.getStationTransceivers()[state.stationName].end());
+        if (availableTransceivers.find(state.stationName) !=
+            availableTransceivers.end()) {
+            for (const auto &transceiver: availableTransceivers.at(state.stationName)) {
+                newTransceivers.push_back(transceiver);
+            }
         }
     }
 
