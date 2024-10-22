@@ -9,10 +9,12 @@
 #include "afv-native/Log.h"
 #include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/afv/VoiceSession.h"
+#include "afv-native/afv/dto/StationTransceiver.h"
 #include "afv-native/afv/params.h"
 #include "afv-native/event.h"
 #include <functional>
 #include <memory>
+#include <mutex>
 
 using namespace afv_native;
 
@@ -657,3 +659,27 @@ std::map<unsigned int, afv::AtcRadioState> afv_native::ATCClient::getRadioState(
 void afv_native::ATCClient::reset() {
     mATCRadioStack->reset();
 }
+
+void afv_native::ATCClient::useAllActiveTransceivers(unsigned int freq) {
+    std::vector<afv::dto::StationTransceiver> newTransceivers;
+
+    for (const auto &[stateFreq, state]: mATCRadioStack->getRadioState()) {
+        if (stateFreq == freq || !state.rx) {
+            continue;
+        }
+
+        if (std::find(mAPISession.getStationTransceivers().begin(),
+                      mAPISession.getStationTransceivers().end(),
+                      state.stationName) != mAPISession.getStationTransceivers().end()) {
+            newTransceivers.insert(
+                newTransceivers.end(),
+                mAPISession.getStationTransceivers()[state.stationName].begin(),
+                mAPISession.getStationTransceivers()[state.stationName].end());
+        }
+    }
+
+    if (newTransceivers.size() > 0) {
+        mATCRadioStack->setTransceivers(freq, newTransceivers);
+        queueTransceiverUpdate();
+    }
+};

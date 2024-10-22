@@ -243,6 +243,7 @@ namespace afv_native {
         bool isFrequencyActive(unsigned int freq);
         void setManualTransceivers(unsigned int freq, std::vector<afv::dto::StationTransceiver> transceivers);
         void linkTransceivers(std::string callsign, unsigned int freq);
+        void useAllActiveTransceivers(unsigned int freq);
 
         std::map<unsigned int, afv::AtcRadioState> getRadioState();
 

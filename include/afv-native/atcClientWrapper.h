@@ -120,7 +120,7 @@ namespace afv_native::api {
         AFV_NATIVE_API void UseTransceiversFromStation(std::string station, unsigned int freq);
         AFV_NATIVE_API void UseTransceiversFromStation(char *station, unsigned int freq);
 
-        AFV_NATIVE_API std::map<std::string, std::vector<afv_native::afv::dto::StationTransceiver>> GetAllTransceivers();
+        AFV_NATIVE_API void UseAllActiveTransceivers(unsigned int freq);
         AFV_NATIVE_API void SetManualTransceivers(unsigned int freq, std::vector<afv_native::afv::dto::StationTransceiver> transceivers);
 
         AFV_NATIVE_API void FetchTransceiverInfo(std::string station);

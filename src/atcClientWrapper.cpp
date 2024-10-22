@@ -630,7 +630,7 @@ AFV_NATIVE_API void afv_native::api::atcClient::SetManualTransceivers(unsigned i
     client->setManualTransceivers(freq, transceivers);
 }
 
-AFV_NATIVE_API std::map<std::string, std::vector<afv_native::afv::dto::StationTransceiver>> GetAllTransceivers() {
+AFV_NATIVE_API void UseAllActiveTransceivers(unsigned int freq) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    return client->getStationTransceivers();
+    client->useAllActiveTransceivers(freq);
 }
