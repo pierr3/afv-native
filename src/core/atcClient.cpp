@@ -668,9 +668,7 @@ void afv_native::ATCClient::useAllActiveTransceivers(unsigned int freq) {
             continue;
         }
 
-        if (std::find(mAPISession.getStationTransceivers().begin(),
-                      mAPISession.getStationTransceivers().end(),
-                      state.stationName) != mAPISession.getStationTransceivers().end()) {
+        if (mAPISession.getStationTransceivers().find(state.stationName) != mAPISession.getStationTransceivers().end()) {
             newTransceivers.insert(
                 newTransceivers.end(),
                 mAPISession.getStationTransceivers()[state.stationName].begin(),
