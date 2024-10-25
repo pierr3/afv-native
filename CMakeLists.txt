@@ -137,7 +137,7 @@ find_package(msgpack-cxx CONFIG REQUIRED)
 find_package(Opus CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Threads REQUIRED)
-find_package(Poco REQUIRED COMPONENTS Foundation Net)
+find_package(Poco REQUIRED COMPONENTS Foundation Net Util)
 
 # Speexdsp does not have find_package
 if (UNIX)
@@ -158,7 +158,7 @@ set(LIBRARIES
 		Opus::opus
 		nlohmann_json::nlohmann_json
 		Threads::Threads
-		Poco::Foundation Poco::Net
+		Poco::Foundation Poco::Net Poco::Util
 		${SPEEXDSP_LIBRARY})
 
 target_link_libraries(afv_native

@@ -32,38 +32,20 @@
  */
 
 #include "afv-native/util/base64.h"
-#include <cstdint>
-#include <openssl/evp.h>
+#include "Poco/Base64Decoder.h"
+#include "Poco/Base64Encoder.h"
+#include <sstream>
 #include <string>
-#include <vector>
 
 using namespace std;
 using namespace afv_native::util;
 
 string afv_native::util::Base64Encode(const unsigned char *buffer_in, size_t len) {
-    /* NOTE(CC):
-     *
-     * This implementation bounces through a temporary buffer resulting in a
-     * double-copy.
-     *
-     * This is chosen in preference to a no-copy approach to prevent
-     * buffer-overflows as we cannot limit the output space required by
-     * EVP_EncodeBlock.
-     *
-     * Similarly, we don't use the one-copy approach as it always wants to write
-     * the terminal character, whereas that's not (portable) compatible with the
-     * C++ string class as we're generally not permitted to mess with the
-     * terminating character! >_<
-     */
-
-    // output size required by EVP_EncodeBlock is predictable - see EVP_EncodeBlock(3)
-    const size_t output_len = (((len + 2) / 3) * 4) + 1;
-
-    std::vector<unsigned char> out_buf(output_len);
-    EVP_EncodeBlock(out_buf.data(), buffer_in, len);
-
-    string base64_value(reinterpret_cast<char *>(out_buf.data()));
-    return std::move(base64_value);
+    ostringstream       ostr;
+    Poco::Base64Encoder b64out(ostr);
+    b64out.write(reinterpret_cast<const char *>(buffer_in), len);
+    b64out.close();
+    return ostr.str();
 }
 
 size_t afv_native::util::Base64DecodeLen(size_t input_len) {
@@ -71,13 +53,8 @@ size_t afv_native::util::Base64DecodeLen(size_t input_len) {
 }
 
 size_t afv_native::util::Base64Decode(const string &base64_in, unsigned char *buffer_out, size_t len) {
-    // because the OpenSSL methods are completely unguarded, we need to preempt
-    // a few things - we need to limit the data exposed to the decode function
-    // to the maximum length we can store in the output buffer. >_<
-
-    size_t input_len = base64_in.length();
-    if (Base64DecodeLen(input_len) > len) {
-        input_len = (len / 3) * 4;
-    }
-    return EVP_DecodeBlock(buffer_out, reinterpret_cast<const unsigned char *>(base64_in.c_str()), input_len);
+    istringstream       istr(base64_in);
+    Poco::Base64Decoder b64in(istr);
+    b64in.read(reinterpret_cast<char *>(buffer_out), len);
+    return b64in.gcount();
 }
