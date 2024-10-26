@@ -151,8 +151,8 @@ std::map<int, std::string> afv_native::api::atcClient::GetAudioApis() {
 
 const char **afv_native::api::atcClient::GetAudioApisNative() {
     typedef std::map<int, std::string> MapType;
-    std::vector<std::string>                    v;
-    auto                                        m = GetAudioApis();
+    std::vector<std::string>           v;
+    auto                               m = GetAudioApis();
     for (MapType::iterator it = m.begin(); it != m.end(); ++it) {
         v.push_back(it->second);
     }
@@ -393,6 +393,10 @@ int afv_native::api::atcClient::GetTransceiverCountForStation(std::string statio
     }
     return 0;
 };
+
+std::map<std::string, std::vector<afv_native::afv::dto::StationTransceiver>> afv_native::api::atcClient::GetTransceivers() {
+    return client->getStationTransceivers();
+}
 
 int afv_native::api::atcClient::GetTransceiverCountForStation(char *station) {
     return GetTransceiverCountForStation(std::string(station));

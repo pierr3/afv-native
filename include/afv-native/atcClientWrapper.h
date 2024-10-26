@@ -132,6 +132,7 @@ namespace afv_native::api {
         AFV_NATIVE_API int GetTransceiverCountForStation(std::string station);
         AFV_NATIVE_API int GetTransceiverCountForStation(char *station);
         AFV_NATIVE_API int GetTransceiverCountForFrequency(unsigned int freq);
+        AFV_NATIVE_API std::map<std::string, std::vector<afv_native::afv::dto::StationTransceiver>> GetTransceivers();
 
         AFV_NATIVE_API void SetPtt(bool pttState);
 
