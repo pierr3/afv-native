@@ -902,6 +902,7 @@ std::vector<afv::dto::Transceiver> ATCRadioSimulation::makeTransceiverDto() {
 
 std::vector<afv::dto::CrossCoupleGroup> ATCRadioSimulation::makeCrossCoupleGroupDto() {
     // Make one cross couple group per frequency
+    std::lock_guard<std::mutex>        radioStateGuard(mRadioStateLock);
     std::vector<afv::dto::CrossCoupleGroup> out   = {{0, {}}};
     unsigned int                            index = 1;
 
