@@ -500,7 +500,7 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
         // immediately, but can wait until the next transceiver update
         mATCRadioStack->stationTransceiverUpdateCallback(stationName, transceivers);
     }
-    const nativeStationName = stationName.c_str();
+    const char* nativeStationName = stationName.c_str();
     ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, reinterpret_cast<void *>(const_cast<char *>(nativeStationName)), nullptr);
 }
 
