@@ -479,6 +479,11 @@ void ATCClient::getStation(std::string callsign) {
 }
 
 void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
+    if (stationName.empty()) {
+        LOG("ATCClient", "Received empty station name in transceiver update");
+        return;
+    }
+
     auto transceivers = getStationTransceivers();
     LOG("ATCClient", "Receiving new transceivers for station %s", stationName.c_str());
     // We can now link any pending new transceivers if we had requested them
@@ -495,9 +500,8 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
         // immediately, but can wait until the next transceiver update
         mATCRadioStack->stationTransceiverUpdateCallback(stationName, transceivers);
     }
-
-    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated,
-                                  (void *) stationName.c_str(), nullptr);
+    const nativeStationName = stationName.c_str();
+    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, reinterpret_cast<void *>(const_cast<char *>(nativeStationName)), nullptr);
 }
 
 std::map<std::string, std::vector<afv::dto::StationTransceiver>> ATCClient::getStationTransceivers() const {
