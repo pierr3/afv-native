@@ -11,7 +11,6 @@
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/params.h"
 #include "afv-native/event.h"
-#include <algorithm>
 #include <functional>
 #include <memory>
 
@@ -201,8 +200,7 @@ void ATCClient::startAudio() {
         if (!mSpeakerDevice) {
             LOG("afv::ATCClient", "Could not initiate speaker audio context.");
             const char *error = "Could not initiate speaker audio context.";
-            ClientEventCallback.invokeAll(ClientEventType::AudioError, static_cast<void*>(&error), nullptr);
-            delete [] error;
+            ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         } else {
             mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
             LOG("afv::ATCClient", "Speaker Device %s notification setup",
@@ -219,8 +217,7 @@ void ATCClient::startAudio() {
         LOG("afv::ATCClient", "Unable to open Speaker audio device.");
         const char *error = "Unable to open Speaker audio device.";
         stopAudio();
-        ClientEventCallback.invokeAll(ClientEventType::AudioError, static_cast<void*>(&error), nullptr);
-        delete [] error;
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
     }
     LOG("afv::ATCClient", "Speaker Device %s output opened",
         mAudioSpeakerDeviceId.c_str());
@@ -232,8 +229,7 @@ void ATCClient::startAudio() {
         if (!mAudioDevice) {
             LOG("afv::ATCClient", "Could not initiate headset audio context.");
             const char *error = "Could not initiate headset audio context.";
-            ClientEventCallback.invokeAll(ClientEventType::AudioError, static_cast<void*>(&error), nullptr);
-            delete [] error;
+            ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
         } else {
             mAudioDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
             LOG("afv::ATCClient", "Headset Device %s notification setup",
@@ -258,8 +254,7 @@ void ATCClient::startAudio() {
         LOG("afv::ATCClient", "Unable to open Headset output device.");
         const char *error = "Unable to open Headset audio device.";
         stopAudio();
-        ClientEventCallback.invokeAll(ClientEventType::AudioError, static_cast<void*>(&error), nullptr);
-        delete [] error;
+        ClientEventCallback.invokeAll(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(error)), nullptr);
     }
 }
 
@@ -471,11 +466,8 @@ void ATCClient::aliasUpdateCallback() {
 }
 
 void ATCClient::stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs) {
-    std::transform(stationName.begin(), stationName.end(), stationName.begin(), ::toupper);
-    auto stationNameRef = stationName.c_str();
     ClientEventCallback.invokeAll(ClientEventType::VccsReceived,
-                                  static_cast<void*>(&stationNameRef), &vccs);
-    delete[] stationNameRef;
+                                  (void *) stationName.c_str(), &vccs);
 }
 
 void ATCClient::stationSearchCallback(bool found, std::pair<std::string, unsigned int> data) {
@@ -487,7 +479,6 @@ void ATCClient::getStation(std::string callsign) {
 }
 
 void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
-    std::transform(stationName.begin(), stationName.end(), stationName.begin(), ::toupper);
     if (stationName.empty()) {
         LOG("ATCClient", "Received empty station name in transceiver update");
         return;
@@ -510,8 +501,7 @@ void ATCClient::stationTransceiversUpdateCallback(std::string stationName) {
         mATCRadioStack->stationTransceiverUpdateCallback(stationName, transceivers);
     }
     auto stationNameRef = stationName.c_str();
-    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, static_cast<void*>(&stationNameRef), nullptr);
-    delete[] stationNameRef;
+    ClientEventCallback.invokeAll(ClientEventType::StationTransceiversUpdated, &stationNameRef, nullptr);
 }
 
 std::map<std::string, std::vector<afv::dto::StationTransceiver>> ATCClient::getStationTransceivers() const {
@@ -646,10 +636,8 @@ void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName, int er
         "use, etc)",
         deviceName.c_str());
 
-    auto deviceNameRef = deviceName.c_str();
     ClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError,
-                                  static_cast<void*>(&deviceNameRef), nullptr);
-                                  delete [] deviceNameRef;
+                                  (void *) deviceName.c_str(), nullptr);
 }
 
 void afv_native::ATCClient::setPlaybackChannel(unsigned int freq, PlaybackChannel channel) {
