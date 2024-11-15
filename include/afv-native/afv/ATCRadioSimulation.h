@@ -66,6 +66,8 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <string>
 #include <unordered_map>
 
 namespace afv_native { namespace afv {
@@ -212,7 +214,7 @@ namespace afv_native { namespace afv {
         void setEnableOutputEffects(bool enableEffects);
         void setEnableHfSquelch(bool enableHfSquelch);
 
-        void setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback);
+        void setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback, util::ChainedCallback<void(ClientEventType, std::optional<std::string> stringData, std::optional<int> intData, std::optional<std::string> stringData2, std::optional<int> intData2, std::optional<std::pair<std::string, unsigned int>>)> *ModernClientEventCallback);
 
         void setOnHeadset(unsigned int radio, bool onHeadset);
         bool getOnHeadset(unsigned int freq);
@@ -252,6 +254,7 @@ namespace afv_native { namespace afv {
         static const int voiceTimeoutIntervalS      = 2;
 
         util::ChainedCallback<void(ClientEventType, void *, void *)> *ClientEventCallback;
+        util::ChainedCallback<void(ClientEventType, std::optional<std::string> stringData, std::optional<int> intData, std::optional<std::string> stringData2, std::optional<int> intData2, std::optional<std::pair<std::string, unsigned int>> stationSearchCallback)> *ModernClientEventCallback;
 
         struct event_base               *mEvBase;
         std::shared_ptr<EffectResources> mResources;
