@@ -22,6 +22,7 @@
 #include "afv-native/http/EventTransferManager.h"
 #include <event2/event.h>
 #include <memory>
+#include <event.h>
 
 namespace afv_native {
     /** ATCClient provides a fully functional ATC Client that can be integrated
@@ -187,7 +188,8 @@ namespace afv_native {
          * guaranteed to be available for the duration of the callback.
          */
         util::ChainedCallback<void(ClientEventType, void *, void *)> ClientEventCallback;
-        util::ChainedCallback<void(ClientEventType, std::optional<std::string> stringData, std::optional<int> intData, std::optional<std::string> stringData2, std::optional<int> intData2, std::optional<std::pair<std::string, unsigned int>>)> ModernClientEventCallback;
+        
+        util::ChainedCallback<afv::ModernClientEventHandlerFunction> ModernClientEventCallback;
 
         /** getStationAliases returns a vector of all the known station aliases.
          *

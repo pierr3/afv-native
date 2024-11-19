@@ -290,7 +290,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             unsigned int freq = rxIter;
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting yet
             ClientEventCallback->invokeAll(ClientEventType::FrequencyRxBegin, &freq, nullptr);
-            ModernClientEventCallback->invokeAll(ClientEventType::FrequencyRxBegin, std::nullopt, freq, std::nullopt, 0, std::nullopt);
+            ModernClientEventCallback->invokeAll(ClientEventType::FrequencyRxBegin, std::nullopt, freq, std::nullopt, std::nullopt, std::nullopt);
             LOG("ATCRadioSimulation", "FrequencyRxBegin event: %i", freq);
         }
         if (!mRadioState[rxIter].mBypassEffects) {
@@ -759,7 +759,7 @@ void ATCRadioSimulation::setEnableHfSquelch(bool enableSquelch) {
     LOG("ATCRadioSimulation", "setEnableHfSquelch: %i", enableSquelch);
 }
 
-void ATCRadioSimulation::setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback, util::ChainedCallback<void(ClientEventType, std::optional<std::string> stringData, std::optional<int> intData, std::optional<std::string> stringData2, std::optional<int> intData2, std::optional<std::pair<std::string, unsigned int>>)> *modernClientEventCallback) {
+void ATCRadioSimulation::setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback, util::ChainedCallback<afv::ModernClientEventHandlerFunction> *modernClientEventCallback) {
     mHeadsetDevice = std::make_shared<AtcOutputAudioDevice>(shared_from_this(), true);
     mSpeakerDevice = std::make_shared<AtcOutputAudioDevice>(shared_from_this(), false);
 
