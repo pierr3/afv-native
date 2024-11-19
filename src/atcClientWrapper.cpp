@@ -3,6 +3,7 @@
 #include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/afv/dto/StationTransceiver.h"
 #include "afv-native/atcClient.h"
+#include "afv-native/event.h"
 #include "afv-native/hardwareType.h"
 #include <algorithm>
 #include <atomic>
@@ -514,7 +515,7 @@ void afv_native::api::atcClient::RaiseClientEvent(void *handle, void (*callback)
     client->ClientEventCallback.addCallback(handle, std::function(callback));
 }
 
-AFV_NATIVE_API void afv_native::api::atcClient::RaiseModernClientEvent(std::function<void(ClientEventType, std::optional<std::string> stringData, std::optional<int> intData, std::optional<std::string> stringData2, std::optional<int> intData2, std::optional<std::pair<std::string, unsigned int>>)> callback) {
+AFV_NATIVE_API void afv_native::api::atcClient::RaiseModernClientEvent(std::function<afv::ModernClientEventHandlerFunction> callback) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->ModernClientEventCallback.addCallback(nullptr, std::function(callback));
 };
