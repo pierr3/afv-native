@@ -36,6 +36,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <map>
 
 namespace afv_native {
     enum class ClientEventType {
@@ -63,7 +64,7 @@ namespace afv_native {
     };
 
     namespace afv {
-        using ModernClientEventHandlerFunction = void(ClientEventType, std::optional<std::string>, std::optional<int>, std::optional<std::string>, std::optional<int>, std::optional<std::pair<std::string, unsigned int>>);
+        using ModernClientEventHandlerFunction = void(ClientEventType, std::optional<std::string>, std::optional<int>, std::optional<std::pair<std::string, unsigned int>>, std::optional<std::map<std::string, unsigned int>>);
         enum class APISessionState {
             Disconnected, /// Disconnected state is not authenticated, nor trying to authenticate.
             Connecting, /// Connecting means we've started our attempt to authenticate and may be waiting for a response from the API Server
