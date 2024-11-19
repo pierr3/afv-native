@@ -67,11 +67,7 @@ namespace afv_native { namespace util {
 
         void invokeAll(Args... args) {
             for (auto &f: mCallbacks) {
-#ifdef __GNUC__
-                std::__invoke(f.second, std::forward<Args>(args)...);
-#else
                 std::invoke(f.second, std::forward<Args>(args)...);
-#endif
             }
         }
     };
