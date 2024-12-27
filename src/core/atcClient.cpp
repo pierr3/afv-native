@@ -10,6 +10,7 @@
 #include "afv-native/afv/ATCRadioSimulation.h"
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/params.h"
+#include "afv-native/atcClientWrapper.h"
 #include "afv-native/event.h"
 #include "afv-native/event/EventBus.h"
 #include <functional>
@@ -483,16 +484,34 @@ void ATCClient::aliasUpdateCallback() {
     event::EventBus::Instance().OnEvent(StationAliasesUpdatedEvent {});
 }
 
-void ATCClient::stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs) {
+void ATCClient::stationVccsCallback(std::string stationName, std::map<std::string, afv::dto::Station> vccs) {
+    std::map<std::string, unsigned int>                 vccsFreqs;
+    std::map<std::string, afv_native::SimpleAtcStation> vccsSimple;
+    for (const auto &el: vccs) {
+        vccsFreqs[el.first] = el.second.Frequency;
+        vccsSimple[el.first] =
+            SimpleAtcStation {el.second.Name, el.second.Frequency, el.second.FrequencyAlias};
+    }
+    LOG("ATCClient", "Received VCCS for station %s", stationName.c_str());
     ClientEventCallback.invokeAll(ClientEventType::VccsReceived,
                                   (void *) stationName.c_str(), &vccs);
 
-    event::EventBus::Instance().OnEvent(VccsReceivedEvent {stationName, vccs});
+    event::EventBus::Instance().OnEvent(VccsReceivedEvent {stationName, vccsSimple});
 }
 
-void ATCClient::stationSearchCallback(bool found, std::pair<std::string, unsigned int> data) {
-    ClientEventCallback.invokeAll(ClientEventType::StationDataReceived, &found, &data);
-    event::EventBus::Instance().OnEvent(StationDataReceivedEvent {found, data});
+void ATCClient::stationSearchCallback(bool found, std::pair<std::string, afv::dto::Station> data) {
+    std::pair<std::string, afv_native::SimpleAtcStation> foundData;
+    if (found) {
+        foundData = std::make_pair(
+            data.first, SimpleAtcStation {data.second.Name, data.second.Frequency,
+                                          data.second.FrequencyAlias});
+    }
+
+    LOG("ATCClient", "Received station search result for %s", data.first.c_str());
+
+    ClientEventCallback.invokeAll(ClientEventType::StationDataReceived, &found,
+                                  &data.second.Frequency);
+    event::EventBus::Instance().OnEvent(StationDataReceivedEvent {found, foundData});
 }
 
 void ATCClient::getStation(std::string callsign) {

@@ -111,14 +111,15 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
             std::error_code ec;
             auto dec_token = jwt::decode(mBearerToken, algorithms({"none"}), ec, verify(false));
             if (ec) {
-                LOG("APISession", "couldn't parse bearer token: %s", ec.message().c_str());
+                LOG("APISession", "couldn't parse bearer token: %s",
+                    ec.message().c_str());
                 mBearerToken = "";
                 raiseError(APISessionError::InvalidAuthToken);
                 return;
             } else {
                 if (dec_token.payload().has_claim("exp")) {
                     const time_t expiry = dec_token.payload().get_claim_value<uint64_t>("exp");
-                    const int    timeRemaining = expiry - ::time(nullptr);
+                    const int timeRemaining = expiry - ::time(nullptr);
                     if (timeRemaining <= 60) {
                         // FIXME: report error upstream.
                         LOG("APISession", "token TTL (%d) is <= 60s.  Please check your system clock.", timeRemaining);
@@ -130,7 +131,8 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
                     // refresh 1 minute before token expiry.
                     mRefreshTokenTimer.enable((timeRemaining - 60) * 1000);
                 } else {
-                    LOG("APISession", "no expiry claim - assuming 1 hour.", ec.message().c_str());
+                    LOG("APISession", "no expiry claim - assuming 1 hour.",
+                        ec.message().c_str());
                     mRefreshTokenTimer.enable(59 * 60 * 1000); // refresh in 59 minutes.
                 }
             }
@@ -147,7 +149,8 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
         // if it were an immediate disconnect.
         mBearerToken = "";
         if (!success) {
-            LOG("APISession", "curl internal error during login: %s", req->getCurlError().c_str());
+            LOG("APISession", "curl internal error during login: %s",
+                req->getCurlError().c_str());
             raiseError(APISessionError::ConnectionError);
         } else {
             LOG("APISession", "got error from API server: Response Code %d", req->getStatusCode());
@@ -251,15 +254,21 @@ void APISession::_getStationCallback(http::RESTRequest *req, bool success, std::
         auto jsReturn = req->getResponse();
 
         bool                                 found = false;
-        std::pair<std::string, unsigned int> ret;
+        std::pair<std::string, dto::Station> ret;
 
-        if (!jsReturn.contains("name") || !jsReturn.contains("frequency") || !jsReturn["frequency"].is_number_integer()) {
-            LOG("APISession", "get station data returned did not contains name or frequency.  Ignoring.");
-        } else {
-            found                 = true;
-            int         foundFreq = jsReturn["frequency"].get<int>();
-            std::string foundName = jsReturn["name"].get<std::string>();
-            ret                   = {foundName, foundFreq};
+        try {
+            if (!jsReturn.is_object()) {
+                LOG("APISession", "station data returned wasn't an object.  Ignoring.");
+                found = false;
+                StationSearchCallback.invokeAll(false, {});
+                return;
+            }
+            dto::Station s;
+            jsReturn.get_to(s);
+            found = true;
+            ret   = {stationName, s};
+        } catch (std::exception &e) {
+            LOG("APISession", "couldn't decode station data: %s", e.what());
         }
 
         StationSearchCallback.invokeAll(found, ret);
@@ -299,7 +308,8 @@ void APISession::_stationsCallback(http::RESTRequest *req, bool success) {
         }
     } else {
         if (!success) {
-            LOG("APISession", "curl internal error during alias retrieval: %s", req->getCurlError().c_str());
+            LOG("APISession", "curl internal error during alias retrieval: %s",
+                req->getCurlError().c_str());
             // raiseError(APISessionError::ConnectionError);
         } else {
             LOG("APISession", "got error from API server getting aliases: Response Code %d", req->getStatusCode());
@@ -353,16 +363,18 @@ void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std:
     if (success && req->getStatusCode() == 200) {
         auto jsReturn = req->getResponse();
 
-        std::map<std::string, unsigned int> ret;
+        std::map<std::string, dto::Station> ret;
 
         if (!jsReturn.is_array()) {
             LOG("APISession", "station vccs data returned wasn't an array.  Ignoring.");
         } else {
             for (const auto &sJson: jsReturn) {
                 try {
-                    ret.insert({sJson["name"].get<std::string>(), sJson["frequency"].get<int>()});
+                    dto::Station s;
+                    sJson.get_to(s);
+                    ret.insert({sJson["name"].get<std::string>(), s});
                 } catch (nlohmann::json::exception &e) {
-                    LOG("APISession", "couldn't decode vccs transceivers: %s", e.what());
+                    LOG("APISession", "couldn't decode station vccs: %s", e.what());
                 }
             }
         }

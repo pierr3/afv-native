@@ -296,9 +296,9 @@ namespace afv_native {
 
         void aliasUpdateCallback();
         void stationTransceiversUpdateCallback(std::string stationName);
-        void stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs);
+        void stationVccsCallback(std::string stationName, std::map<std::string, afv::dto::Station> vccs);
 
-        void stationSearchCallback(bool found, std::pair<std::string, unsigned int> data);
+        void stationSearchCallback(bool found, std::pair<std::string, afv::dto::Station> data);
 
         void deviceStoppedCallback(std::string deviceName, int errorCode);
 

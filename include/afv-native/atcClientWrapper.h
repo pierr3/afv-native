@@ -16,21 +16,6 @@ namespace afv_native {
     }
     typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
     typedef std::function<void(std::string subsystem, std::string file, int line, std::string lineOut)> modern_log_fn;
-
-    struct SimpleAtcRadioState {
-        bool            tx;
-        bool            rx;
-        bool            xc;
-        bool            crossCoupleAcross;
-        bool            onHeadset;
-        unsigned int    Frequency;
-        std::string     stationName       = "";
-        HardwareType    simulatedHardware = HardwareType::Schmid_ED_137B;
-        bool            isATIS            = false;
-        PlaybackChannel playbackChannel   = PlaybackChannel::Both;
-
-        std::string lastTransmitCallsign = "";
-    };
 } // namespace afv_native
 
 namespace afv_native::api {

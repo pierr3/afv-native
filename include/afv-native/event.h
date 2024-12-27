@@ -33,6 +33,7 @@
 
 #ifndef AFV_NATIVE_EVENT_H
 #define AFV_NATIVE_EVENT_H
+#include "types.h"
 #include <map>
 #include <optional>
 #include <string>
@@ -95,13 +96,13 @@ namespace afv_native {
     };
 
     struct VccsReceivedEvent {
-        std::string                         stationName;
-        std::map<std::string, unsigned int> vccsData;
+        std::string                             stationName;
+        std::map<std::string, SimpleAtcStation> vccsData;
     };
 
     struct StationDataReceivedEvent {
-        bool                                                found;
-        std::optional<std::pair<std::string, unsigned int>> stationData;
+        bool                                                    found;
+        std::optional<std::pair<std::string, SimpleAtcStation>> stationData;
     };
 
     struct InputDeviceErrorEvent {};
@@ -137,7 +138,7 @@ namespace afv_native {
     };
 
     namespace afv {
-        using ModernClientEventHandlerFunction = void(ClientEventType, std::optional<std::string>, std::optional<int>, std::optional<std::pair<std::string, unsigned int>>, std::optional<std::map<std::string, unsigned int>>);
+        using ModernClientEventHandlerFunction = void(ClientEventType, std::optional<std::string>, std::optional<int>, std::optional<std::pair<std::string, afv_native::SimpleAtcStation>>, std::optional<std::map<std::string, afv_native::SimpleAtcStation>>);
         enum class APISessionState {
             Disconnected, /// Disconnected state is not authenticated, nor trying to authenticate.
             Connecting, /// Connecting means we've started our attempt to authenticate and may be waiting for a response from the API Server
