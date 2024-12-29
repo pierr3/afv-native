@@ -27,6 +27,17 @@ namespace afv_native { namespace util {
         }
         return false;
     }
+
+    template <typename T>
+    std::string VectorToCSV(const std::vector<T> &vec) {
+        std::ostringstream out;
+        if (!vec.empty()) {
+            std::copy(std::begin(vec), std::end(vec) - 1, std::ostream_iterator<T>(out, ","));
+            out << vec.back();
+        }
+
+        return out.str();
+    }
 }} // namespace afv_native::util
 
 #endif // AFV_NATIVE_UTIL_OTHER_H

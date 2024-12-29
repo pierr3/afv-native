@@ -11,6 +11,9 @@
 // --- REMOVE ABOVE BEFORE PUBLISHING ---
 
 namespace afv_native {
+    namespace event {
+        class EventBus;
+    }
     typedef void (*log_fn)(const char *subsystem, const char *file, int line, const char *lineOut);
     typedef std::function<void(std::string subsystem, std::string file, int line, std::string lineOut)> modern_log_fn;
 
@@ -32,8 +35,8 @@ namespace afv_native {
 
 namespace afv_native::api {
     AFV_NATIVE_API void setLogger(afv_native::modern_log_fn gLogger);
-
-    struct AFV_NATIVE_API AudioInterface {
+    AFV_NATIVE_API event::EventBus &getEventBus();
+    struct AFV_NATIVE_API           AudioInterface {
         std::string id;
         std::string name;
         bool        isDefault;

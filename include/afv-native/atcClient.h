@@ -17,6 +17,7 @@
 #include "afv-native/audio/AudioDevice.h"
 #include "afv-native/audio/ITick.h"
 #include "afv-native/event.h"
+#include "afv-native/event/EventBus.h"
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/hardwareType.h"
 #include "afv-native/http/EventTransferManager.h"

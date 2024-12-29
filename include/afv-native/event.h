@@ -39,6 +39,79 @@
 #include <map>
 
 namespace afv_native {
+
+    struct APIServerConnectedEvent {};
+
+    struct APIServerDisconnectedEvent {};
+
+    struct APIServerErrorEvent {
+        int errorCode;
+    };
+
+    struct VoiceServerConnectedEvent {};
+
+    struct VoiceServerDisconnectedEvent {};
+
+    struct VoiceServerChannelErrorEvent {
+        int channelErrno;
+    };
+
+    struct VoiceServerErrorEvent {
+        int errorCode;
+    };
+
+    struct PttOpenEvent {};
+
+    struct PttClosedEvent {};
+
+    struct StationAliasesUpdatedEvent {};
+
+    struct StationTransceiversUpdatedEvent {
+        std::string stationName;
+    };
+
+    struct FrequencyRxBeginEvent {
+        unsigned int frequency;
+    };
+
+    struct FrequencyRxEndEvent {
+        unsigned int frequency;
+    };
+
+    struct StationRxBeginEvent {
+        unsigned int frequency;
+        std::string  callsign;
+        std::string  lastRx;
+    };
+
+    struct StationRxEndEvent {
+        unsigned int frequency;
+        std::string  callsign;
+        std::string  lastRx;
+    };
+
+    struct AudioErrorEvent {
+        std::string message;
+    };
+
+    struct VccsReceivedEvent {
+        std::string                                         stationName;
+        std::map<std::string, afv_native::SimpleAtcStation> vccsData;
+    };
+
+    struct StationDataReceivedEvent {
+        bool found;
+        std::optional<std::pair<std::string, afv_native::SimpleAtcStation>> stationData;
+    };
+
+    struct InputDeviceErrorEvent {};
+
+    struct AudioDisabledEvent {};
+
+    struct AudioDeviceStoppedErrorEvent {
+        std::string deviceName;
+    };
+
     enum class ClientEventType {
         APIServerConnected,
         APIServerDisconnected,

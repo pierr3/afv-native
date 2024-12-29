@@ -4,6 +4,7 @@
 #include "afv-native/afv/dto/StationTransceiver.h"
 #include "afv-native/atcClient.h"
 #include "afv-native/event.h"
+#include "afv-native/event/EventBus.h"
 #include "afv-native/hardwareType.h"
 #include <algorithm>
 #include <atomic>
@@ -51,6 +52,10 @@ void afv_native::api::atcClient::setLogger(afv_native::log_fn gLogger) {
 
 void afv_native::api::setLogger(afv_native::modern_log_fn gLogger) {
     afv_native::setLogger(gLogger);
+}
+
+afv_native::event::EventBus &afv_native::api::getEventBus() {
+    return afv_native::event::EventBus::Instance();
 }
 
 afv_native::api::atcClient::atcClient(std::string clientName, std::string resourcePath, std::string baseURL) {
