@@ -501,23 +501,16 @@ void ATCClient::aliasUpdateCallback() {
 
 void ATCClient::stationVccsCallback(std::string stationName, std::map<std::string, unsigned int> vccs) {
     ClientEventCallback.invokeAll(ClientEventType::VccsReceived,
-                                  (void *) stationName.c_str(), &vccsFreqs);
+                                  (void *) stationName.c_str(), &vccs);
 
-    ModernClientEventCallback.invokeAll(ClientEventType::VccsReceived, stationName, std::nullopt, std::nullopt, vccsSimple);
-    event::EventBus::Instance().OnEvent(VccsReceivedEvent {stationName, vccsSimple});
+    ModernClientEventCallback.invokeAll(ClientEventType::VccsReceived, stationName, std::nullopt, std::nullopt, vccs);
+    event::EventBus::Instance().OnEvent(VccsReceivedEvent {stationName, vccs});
 }
 
-void ATCClient::stationSearchCallback(bool found, std::pair<std::string, afv::dto::Station> data) {
-    std::optional<std::pair<std::string, afv_native::SimpleAtcStation>> foundData;
-    if (found) {
-        foundData = std::make_pair(
-            data.first, SimpleAtcStation {data.second.Name, data.second.Frequency,
-                                          data.second.FrequencyAlias});
-    }
-    ClientEventCallback.invokeAll(ClientEventType::StationDataReceived, &found,
-                                  &data.second.Frequency);
-    ModernClientEventCallback.invokeAll(ClientEventType::StationDataReceived, std::nullopt, static_cast<int>(found), foundData, std::nullopt);
-    event::EventBus::Instance().OnEvent(StationDataReceivedEvent {found, foundData});
+void ATCClient::stationSearchCallback(bool found, std::pair<std::string, unsigned int> data) {
+    ClientEventCallback.invokeAll(ClientEventType::StationDataReceived, &found, &data);
+    ModernClientEventCallback.invokeAll(ClientEventType::StationDataReceived, std::nullopt, static_cast<int>(found), data, std::nullopt);
+    event::EventBus::Instance().OnEvent(StationDataReceivedEvent {found, data});
 }
 
 void ATCClient::getStation(std::string callsign) {
@@ -688,8 +681,24 @@ void afv_native::ATCClient::deviceStoppedCallback(std::string deviceName, int er
                                   (void *) deviceName.c_str(), nullptr);
     ModernClientEventCallback.invokeAll(ClientEventType::AudioDeviceStoppedError, deviceName, std::nullopt, std::nullopt, std::nullopt);
     event::EventBus::Instance().OnEvent(AudioDeviceStoppedErrorEvent {deviceName});
-d::nullopt);
-oState();
+}
+
+void afv_native::ATCClient::setPlaybackChannel(unsigned int freq, PlaybackChannel channel) {
+    mATCRadioStack->setPlaybackChannel(freq, channel);
+}
+
+void afv_native::ATCClient::setPlaybackChannelAll(PlaybackChannel channel) {
+    mATCRadioStack->setPlaybackChannelAll(channel);
+}
+
+afv_native::PlaybackChannel afv_native::ATCClient::getPlaybackChannel(unsigned int freq) {
+    return mATCRadioStack->getPlaybackChannel(freq);
+}
+int afv_native::ATCClient::getTransceiverCountForFrequency(unsigned int freq) {
+    return mATCRadioStack->getTransceiverCountForFrequency(freq);
+}
+std::map<unsigned int, afv::AtcRadioState> afv_native::ATCClient::getRadioState() {
+    return mATCRadioStack->getRadioState();
 }
 
 void afv_native::ATCClient::reset() {

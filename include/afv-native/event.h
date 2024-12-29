@@ -33,10 +33,10 @@
 
 #ifndef AFV_NATIVE_EVENT_H
 #define AFV_NATIVE_EVENT_H
+#include <map>
 #include <optional>
 #include <string>
 #include <utility>
-#include <map>
 
 namespace afv_native {
 
@@ -95,13 +95,13 @@ namespace afv_native {
     };
 
     struct VccsReceivedEvent {
-        std::string                                         stationName;
-        std::map<std::string, afv_native::SimpleAtcStation> vccsData;
+        std::string                         stationName;
+        std::map<std::string, unsigned int> vccsData;
     };
 
     struct StationDataReceivedEvent {
-        bool found;
-        std::optional<std::pair<std::string, afv_native::SimpleAtcStation>> stationData;
+        bool                                                found;
+        std::optional<std::pair<std::string, unsigned int>> stationData;
     };
 
     struct InputDeviceErrorEvent {};
