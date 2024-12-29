@@ -492,6 +492,7 @@ void ATCClient::stationVccsCallback(std::string stationName, std::map<std::strin
         vccsSimple[el.first] =
             SimpleAtcStation {el.second.Name, el.second.Frequency, el.second.FrequencyAlias};
     }
+    LOG("ATCClient", "Received VCCS for station %s", stationName.c_str());
     ClientEventCallback.invokeAll(ClientEventType::VccsReceived,
                                   (void *) stationName.c_str(), &vccs);
 
@@ -505,6 +506,9 @@ void ATCClient::stationSearchCallback(bool found, std::pair<std::string, afv::dt
             data.first, SimpleAtcStation {data.second.Name, data.second.Frequency,
                                           data.second.FrequencyAlias});
     }
+
+    LOG("ATCClient", "Received station search result for %s", data.first.c_str());
+
     ClientEventCallback.invokeAll(ClientEventType::StationDataReceived, &found,
                                   &data.second.Frequency);
     event::EventBus::Instance().OnEvent(StationDataReceivedEvent {found, foundData});
