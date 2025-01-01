@@ -603,12 +603,24 @@ bool ATCClient::GetRxState(unsigned int freq) {
     return false;
 };
 
+double ATCClient::GetOutputGainState(unsigned int freq) {
+    return mATCRadioStack->getOutputGainState(freq);
+}
+
+bool ATCClient::GetOutputMuteState(unsigned int freq) {
+    return mATCRadioStack->getOutputMuteState(freq);
+}
+
 bool afv_native::ATCClient::GetCrossCoupleAcrossState(unsigned int freq) {
     return mATCRadioStack->getCrossCoupleAcrossState(freq);
 };
 
 void ATCClient::setOnHeadset(unsigned int freq, bool onHeadset) {
     mATCRadioStack->setOnHeadset(freq, onHeadset);
+}
+
+void ATCClient::setOutputMute(unsigned int freq, bool mute) {
+    mATCRadioStack->setOutputMute(freq, mute);
 }
 
 bool ATCClient::getOnHeadset(unsigned int freq) {

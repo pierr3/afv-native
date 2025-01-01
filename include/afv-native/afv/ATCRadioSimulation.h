@@ -107,6 +107,7 @@ namespace afv_native { namespace afv {
         bool                                         tx                = false;
         bool                                         rx                = true;
         bool                                         xc                = false;
+        bool                                         outputMute        = false;
         bool                                         crossCoupleAcross = false;
         std::string                                  stationName       = "";
         std::vector<dto::Transceiver>                transceivers;
@@ -174,6 +175,7 @@ namespace afv_native { namespace afv {
         void setTx(unsigned int freq, bool tx);
         void setXc(unsigned int freq, bool xc);
         void setCrossCoupleAcross(unsigned int freq, bool crossCoupleAcross);
+        void setOutputMute(unsigned int freq, bool mute);
 
         bool getTxActive(unsigned int radio);
         bool getRxActive(unsigned int radio);
@@ -205,6 +207,8 @@ namespace afv_native { namespace afv {
 
         double getVu() const;
         double getPeak() const;
+        double getOutputGainState(unsigned int freq);
+        bool   getOutputMuteState(unsigned int freq);
 
         void reset();
 

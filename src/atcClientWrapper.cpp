@@ -359,6 +359,11 @@ void afv_native::api::atcClient::SetOnHeadset(unsigned int freq, bool active) {
     client->setOnHeadset(freq, active);
 }
 
+void afv_native::api::atcClient::SetOutputMute(unsigned int freq, bool mute) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setOutputMute(freq, mute);
+}
+
 bool afv_native::api::atcClient::GetOnHeadset(unsigned int freq) {
     return client->getOnHeadset(freq);
 }
@@ -381,6 +386,14 @@ bool afv_native::api::atcClient::GetXcState(unsigned int freq) {
 
 bool afv_native::api::atcClient::GetRxState(unsigned int freq) {
     return client->GetRxState(freq);
+};
+
+double afv_native::api::atcClient::GetOutputGainState(unsigned int freq) {
+    return client->GetOutputGainState(freq);
+};
+
+bool afv_native::api::atcClient::GetOutputMuteState(unsigned int freq) {
+    return client->GetOutputMuteState(freq);
 };
 
 void afv_native::api::atcClient::UseTransceiversFromStation(std::string station, unsigned int freq) {

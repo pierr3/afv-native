@@ -21,9 +21,9 @@
 #include "afv-native/event/EventCallbackTimer.h"
 #include "afv-native/hardwareType.h"
 #include "afv-native/http/EventTransferManager.h"
+#include <event.h>
 #include <event2/event.h>
 #include <memory>
-#include <event.h>
 
 namespace afv_native {
     /** ATCClient provides a fully functional ATC Client that can be integrated
@@ -87,6 +87,8 @@ namespace afv_native {
         void setXc(unsigned int freq, bool active);
 
         void setCrossCoupleAcross(unsigned int freq, bool active);
+
+        void setOutputMute(unsigned int freq, bool mute);
 
         /** sets the PTT (push-to-talk) state for the radio.
          *
@@ -189,7 +191,7 @@ namespace afv_native {
          * guaranteed to be available for the duration of the callback.
          */
         util::ChainedCallback<void(ClientEventType, void *, void *)> ClientEventCallback;
-        
+
         util::ChainedCallback<afv::ModernClientEventHandlerFunction> ModernClientEventCallback;
 
         /** getStationAliases returns a vector of all the known station aliases.
@@ -229,10 +231,12 @@ namespace afv_native {
          */
         bool getTxActive(unsigned int radioNumber);
 
-        bool GetTxState(unsigned int freq);
-        bool GetRxState(unsigned int freq);
-        bool GetXcState(unsigned int freq);
-        bool GetCrossCoupleAcrossState(unsigned int freq);
+        bool   GetTxState(unsigned int freq);
+        bool   GetRxState(unsigned int freq);
+        bool   GetXcState(unsigned int freq);
+        bool   GetCrossCoupleAcrossState(unsigned int freq);
+        double GetOutputGainState(unsigned int freq);
+        bool   GetOutputMuteState(unsigned int freq);
 
         /** requestStationTransceivers requests the list of transceivers associated with the named station
          *

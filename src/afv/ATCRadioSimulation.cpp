@@ -208,12 +208,11 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
     std::shared_ptr<OutputDeviceState> state = onHeadset ? mHeadsetState : mSpeakerState;
 
     ::memset(state->mChannelBuffer, 0, audio::frameSizeBytes);
-    if (mPtt.load() && mRadioState[rxIter].tx) {
-        // don't analyze and mix-in the radios transmitting, but suppress the
-        // effects.
+    if (mPtt.load() && mRadioState[rxIter].tx || mRadioState[rxIter].outputMute) {
+        // don't analyze and mix-in the radios that are transmitting or muted,
+        // but suppress the effects.
         resetRadioFx(rxIter, true);
         ignoreaudio = true;
-        // return true;
     }
     // now, find all streams that this applies to.
     float    crackleGain       = 0.0f;
@@ -805,6 +804,16 @@ void ATCRadioSimulation::setOnHeadset(unsigned int radio, bool onHeadset) {
     mRadioState[radio].onHeadset = onHeadset;
 }
 
+void ATCRadioSimulation::setOutputMute(unsigned int freq, bool mute) {
+    std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
+    if (!isFrequencyActive(freq)) {
+        LOG("ATCRadioSimulation", "setOutputMute failed, frequency inactive: %i", freq);
+        return;
+    }
+    mRadioState[freq].outputMute = mute;
+    LOG("ATCRadioSimulation", "setOutputMute: %i: %s", freq, mute ? "true" : "false");
+}
+
 void afv_native::afv::ATCRadioSimulation::setRx(unsigned int freq, bool rx) {
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
     if (!isFrequencyActive(freq)) {
@@ -1045,6 +1054,14 @@ bool afv_native::afv::ATCRadioSimulation::getTxState(unsigned int freq) {
 
 bool afv_native::afv::ATCRadioSimulation::getXcState(unsigned int freq) {
     return mRadioState.count(freq) != 0 ? mRadioState[freq].xc : false;
+}
+
+bool afv_native::afv::ATCRadioSimulation::getOutputMuteState(unsigned int freq) {
+    return mRadioState.count(freq) != 0 ? mRadioState[freq].outputMute : false;
+}
+
+double afv_native::afv::ATCRadioSimulation::getOutputGainState(unsigned int freq) {
+    return mRadioState.count(freq) != 0 ? mRadioState[freq].Gain : 0.0;
 }
 
 void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
