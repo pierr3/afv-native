@@ -236,7 +236,7 @@ namespace afv_native {
         bool   GetXcState(unsigned int freq);
         bool   GetCrossCoupleAcrossState(unsigned int freq);
         double GetOutputGainState(unsigned int freq);
-        bool   GetOutputMuteState(unsigned int freq);
+        bool   GetIsOutputMutedState(unsigned int freq);
 
         /** requestStationTransceivers requests the list of transceivers associated with the named station
          *

@@ -392,8 +392,8 @@ double afv_native::api::atcClient::GetOutputGainState(unsigned int freq) {
     return client->GetOutputGainState(freq);
 };
 
-bool afv_native::api::atcClient::GetOutputMuteState(unsigned int freq) {
-    return client->GetOutputMuteState(freq);
+bool afv_native::api::atcClient::GetIsOutputMutedState(unsigned int freq) {
+    return client->GetIsOutputMutedState(freq);
 };
 
 void afv_native::api::atcClient::UseTransceiversFromStation(std::string station, unsigned int freq) {

@@ -120,7 +120,7 @@ namespace afv_native::api {
         AFV_NATIVE_API bool   GetXcState(unsigned int freq);
         AFV_NATIVE_API double GetOutputGainState(unsigned int freq);
         AFV_NATIVE_API bool   GetCrossCoupleAcrossState(unsigned int freq);
-        AFV_NATIVE_API bool   GetOutputMuteState(unsigned int freq);
+        AFV_NATIVE_API bool   GetIsOutputMutedState(unsigned int freq);
 
         // Use this to set the current transceivers to the transceivers from this station, pulled from the AFV database, only one at a time can be active
         AFV_NATIVE_API void UseTransceiversFromStation(std::string station, unsigned int freq);

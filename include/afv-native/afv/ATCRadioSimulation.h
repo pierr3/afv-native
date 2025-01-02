@@ -107,7 +107,7 @@ namespace afv_native { namespace afv {
         bool                                         tx                = false;
         bool                                         rx                = true;
         bool                                         xc                = false;
-        bool                                         outputMute        = false;
+        bool                                         isOutputMuted     = false;
         bool                                         crossCoupleAcross = false;
         std::string                                  stationName       = "";
         std::vector<dto::Transceiver>                transceivers;
@@ -208,7 +208,7 @@ namespace afv_native { namespace afv {
         double getVu() const;
         double getPeak() const;
         double getOutputGainState(unsigned int freq);
-        bool   getOutputMuteState(unsigned int freq);
+        bool   getIsOutputMutedState(unsigned int freq);
 
         void reset();
 

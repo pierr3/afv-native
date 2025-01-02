@@ -607,8 +607,8 @@ double ATCClient::GetOutputGainState(unsigned int freq) {
     return mATCRadioStack->getOutputGainState(freq);
 }
 
-bool ATCClient::GetOutputMuteState(unsigned int freq) {
-    return mATCRadioStack->getOutputMuteState(freq);
+bool ATCClient::GetIsOutputMutedState(unsigned int freq) {
+    return mATCRadioStack->getIsOutputMutedState(freq);
 }
 
 bool afv_native::ATCClient::GetCrossCoupleAcrossState(unsigned int freq) {
