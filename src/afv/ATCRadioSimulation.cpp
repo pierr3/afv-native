@@ -208,7 +208,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
     std::shared_ptr<OutputDeviceState> state = onHeadset ? mHeadsetState : mSpeakerState;
 
     ::memset(state->mChannelBuffer, 0, audio::frameSizeBytes);
-    if (mPtt.load() && mRadioState[rxIter].tx || mRadioState[rxIter].isOutputMuted) {
+    if (mPtt.load() && mRadioState[rxIter].tx) {
         // don't analyze and mix-in the radios that are transmitting or muted,
         // but suppress the effects.
         resetRadioFx(rxIter, true);
@@ -272,7 +272,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         if (mUseStream) {
             // then include this stream.
             try {
-                if (!ignoreaudio) {
+                if (!ignoreaudio && !mRadioState[rxIter].isOutputMuted) {
                     mix_buffers(state->mChannelBuffer,
                                 sampleCache.at(srcPair.second.source.get()),
                                 voiceGain * mRadioState[rxIter].Gain);
@@ -375,7 +375,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
 
     // now, finally, mix the channel buffer into the mixing buffer.
     if (onHeadset) {
-        if (!ignoreaudio) {
+        if (!ignoreaudio && !mRadioState[rxIter].isOutputMuted) {
             if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left ||
                 mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
                 mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
@@ -388,7 +388,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         }
 
     } else {
-        if (!ignoreaudio) {
+        if (!ignoreaudio && !mRadioState[rxIter].isOutputMuted) {
             mix_buffers(state->mMixingBuffer, state->mChannelBuffer);
         }
     }
