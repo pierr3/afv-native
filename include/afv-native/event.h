@@ -85,9 +85,9 @@ namespace afv_native {
     };
 
     struct StationRxEndEvent {
-        unsigned int frequency;
-        std::string  callsign;
-        std::string  lastRx;
+        unsigned int             frequency;
+        std::string              callsign;
+        std::vector<std::string> lastRxCallsigns;
     };
 
     struct AudioErrorEvent {

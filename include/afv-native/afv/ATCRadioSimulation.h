@@ -218,7 +218,7 @@ namespace afv_native { namespace afv {
         void setEnableOutputEffects(bool enableEffects);
         void setEnableHfSquelch(bool enableHfSquelch);
 
-        void setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback, util::ChainedCallback<afv::ModernClientEventHandlerFunction> *modernClientEventCallback);
+        void setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback);
 
         void setOnHeadset(unsigned int radio, bool onHeadset);
         bool getOnHeadset(unsigned int freq);
@@ -258,7 +258,6 @@ namespace afv_native { namespace afv {
         static const int voiceTimeoutIntervalS      = 2;
 
         util::ChainedCallback<void(ClientEventType, void *, void *)> *ClientEventCallback;
-        util::ChainedCallback<afv::ModernClientEventHandlerFunction> *ModernClientEventCallback;
 
         struct event_base               *mEvBase;
         std::shared_ptr<EffectResources> mResources;

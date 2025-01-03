@@ -192,8 +192,6 @@ namespace afv_native {
          */
         util::ChainedCallback<void(ClientEventType, void *, void *)> ClientEventCallback;
 
-        util::ChainedCallback<afv::ModernClientEventHandlerFunction> ModernClientEventCallback;
-
         /** getStationAliases returns a vector of all the known station aliases.
          *
          * @note this method uses a copy in place to prevent race inside the

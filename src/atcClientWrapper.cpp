@@ -533,11 +533,6 @@ void afv_native::api::atcClient::RaiseClientEvent(void *handle, void (*callback)
     client->ClientEventCallback.addCallback(handle, std::function(callback));
 }
 
-AFV_NATIVE_API void afv_native::api::atcClient::RaiseModernClientEvent(std::function<afv::ModernClientEventHandlerFunction> callback) {
-    std::lock_guard<std::mutex> lock(afvMutex);
-    client->ModernClientEventCallback.addCallback(nullptr, std::function(callback));
-};
-
 AFV_NATIVE_API void afv_native::api::atcClient::SetRadioGainAll(float gain) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setRadioGainAll(gain);
