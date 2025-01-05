@@ -350,7 +350,14 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             for (const auto &c: mRadioState[rxIter].liveTransmittingCallsigns) {
                 ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &rxIter,
                                                (void *) c.c_str());
-                EventBus::Instance().OnEvent(StationRxEndEvent {rxIter, c});
+                std::vector<std::string> finalArray;
+                if (!mRadioState[rxIter].liveTransmittingCallsigns.empty()) {
+                    finalArray = mRadioState[rxIter].liveTransmittingCallsigns;
+                } else {
+                    finalArray.push_back(c);
+                }
+
+                EventBus::Instance().OnEvent(StationRxEndEvent {rxIter, c, finalArray});
                 LOG("ATCRadioSimulation", "StationRxEnd Forced event: %i: %s", rxIter, c.c_str());
             }
 
@@ -485,23 +492,21 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
         if (pkt.LastPacket) {
             bool hasBeenDeleted = afv_native::util::removeIfExists(
                 pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
+
             if (hasBeenDeleted) {
-                // There is a risk that the pointer to lastTransmitCallsign might already change
-                // or be invalid by the event handler receives it, needs to be checked in real conditions
                 ClientEventCallback->invokeAll(
                     ClientEventType::StationRxEnd, &trans.Frequency,
                     (void *) mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
 
-                std::vector<std::string> lastRxCallsigns;
-                if (mRadioState[trans.Frequency].liveTransmittingCallsigns.size() > 0) {
-                    lastRxCallsigns = mRadioState[trans.Frequency].liveTransmittingCallsigns;
-                }
-                if (!mRadioState[trans.Frequency].lastTransmitCallsign.empty()) {
-                    lastRxCallsigns.push_back(mRadioState[trans.Frequency].lastTransmitCallsign);
+                std::vector<std::string> finalArray;
+                if (!mRadioState[trans.Frequency].liveTransmittingCallsigns.empty()) {
+                    finalArray = mRadioState[trans.Frequency].liveTransmittingCallsigns;
+                } else {
+                    finalArray.push_back(pkt.Callsign);
                 }
 
                 EventBus::Instance().OnEvent(StationRxEndEvent {
-                    trans.Frequency, mRadioState[trans.Frequency].lastTransmitCallsign, lastRxCallsigns});
+                    trans.Frequency, mRadioState[trans.Frequency].lastTransmitCallsign, finalArray});
 
                 LOG("ATCRadioSimulation", "StationRxEnd event: %i: %s", trans.Frequency,
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
@@ -509,10 +514,14 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
         } else {
             if (!afv_native::util::vectorContains(pkt.Callsign,
                                                   mRadioState[trans.Frequency].liveTransmittingCallsigns)) {
+                // Create vector of all current transmitters including the new one
+                std::vector<std::string> allTransmitters =
+                    mRadioState[trans.Frequency].liveTransmittingCallsigns;
+                allTransmitters.push_back(pkt.Callsign); // Add the new transmitter
+
                 LOG("ATCRadioSimulation", "StationRxBegin event: %i: %s", trans.Frequency,
                     mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
 
-                // Need to emit that we have a new pilot that started transmitting
                 ClientEventCallback->invokeAll(
                     ClientEventType::StationRxBegin, &trans.Frequency,
                     (void *) mRadioState[trans.Frequency].lastTransmitCallsign.c_str());
@@ -520,8 +529,7 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
                 mRadioState[trans.Frequency].liveTransmittingCallsigns.emplace_back(pkt.Callsign);
 
                 EventBus::Instance().OnEvent(StationRxBeginEvent {
-                    trans.Frequency, mRadioState[trans.Frequency].lastTransmitCallsign,
-                    afv_native::util::VectorToCSV(mRadioState[trans.Frequency].liveTransmittingCallsigns)});
+                    trans.Frequency, mRadioState[trans.Frequency].lastTransmitCallsign, allTransmitters});
             }
         }
 
@@ -654,13 +662,19 @@ void ATCRadioSimulation::maintainVoiceTimeout() {
 
         if (time(0) - it->second.lastVoiceTime >= voiceTimeoutIntervalS) {
             LOG("ATCRadioSimulation", "Found VoiceTimeout.. %i", it->second.Frequency);
-            // Voice channel rx has timed out.. update things.
             it->second.lastVoiceTime = 0;
             for (const auto &c: it->second.liveTransmittingCallsigns) {
                 ClientEventCallback->invokeAll(ClientEventType::StationRxEnd,
                                                &it->second.Frequency, (void *) c.c_str());
 
-                EventBus::Instance().OnEvent(StationRxEndEvent {it->second.Frequency, c});
+                std::vector<std::string> finalArray;
+                if (!it->second.liveTransmittingCallsigns.empty()) {
+                    finalArray = it->second.liveTransmittingCallsigns;
+                } else {
+                    finalArray.push_back(c);
+                }
+
+                EventBus::Instance().OnEvent(StationRxEndEvent {it->second.Frequency, c, finalArray});
                 LOG("ATCRadioSimulation", "StationRxEnd TIMEOUT event: %i: %s",
                     it->second.Frequency, c.c_str());
             }
@@ -814,7 +828,14 @@ void afv_native::afv::ATCRadioSimulation::setRx(unsigned int freq, bool rx) {
         for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
             ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq,
                                            (void *) callsign.c_str());
-            EventBus::Instance().OnEvent(StationRxEndEvent {freq, callsign});
+            std::vector<std::string> finalArray;
+            if (!mRadioState[freq].liveTransmittingCallsigns.empty()) {
+                finalArray = mRadioState[freq].liveTransmittingCallsigns;
+            } else {
+                finalArray.push_back(callsign);
+            }
+
+            EventBus::Instance().OnEvent(StationRxEndEvent {freq, callsign, finalArray});
             LOG("ATCRadioSimulation", "SetRx false StationRxEnd event: %i: %s", freq,
                 callsign.c_str());
         }
@@ -1060,7 +1081,14 @@ void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
     for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
         ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq,
                                        (void *) callsign.c_str());
-        EventBus::Instance().OnEvent(StationRxEndEvent {freq, callsign});
+        std::vector<std::string> finalArray;
+        if (!mRadioState[freq].liveTransmittingCallsigns.empty()) {
+            finalArray = mRadioState[freq].liveTransmittingCallsigns;
+        } else {
+            finalArray.push_back(callsign);
+        }
+
+        EventBus::Instance().OnEvent(StationRxEndEvent {freq, callsign, finalArray});
         LOG("ATCRadioSimulation", "removeFrequency StationRxEnd event: %i: %s", freq,
             callsign.c_str());
     }
