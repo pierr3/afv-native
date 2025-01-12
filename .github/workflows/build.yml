@@ -1,10 +1,10 @@
 name: Build afv-native
 
-on: 
+on:
   push:
   workflow_dispatch:
 
-concurrency: 
+concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
@@ -20,6 +20,8 @@ jobs:
           ref: master
       - name: Setup environment
         run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake libtool pkg-config
           git submodule update --init -- vcpkg
           pip install cmake
           cmake --version
