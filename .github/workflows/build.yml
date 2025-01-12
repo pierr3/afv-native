@@ -21,7 +21,7 @@ jobs:
       - name: Setup environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake libtool pkg-config
+          sudo apt-get install -y autoconf automake libtool pkg-config libltdl-dev
           git submodule update --init -- vcpkg
           pip install cmake
           cmake --version
