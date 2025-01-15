@@ -848,7 +848,6 @@ void afv_native::afv::ATCRadioSimulation::setCrossCoupleAcross(unsigned int freq
         LOG("ATCRadioSimulation", "setXcRadio failed, frequency inactive: %i", freq);
         return;
     }
-    mRadioState[freq].xc                = crossCoupleAcross;
     mRadioState[freq].crossCoupleAcross = crossCoupleAcross;
     if (crossCoupleAcross) {
         mRadioState[freq].xc = false;
