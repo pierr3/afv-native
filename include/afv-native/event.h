@@ -38,6 +38,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace afv_native {
 
