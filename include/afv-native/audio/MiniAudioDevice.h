@@ -6,6 +6,7 @@
 #define MA_NO_NULL
 #define MA_NO_CUSTOM
 #define MA_NO_DSOUND
+#define MA_NO_JACK
 
 #include "afv-native/audio/AudioDevice.h"
 #include "miniaudio.h"
