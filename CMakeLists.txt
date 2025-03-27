@@ -37,10 +37,6 @@ if (APPLE)
 	#disable runtime linking to prevent issues with backends that are not actually implemented
 	add_definitions(-DMA_NO_RUNTIME_LINKING)
 endif()
-if (WIN32)
-	add_definitions(-DMA_NO_JACK)
-	add_definitions(-DMA_NO_WINMM)
-endif()
 
 if (UNIX AND DEFINED AFV_STATIC)
 add_library(afv_native STATIC)
@@ -51,8 +47,6 @@ endif()
 if (WIN32)
 	add_library(afv_native SHARED)
 endif()
-
-
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 
