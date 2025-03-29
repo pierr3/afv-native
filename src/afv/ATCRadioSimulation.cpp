@@ -244,10 +244,25 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
 
             float crackleFactor = 0.0f;
             if (!mRadioState[rxIter].mBypassEffects) {
-                crackleFactor = static_cast<float>((exp(closestTransceiver.DistanceRatio) *
-                                                    pow(closestTransceiver.DistanceRatio, -4.0) / 350.0) -
-                                                   0.00776652);
-                crackleFactor = fmax(0.0f, crackleFactor);
+                // Using the provided scale where 0.1 is edge of reception range
+                float distanceRatio = closestTransceiver.DistanceRatio;
+
+                // Create a curve that rises slowly until around 0.1, then more rapidly
+                float receptionThreshold = 0.1f;
+                float baseNoise          = 0.0f;
+
+                // For distances below reception threshold
+                if (distanceRatio < receptionThreshold) {
+                    // Minimal crackling that increases gradually as we approach the edge
+                    baseNoise = 0.02f * pow(distanceRatio / receptionThreshold, 2.0f);
+                } else {
+                    // Progressive degradation beyond reception threshold
+                    float beyondRangeRatio = (distanceRatio - receptionThreshold) / (1.0f - receptionThreshold);
+                    baseNoise = 0.02f + 0.18f * pow(beyondRangeRatio, 1.5f);
+                }
+
+                // Apply final clamping
+                crackleFactor = fmax(0.0f, baseNoise);
                 crackleFactor = fmin(0.20f, crackleFactor);
 
                 if (freqIsHF(rxIter)) {
