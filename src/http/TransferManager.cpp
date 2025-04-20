@@ -49,11 +49,22 @@ TransferManager::TransferManager(): mPendingTransfers() {
 }
 
 TransferManager::~TransferManager() {
+    // First, remove all easy handles from the multi handle
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
+    for (auto const &pair: mPendingTransfers) {
+        curl_multi_remove_handle(mCurlMultiHandle, pair.first);
+    }
+
+    // Clear pending transfers
+    mPendingTransfers.clear();
+
+    // Now it's safe to clean up the handles
     curl_multi_cleanup(mCurlMultiHandle);
     curl_share_cleanup(mCurlShareHandle);
 }
 
 void TransferManager::process() {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
     int running = 0;
 
     curl_multi_perform(mCurlMultiHandle, &running);

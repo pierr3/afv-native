@@ -36,6 +36,7 @@
 
 #include <curl/curl.h>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 namespace afv_native { namespace http {
@@ -53,6 +54,8 @@ namespace afv_native { namespace http {
         CURLSH *mCurlShareHandle;
 
         std::unordered_map<CURL *, Request *> mPendingTransfers;
+
+        std::recursive_mutex mMutex;
 
         /** processPendingMultiEvents triggers a reconcilation of any outstanding
          * completion notifications from curl and notifies the request objects
