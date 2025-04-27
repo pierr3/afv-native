@@ -500,7 +500,7 @@ void ATCClient::stationVccsCallback(std::string stationName, std::map<std::strin
 }
 
 void ATCClient::stationSearchCallback(bool found, std::pair<std::string, afv::dto::Station> data) {
-    std::pair<std::string, afv_native::SimpleAtcStation> foundData;
+    std::pair<std::string, std::optional<afv_native::SimpleAtcStation>> foundData = std::make_pair(data.first, std::nullopt);
     if (found) {
         foundData = std::make_pair(
             data.first, SimpleAtcStation {data.second.Name, data.second.Frequency,
