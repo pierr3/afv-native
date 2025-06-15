@@ -65,6 +65,7 @@ afv_native::api::atcClient::atcClient(std::string clientName, std::string resour
     wVersionRequested = MAKEWORD(2, 2);
     WSAStartup(wVersionRequested, &wsaData);
 #endif
+    requestLoopExit = false;
 
     ev_base = event_base_new();
 
