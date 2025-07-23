@@ -250,17 +250,19 @@ void APISession::updateStationAliases() {
 }
 
 void APISession::_getStationCallback(http::RESTRequest *req, bool success, std::string stationName) {
+    std::pair<std::string, dto::Station> ret;
+
     if (success && req->getStatusCode() == 200) {
         auto jsReturn = req->getResponse();
 
         bool                                 found = false;
-        std::pair<std::string, dto::Station> ret;
 
         try {
             if (!jsReturn.is_object()) {
                 LOG("APISession", "station data returned wasn't an object.  Ignoring.");
                 found = false;
-                StationSearchCallback.invokeAll(false, {});
+                ret   = {stationName, dto::Station()};
+                StationSearchCallback.invokeAll(false, ret);
                 return;
             }
             dto::Station s;
@@ -279,7 +281,8 @@ void APISession::_getStationCallback(http::RESTRequest *req, bool success, std::
         } else {
             // We log the error but also return that we did not find the station if 404
             if (req->getStatusCode() == 404) {
-                StationSearchCallback.invokeAll(false, {});
+                ret = {stationName, dto::Station()};
+                StationSearchCallback.invokeAll(false, ret);
             }
             LOG("APISession", "got error from API server get station: Response Code %d", req->getStatusCode());
         }

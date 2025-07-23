@@ -103,7 +103,7 @@ namespace afv_native {
 
     struct StationDataReceivedEvent {
         bool                                                    found;
-        std::optional<std::pair<std::string, SimpleAtcStation>> stationData;
+        std::pair<std::string, std::optional<SimpleAtcStation>> stationData;
     };
 
     struct InputDeviceErrorEvent {};

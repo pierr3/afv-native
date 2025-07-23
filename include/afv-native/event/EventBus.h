@@ -90,12 +90,10 @@ namespace afv_native::event {
 
         template <typename T>
         void OnEvent(const T &event) {
-            std::lock_guard<std::mutex> lock(mutex_);
             GetStream<T>().OnEvent(event);
         }
 
         void Reset() {
-            std::lock_guard<std::mutex> lock(mutex_);
             streams_.clear();
             handlerTypes_.clear();
         }
