@@ -56,6 +56,7 @@ namespace afv_native {
 
     struct VoiceServerChannelErrorEvent {
         int channelErrno;
+        std::string errorMessage;
     };
 
     struct VoiceServerErrorEvent {

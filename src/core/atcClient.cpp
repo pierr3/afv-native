@@ -120,6 +120,7 @@ void ATCClient::setCallsign(std::string callsign) {
 void ATCClient::voiceStateCallback(afv::VoiceSessionState state) {
     afv::VoiceSessionError voiceError;
     int                    channelErrno;
+    std::string errorMessage;
 
     switch (state) {
         case afv::VoiceSessionState::Connected:
@@ -149,8 +150,9 @@ void ATCClient::voiceStateCallback(afv::VoiceSessionState state) {
             voiceError = mVoiceSession.getLastError();
             if (voiceError == afv::VoiceSessionError::UDPChannelError) {
                 channelErrno = mVoiceSession.getUDPChannel().getLastErrno();
+                errorMessage    = mVoiceSession.getUDPChannel().getLastErrorMessage();
                 ClientEventCallback.invokeAll(ClientEventType::VoiceServerChannelError, &channelErrno, nullptr);
-                event::EventBus::Instance().OnEvent(VoiceServerChannelErrorEvent {channelErrno});
+                event::EventBus::Instance().OnEvent(VoiceServerChannelErrorEvent {channelErrno, errorMessage});
             } else {
                 ClientEventCallback.invokeAll(ClientEventType::VoiceServerError, &voiceError, nullptr);
                 event::EventBus::Instance().OnEvent(VoiceServerErrorEvent {static_cast<int>(voiceError)});
@@ -304,7 +306,7 @@ void ATCClient::sendTransceiverUpdate() {
     });
 
     // We now also update any cross coupled transceivers
-    mVoiceSession.postCrossCoupleGroupUpdate(mATCRadioStack->makeCrossCoupleGroupDto(), [this](http::Request *r, bool success) {
+    mVoiceSession.postCrossCoupleGroupUpdate(mATCRadioStack->makeCrossCoupleGroupDto(), [](http::Request *r, bool success) {
         if (!success) {
             LOG("ATCClient", "Failed to post cross couple transceivers update with code %s",
                 std::to_string(r->getStatusCode()).c_str());

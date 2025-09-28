@@ -127,6 +127,7 @@ namespace afv_native { namespace afv {
         void sendHeartbeatCallback();
         void receivedHeartbeat();
         void heartbeatTimedOut();
+        void udpErrorCallback(bool fatal, int err, std::string message);
 
         void sessionStateCallback(APISessionState state);
         void voiceSessionSetupRequestCallback(http::Request *req, bool success);

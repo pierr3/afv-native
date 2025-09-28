@@ -121,6 +121,9 @@ bool VoiceSession::setupSession(const dto::PostCallsignResponse &cresp) {
     mLastHeartbeatReceived = util::monotime_get();
     mHeartbeatTimer.enable(afvHeartbeatIntervalMs);
     mHeartbeatTimeout.enable(afvHeartbeatTimeoutMs);
+    mChannel.registerErrorCallback([this](const bool fatal, const int errnum, const std::string message) {
+        this->udpErrorCallback(fatal, errnum, message);
+    });
     mChannel.registerDtoHandler("HA", [this](const unsigned char *data, size_t len) {
         this->receivedHeartbeat();
     });
@@ -165,6 +168,16 @@ void VoiceSession::heartbeatTimedOut() {
     LOG("voicesession", "heartbeat timeout - %d ms elapsed - disconnecting", now - mLastHeartbeatReceived);
     mLastError = VoiceSessionError::Timeout;
     Disconnect(true, true);
+}
+
+void VoiceSession::udpErrorCallback(bool fatal, int err, std::string message) {
+    if (fatal) {
+        LOG("voicesession", "fatal UDP error %d: %s", err, message.c_str());
+        mLastError = VoiceSessionError::UDPChannelError;
+        Disconnect(true, true);
+    } else {
+        LOG("voicesession", "non-fatal UDP error %d: %s", err, message.c_str());
+    }
 }
 
 void VoiceSession::Disconnect(bool do_close, bool reconnect) {

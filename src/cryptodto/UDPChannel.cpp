@@ -127,6 +127,28 @@ void UDPChannel::readCallback(const Poco::AutoPtr<Poco::Net::ReadableNotificatio
     }
 }
 
+void UDPChannel::errorCallback(const Poco::AutoPtr<Poco::Net::ErrorNotification> &notification) {
+    int code = notification->code();
+    LOG("udpchannel::errorCallback", "socket error (%i): %s", code, notification->description().c_str());
+    mLastErrno = code;
+    mLastErrorMessage = notification->description();
+
+    if (code == POCO_ECONNRESET || code == POCO_ENOTCONN || code == POCO_ECONNABORTED || code == POCO_ECONNREFUSED) {
+        // these are all fatal for a connected UDP socket
+        if (mUdpErrorCallback) {
+            mUdpErrorCallback.value()(true, code, notification->description());
+        }
+        close();
+
+        return;
+    }
+
+    if (mUdpErrorCallback) {
+        mUdpErrorCallback.value()(false, code, notification->description());
+    }
+}
+
+
 bool UDPChannel::open() {
     mIsOpen = false;
     if (mAddress.empty()) {
@@ -151,6 +173,7 @@ bool UDPChannel::open() {
         mPocoUDPSocket.setBlocking(false);
         mPocoUDPSocket.connect(socketAddress);
         mPocoSocketReactor.addEventHandler(mPocoUDPSocket, Poco::NObserver<UDPChannel, Poco::Net::ReadableNotification>(*this, &UDPChannel::readCallback));
+        mPocoSocketReactor.addEventHandler(mPocoUDPSocket, Poco::NObserver<UDPChannel, Poco::Net::ErrorNotification>(*this, &UDPChannel::errorCallback));
         mIsOpen = true;
         return true;
     } catch (const Poco::Exception &e) {
@@ -164,10 +187,12 @@ bool UDPChannel::open() {
 void UDPChannel::close() {
     if (mPocoUDPSocket.impl()) {
         mPocoSocketReactor.removeEventHandler(mPocoUDPSocket, Poco::NObserver<UDPChannel, Poco::Net::ReadableNotification>(*this, &UDPChannel::readCallback));
+        mPocoSocketReactor.removeEventHandler(mPocoUDPSocket, Poco::NObserver<UDPChannel, Poco::Net::ErrorNotification>(*this, &UDPChannel::errorCallback));
         mPocoUDPSocket.close();
     }
     mIsOpen = false;
     receiveSequence.reset();
+    mUdpErrorCallback = std::nullopt;
 }
 
 void UDPChannel::setAddress(const std::string &address) {
@@ -208,8 +233,15 @@ void UDPChannel::unregisterDtoHandler(const std::string &dtoName) {
     mDtoHandlers.erase(dtoName);
 }
 
+void UDPChannel::registerErrorCallback(std::function<void(bool fatal, int errnum, std::string message)> callback) {
+    mUdpErrorCallback = std::make_optional(callback);
+}
+
 int UDPChannel::getLastErrno() const {
     return mLastErrno;
+}
+std::string UDPChannel::getLastErrorMessage() const {
+    return mLastErrorMessage;
 }
 
 void UDPChannel::setChannelConfig(const dto::ChannelConfig &config) {

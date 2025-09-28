@@ -36,13 +36,14 @@
 
 #include "afv-native/Log.h"
 #include "afv-native/cryptodto/Channel.h"
+#include <Poco/Net/Net.h>
 #include <Poco/NObserver.h>
 #include <Poco/Net/DatagramSocket.h>
-#include <Poco/Net/NetException.h>
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/SocketNotification.h>
 #include <Poco/Net/SocketReactor.h>
 #include <Poco/Thread.h>
+#include <Poco/Exception.h>
 #include <atomic>
 #include <event2/event.h>
 #include <functional>
@@ -72,10 +73,14 @@ namespace afv_native { namespace cryptodto {
         unsigned int mAcceptableCiphers;
 
         void readCallback(const Poco::AutoPtr<Poco::Net::ReadableNotification> &notification);
+        void errorCallback(const Poco::AutoPtr<Poco::Net::ErrorNotification> &notification);
 
       protected:
         std::unordered_map<std::string, std::function<void(const unsigned char *data, size_t len)>> mDtoHandlers;
         int mLastErrno;
+        std::string mLastErrorMessage;
+
+        std::optional<std::function<void(bool fatal, int err, std::string message)>> mUdpErrorCallback;
 
         void enableRxMode(CryptoDtoMode mode);
 
@@ -124,9 +129,12 @@ namespace afv_native { namespace cryptodto {
         void registerDtoHandler(const std::string &dtoName, std::function<void(const unsigned char *data, size_t len)> callback);
         void unregisterDtoHandler(const std::string &dtoName);
 
+        void registerErrorCallback(std::function<void(const bool fatal, const int errnum, const std::string message)> callback);
+
         void setAddress(const std::string &address);
 
         int getLastErrno() const;
+        std::string getLastErrorMessage() const;
 
         void setChannelConfig(const dto::ChannelConfig &config) override;
     };
