@@ -254,6 +254,9 @@ namespace afv_native {
 
         void reset();
 
+        void playAdHocSound(const std::string &wavFilePath, float gain, AdHocOutputTarget target);
+        void stopAdHocSounds();
+
         void setHardware(HardwareType hardware);
 
         void setTick(std::shared_ptr<audio::ITick> tick);

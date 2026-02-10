@@ -17,6 +17,13 @@
         "openssl",
         "libevent",
         "sdl2",
-        "poco"
+        {
+            "name": "poco",
+            "features": [
+                "netssl",
+                "net",
+                "util"
+            ]
+        }
     ]
 }

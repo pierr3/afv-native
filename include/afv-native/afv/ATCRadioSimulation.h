@@ -228,6 +228,9 @@ namespace afv_native { namespace afv {
         void putAudioFrame(const audio::SampleType *bufferIn) override;
         audio::SourceStatus getAudioFrame(audio::SampleType *bufferOut, bool onHeadset);
 
+        void playAdHocSound(std::shared_ptr<audio::ISampleStorage> storage, float gain, AdHocOutputTarget target);
+        void stopAdHocSounds();
+
         /** Contains the number of IncomingAudioStreams known to the simulation stack */
         std::atomic<uint32_t> IncomingAudioStreams;
 
@@ -298,6 +301,10 @@ namespace afv_native { namespace afv {
         event::EventCallbackTimer mMaintenanceTimer;
         event::EventCallbackTimer mVoiceTimeoutTimer;
         RollingAverage<double>    mVuMeter;
+
+        audio::OutputMixer mAdHocHeadsetMixer;
+        audio::OutputMixer mAdHocSpeakerMixer;
+        audio::SampleType  mAdHocFetchBuffer[audio::frameSizeSamples];
 
         void resetRadioFx(unsigned int radio, bool except_click = false);
 

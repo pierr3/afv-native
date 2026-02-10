@@ -34,7 +34,10 @@
  */
 
 #include "afv-native/afv/ATCRadioSimulation.h"
+#include "afv-native/audio/RecordedSampleSource.h"
 #include "afv-native/audio/VHFFilterSource.h"
+#include "afv-native/audio/WavFile.h"
+#include "afv-native/audio/WavSampleStorage.h"
 #include "afv-native/event.h"
 #include "afv-native/event/EventBus.h"
 #include "afv-native/util/other.h"
@@ -420,6 +423,20 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
         for (auto &[freq, radio]: mRadioState) {
             if (radio.onHeadset == onHeadset) {
                 _process_radio(sampleCache, freq, onHeadset);
+            }
+        }
+    }
+
+    // Mix in ad-hoc sounds for this output device
+    {
+        auto &mixer = onHeadset ? mAdHocHeadsetMixer : mAdHocSpeakerMixer;
+        auto rv = mixer.getAudioFrame(mAdHocFetchBuffer);
+        if (rv == audio::SourceStatus::OK) {
+            if (onHeadset) {
+                mix_buffers(state->mLeftMixingBuffer, mAdHocFetchBuffer);
+                mix_buffers(state->mRightMixingBuffer, mAdHocFetchBuffer);
+            } else {
+                mix_buffers(state->mMixingBuffer, mAdHocFetchBuffer);
             }
         }
     }
@@ -1083,4 +1100,22 @@ void afv_native::afv::ATCRadioSimulation::interleave(audio::SampleType *leftChan
 std::map<unsigned int, AtcRadioState> afv_native::afv::ATCRadioSimulation::getRadioState() {
     std::lock_guard<std::mutex> lock(mRadioStateLock);
     return mRadioState;
+}
+
+void ATCRadioSimulation::playAdHocSound(std::shared_ptr<audio::ISampleStorage> storage, float gain, AdHocOutputTarget target) {
+    std::lock_guard<std::mutex> lock(mStreamMapLock);
+    if (target == AdHocOutputTarget::Headset || target == AdHocOutputTarget::Both) {
+        auto source = std::make_shared<audio::RecordedSampleSource>(storage, false);
+        mAdHocHeadsetMixer.setSource(source, gain);
+    }
+    if (target == AdHocOutputTarget::Speaker || target == AdHocOutputTarget::Both) {
+        auto source = std::make_shared<audio::RecordedSampleSource>(storage, false);
+        mAdHocSpeakerMixer.setSource(source, gain);
+    }
+}
+
+void ATCRadioSimulation::stopAdHocSounds() {
+    std::lock_guard<std::mutex> lock(mStreamMapLock);
+    mAdHocHeadsetMixer = audio::OutputMixer();
+    mAdHocSpeakerMixer = audio::OutputMixer();
 }

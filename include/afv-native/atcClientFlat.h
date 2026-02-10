@@ -108,6 +108,8 @@ extern "C" {
     AFV_NATIVE_API void ATCClient_SetHardware(ATCClientHandle handle, afv_native::HardwareType hardware);
     AFV_NATIVE_API void ATCClient_RaiseClientEvent(ATCClientHandle handle, void (*callback)(afv_native::ClientEventType, void *, void *));
     AFV_NATIVE_API void ATCClient_SetTransceivers(ATCClientHandle handle, unsigned int freq, int count, StationTransceiverFlat_t transceivers[]);
+    AFV_NATIVE_API void ATCClient_PlayAdHocSound(ATCClientHandle handle, char *wavFilePath, float gain, afv_native::AdHocOutputTarget target);
+    AFV_NATIVE_API void ATCClient_StopAdHocSounds(ATCClientHandle handle);
 }
 
 #endif

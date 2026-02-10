@@ -11,6 +11,8 @@
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/params.h"
 #include "afv-native/atcClientWrapper.h"
+#include "afv-native/audio/WavFile.h"
+#include "afv-native/audio/WavSampleStorage.h"
 #include "afv-native/event.h"
 #include "afv-native/event/EventBus.h"
 #include <functional>
@@ -721,4 +723,19 @@ std::map<unsigned int, afv::AtcRadioState> afv_native::ATCClient::getRadioState(
 
 void afv_native::ATCClient::reset() {
     mATCRadioStack->reset();
+}
+
+void afv_native::ATCClient::playAdHocSound(const std::string &wavFilePath, float gain, AdHocOutputTarget target) {
+    auto *audData = audio::LoadWav(wavFilePath.c_str());
+    if (audData == nullptr) {
+        LOG("afv::ATCClient", "playAdHocSound: failed to load WAV file: %s", wavFilePath.c_str());
+        return;
+    }
+    auto storage = std::make_shared<audio::WavSampleStorage>(*audData);
+    delete audData;
+    mATCRadioStack->playAdHocSound(storage, gain, target);
+}
+
+void afv_native::ATCClient::stopAdHocSounds() {
+    mATCRadioStack->stopAdHocSounds();
 }

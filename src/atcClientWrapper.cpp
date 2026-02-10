@@ -649,6 +649,20 @@ AFV_NATIVE_API void afv_native::api::atcClient::FreeRadioState(afv_native::Simpl
     delete state;
 }
 
+AFV_NATIVE_API void afv_native::api::atcClient::PlayAdHocSound(std::string wavFilePath, float gain, afv_native::AdHocOutputTarget target) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->playAdHocSound(wavFilePath, gain, target);
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::PlayAdHocSound(char *wavFilePath, float gain, afv_native::AdHocOutputTarget target) {
+    PlayAdHocSound(std::string(wavFilePath), gain, target);
+}
+
+AFV_NATIVE_API void afv_native::api::atcClient::StopAdHocSounds() {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->stopAdHocSounds();
+}
+
 AFV_NATIVE_API void afv_native::api::atcClient::SetManualTransceivers(unsigned int freq, std::vector<afv_native::afv::dto::StationTransceiver> transceivers) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setManualTransceivers(freq, transceivers);

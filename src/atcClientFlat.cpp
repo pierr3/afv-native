@@ -301,3 +301,11 @@ AFV_NATIVE_API void ATCClient_SetTransceivers(ATCClientHandle handle, unsigned i
     handle->impl->SetManualTransceivers(freq, *trans);
     delete trans;
 }
+
+AFV_NATIVE_API void ATCClient_PlayAdHocSound(ATCClientHandle handle, char *wavFilePath, float gain, afv_native::AdHocOutputTarget target) {
+    handle->impl->PlayAdHocSound(wavFilePath, gain, target);
+}
+
+AFV_NATIVE_API void ATCClient_StopAdHocSounds(ATCClientHandle handle) {
+    handle->impl->StopAdHocSounds();
+}

@@ -13,6 +13,12 @@ namespace afv_native {
         Left,
         Right
     };
+
+    enum class AdHocOutputTarget {
+        Headset,
+        Speaker,
+        Both
+    };
 } // namespace afv_native
 
 #endif // AFV_NATIVE_HARDWARE_H
