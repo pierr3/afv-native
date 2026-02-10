@@ -32,7 +32,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, co
 
     if (audioApi == -1) {
         LOG("MiniAudioAudioDevice", "Cannot initialize audio device with unknown audio api.");
-        throw new std::runtime_error("MiniAudioAudioDevice: Cannot initialize audio device with unknown audio api.");
+        throw std::runtime_error("MiniAudioAudioDevice: Cannot initialize audio device with unknown audio api.");
         return;
     } else {
         try {
@@ -42,7 +42,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, co
         } catch (std::exception &e) {
             LOG("MiniAudioAudioDevice", "Error initializing audio api, api unknown: %s", e.what());
 
-            throw new std::exception();
+            throw std::runtime_error("MiniAudioAudioDevice: Error initializing audio api");
         }
     }
 
@@ -58,6 +58,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, co
 }
 
 MiniAudioAudioDevice::~MiniAudioAudioDevice() {
+    close();
 }
 
 bool MiniAudioAudioDevice::openOutput() {
@@ -69,6 +70,9 @@ bool MiniAudioAudioDevice::openInput() {
 }
 
 void MiniAudioAudioDevice::close() {
+    if (mHasClosedManually) {
+        return;
+    }
     mHasClosedManually = true;
 
     if (mInputInitialized) {
@@ -250,6 +254,7 @@ bool MiniAudioAudioDevice::initOutput() {
     result = ma_device_start(&outputDev);
     if (result != MA_SUCCESS) {
         LOG("MiniAudioAudioDevice", "Error starting output device: %s", ma_result_description(result));
+        ma_device_uninit(&outputDev);
         return false;
     }
 
@@ -296,6 +301,7 @@ bool MiniAudioAudioDevice::initInput() {
     result = ma_device_start(&inputDev);
     if (result != MA_SUCCESS) {
         LOG("MiniAudioAudioDevice", "Error starting input device: %s", ma_result_description(result));
+        ma_device_uninit(&inputDev);
         return false;
     }
 

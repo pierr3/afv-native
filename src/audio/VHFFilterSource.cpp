@@ -61,6 +61,7 @@ VHFFilterSource::VHFFilterSource(HardwareType hd):
 
 VHFFilterSource::~VHFFilterSource() {
     delete compressor;
+    delete limiter;
 };
 
 void VHFFilterSource::setupPresets() {
