@@ -53,6 +53,7 @@ namespace afv_native { namespace afv {
 
     enum class VoiceSessionState {
         Connected,
+        Degraded,
         Disconnected,
         Error
     };
@@ -89,6 +90,7 @@ namespace afv_native { namespace afv {
 
         VoiceSessionError getLastError() const;
         VoiceSessionType  type() const;
+        void onPacketReceived();
 
       protected:
         APISession &mSession;
@@ -106,6 +108,9 @@ namespace afv_native { namespace afv {
         event::EventCallbackTimer mHeartbeatTimeout;
 
         VoiceSessionError mLastError;
+
+        int mConsecutiveMissedHeartbeats = 0;
+        bool mDegradedNotified = false;
 
         /** setupSession use the information in the PostCallsignResponse DTO to start up
          * the UDP session and tasks

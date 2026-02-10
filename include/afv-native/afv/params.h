@@ -41,6 +41,7 @@ namespace afv_native { namespace afv {
 
     const unsigned afvHeartbeatIntervalMs            = 3000;
     const unsigned afvHeartbeatTimeoutMs             = 20000;
+    const unsigned afvMaxConsecutiveMissedHeartbeats = 10;
     const unsigned afvTransceiverUpdateIntervalMs    = 20000;
     const unsigned afvATCTransceiverUpdateIntervalMs = 60000;
 

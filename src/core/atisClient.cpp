@@ -105,6 +105,9 @@ void ATISClient::voiceStateCallback(afv::VoiceSessionState state) {
 
             ClientEventCallback.invokeAll(ClientEventType::VoiceServerDisconnected, nullptr);
             break;
+        case afv::VoiceSessionState::Degraded:
+            LOG("afv::ATISClient", "Voice Session Connection Degraded");
+            break;
         case afv::VoiceSessionState::Error:
             LOG("afv::ATISClient", "got error from voice session");
             stopAudio();

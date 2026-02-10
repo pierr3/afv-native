@@ -36,6 +36,7 @@
 
 #include "afv-native/Log.h"
 #include "afv-native/cryptodto/Channel.h"
+#include "afv-native/util/monotime.h"
 #include <Poco/Net/Net.h>
 #include <Poco/NObserver.h>
 #include <Poco/Net/DatagramSocket.h>
@@ -47,6 +48,7 @@
 #include <atomic>
 #include <event2/event.h>
 #include <functional>
+#include <optional>
 #include <unordered_map>
 
 namespace afv_native { namespace cryptodto {
@@ -66,7 +68,7 @@ namespace afv_native { namespace cryptodto {
         Poco::Net::DatagramSocket mPocoUDPSocket;
         Poco::Net::SocketReactor  mPocoSocketReactor;
         Poco::Thread              mReactorThread;
-        bool mIsOpen = false;
+        std::atomic<bool> mIsOpen{false};
         std::atomic<sequence_t>   mTxSequence;
         SequenceTest              receiveSequence;
 
@@ -79,8 +81,11 @@ namespace afv_native { namespace cryptodto {
         std::unordered_map<std::string, std::function<void(const unsigned char *data, size_t len)>> mDtoHandlers;
         int mLastErrno;
         std::string mLastErrorMessage;
+        int mConsecutiveFatalErrors = 0;
+        util::monotime_t mFirstFatalErrorTime = 0;
 
         std::optional<std::function<void(bool fatal, int err, std::string message)>> mUdpErrorCallback;
+        std::optional<std::function<void()>> mPacketReceivedCallback;
 
         void enableRxMode(CryptoDtoMode mode);
 
@@ -89,7 +94,7 @@ namespace afv_native { namespace cryptodto {
         bool RxModeEnabled(CryptoDtoMode mode) const;
 
       public:
-        explicit UDPChannel(int receiveSequenceHistorySize = 10);
+        explicit UDPChannel(int receiveSequenceHistorySize = 64);
         virtual ~UDPChannel();
 
         bool open();
@@ -97,10 +102,10 @@ namespace afv_native { namespace cryptodto {
         bool isOpen() const;
 
         template <typename T>
-        void sendDto(const T &pkt) {
+        bool sendDto(const T &pkt) {
             if (!mPocoUDPSocket.impl()) {
                 LOG("UDPChannel", "tried to send on closed socket");
-                return;
+                return false;
             }
             std::vector<unsigned char> dgBuffer(maxPermittedDatagramSize);
             sequence_t thisSeq = std::atomic_fetch_add(&mTxSequence, static_cast<sequence_t>(1));
@@ -111,10 +116,12 @@ namespace afv_native { namespace cryptodto {
                 try {
                     int sent = mPocoUDPSocket.sendBytes(
                         reinterpret_cast<char *>(dgBuffer.data()), dgBuffer.size());
-                    if (sent < dgBuffer.size()) {
+                    if (sent < static_cast<int>(dgBuffer.size())) {
                         LOG("udpchannel", "short write sending datagram - sent %d of %d bytes", sent,
-                            dgBuffer.size());
+                            static_cast<int>(dgBuffer.size()));
+                        return false;
                     }
+                    return true;
                 } catch (const Poco::Exception &ex) {
                     if (ex.code() == POCO_EWOULDBLOCK) {
                         LOG("udpchannel", "UDP packet dropped on send due to TxBuffer being full");
@@ -122,14 +129,17 @@ namespace afv_native { namespace cryptodto {
                         LOG("udpchannel", "error sending datagram: %s",
                             ex.displayText().c_str());
                     }
+                    return false;
                 }
             }
+            return false;
         }
 
         void registerDtoHandler(const std::string &dtoName, std::function<void(const unsigned char *data, size_t len)> callback);
         void unregisterDtoHandler(const std::string &dtoName);
 
         void registerErrorCallback(std::function<void(const bool fatal, const int errnum, const std::string message)> callback);
+        void registerPacketReceivedCallback(std::function<void()> callback);
 
         void setAddress(const std::string &address);
 

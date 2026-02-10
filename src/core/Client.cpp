@@ -190,6 +190,10 @@ void Client::voiceStateCallback(afv::VoiceSessionState state)
         mRadioSim->reset();
         ClientEventCallback.invokeAll(ClientEventType::VoiceServerDisconnected, nullptr, nullptr);
         break;
+    case afv::VoiceSessionState::Degraded:
+        LOG("afv::Client", "Voice Session Connection Degraded");
+        ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnectionDegraded, nullptr, nullptr);
+        break;
     case afv::VoiceSessionState::Error:
         LOG("afv::Client", "got error from voice session");
         stopAudio();

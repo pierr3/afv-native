@@ -130,6 +130,11 @@ void ATCClient::voiceStateCallback(afv::VoiceSessionState state) {
             ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnected, nullptr, nullptr);
             event::EventBus::Instance().OnEvent(VoiceServerConnectedEvent {});
             break;
+        case afv::VoiceSessionState::Degraded:
+            LOG("afv::ATCClient", "Voice Session Connection Degraded");
+            ClientEventCallback.invokeAll(ClientEventType::VoiceServerConnectionDegraded, nullptr, nullptr);
+            event::EventBus::Instance().OnEvent(VoiceServerConnectionDegradedEvent {});
+            break;
         case afv::VoiceSessionState::Disconnected:
             LOG("afv::ATCClient", "Voice Session Disconnected");
             stopAudio();

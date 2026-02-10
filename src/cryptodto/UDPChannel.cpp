@@ -34,6 +34,7 @@
 #include "afv-native/cryptodto/UDPChannel.h"
 #include "afv-native/Log.h"
 #include "afv-native/cryptodto/dto/ChannelConfig.h"
+#include "afv-native/util/monotime.h"
 #include <Poco/Net/IPAddress.h>
 #include <cerrno>
 #include <event2/util.h>
@@ -103,6 +104,9 @@ void UDPChannel::readCallback(const Poco::AutoPtr<Poco::Net::ReadableNotificatio
         case ReceiveOutcome::Overflow:
             break;
     }
+    // A successful packet receipt proves the link is alive - reset error tracking
+    mConsecutiveFatalErrors = 0;
+    mFirstFatalErrorTime = 0;
     // validate that the packet has a valid payload.
     if (dtoBuf.size() < 2) {
         LOG("udpchannel:readCallback", "internal dto had bad length (too short)");
@@ -125,6 +129,9 @@ void UDPChannel::readCallback(const Poco::AutoPtr<Poco::Net::ReadableNotificatio
             dtoIter->second(reinterpret_cast<const unsigned char *>(dtoBuf.data()) + 2, dtoBuf.size() - 2);
         }
     }
+    if (mPacketReceivedCallback) {
+        mPacketReceivedCallback.value()();
+    }
 }
 
 void UDPChannel::errorCallback(const Poco::AutoPtr<Poco::Net::ErrorNotification> &notification) {
@@ -134,11 +141,30 @@ void UDPChannel::errorCallback(const Poco::AutoPtr<Poco::Net::ErrorNotification>
     mLastErrorMessage = notification->description();
 
     if (code == POCO_ECONNRESET || code == POCO_ENOTCONN || code == POCO_ECONNABORTED || code == POCO_ECONNREFUSED) {
-        // these are all fatal for a connected UDP socket
-        if (mUdpErrorCallback) {
-            mUdpErrorCallback.value()(true, code, notification->description());
+        mConsecutiveFatalErrors++;
+        auto now = util::monotime_get();
+        if (mFirstFatalErrorTime == 0) {
+            mFirstFatalErrorTime = now;
         }
-        close();
+
+        // Only treat as truly fatal after 3 errors within 10 seconds
+        if (mConsecutiveFatalErrors >= 3 && (now - mFirstFatalErrorTime) <= 10000) {
+            LOG("udpchannel::errorCallback", "fatal error threshold reached (%d errors in %lld ms) - closing",
+                mConsecutiveFatalErrors, (long long)(now - mFirstFatalErrorTime));
+            if (mUdpErrorCallback) {
+                mUdpErrorCallback.value()(true, code, notification->description());
+            }
+            close();
+        } else {
+            // Reset tracking if errors are spread over more than 10 seconds
+            if ((now - mFirstFatalErrorTime) > 10000) {
+                mConsecutiveFatalErrors = 1;
+                mFirstFatalErrorTime = now;
+            }
+            if (mUdpErrorCallback) {
+                mUdpErrorCallback.value()(false, code, notification->description());
+            }
+        }
 
         return;
     }
@@ -193,6 +219,7 @@ void UDPChannel::close() {
     mIsOpen = false;
     receiveSequence.reset();
     mUdpErrorCallback = std::nullopt;
+    mPacketReceivedCallback = std::nullopt;
 }
 
 void UDPChannel::setAddress(const std::string &address) {
@@ -235,6 +262,10 @@ void UDPChannel::unregisterDtoHandler(const std::string &dtoName) {
 
 void UDPChannel::registerErrorCallback(std::function<void(bool fatal, int errnum, std::string message)> callback) {
     mUdpErrorCallback = std::make_optional(callback);
+}
+
+void UDPChannel::registerPacketReceivedCallback(std::function<void()> callback) {
+    mPacketReceivedCallback = std::make_optional(callback);
 }
 
 int UDPChannel::getLastErrno() const {

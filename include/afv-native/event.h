@@ -63,6 +63,10 @@ namespace afv_native {
         int errorCode;
     };
 
+    struct VoiceServerConnectionDegradedEvent {};
+
+    struct VoiceServerConnectionResumedEvent {};
+
     struct PttOpenEvent {};
 
     struct PttClosedEvent {};
@@ -123,6 +127,8 @@ namespace afv_native {
         VoiceServerDisconnected,
         VoiceServerChannelError, // data is a pointer to an int containing the errno
         VoiceServerError,        // data is a pointer to the VoiceSessionError
+        VoiceServerConnectionDegraded,
+        VoiceServerConnectionResumed,
         PttOpen,
         PttClosed,
         StationAliasesUpdated,

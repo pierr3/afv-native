@@ -119,6 +119,8 @@ bool VoiceSession::setupSession(const dto::PostCallsignResponse &cresp) {
     mVoiceSessionSetupRequest.reset();
     mVoiceSessionTeardownRequest.reset();
     mLastHeartbeatReceived = util::monotime_get();
+    mConsecutiveMissedHeartbeats = 0;
+    mDegradedNotified = false;
     mHeartbeatTimer.enable(afvHeartbeatIntervalMs);
     mHeartbeatTimeout.enable(afvHeartbeatTimeoutMs);
     mChannel.registerErrorCallback([this](const bool fatal, const int errnum, const std::string message) {
@@ -126,6 +128,9 @@ bool VoiceSession::setupSession(const dto::PostCallsignResponse &cresp) {
     });
     mChannel.registerDtoHandler("HA", [this](const unsigned char *data, size_t len) {
         this->receivedHeartbeat();
+    });
+    mChannel.registerPacketReceivedCallback([this]() {
+        this->onPacketReceived();
     });
     mLastError = VoiceSessionError::NoError;
     StateCallback.invokeAll(VoiceSessionState::Connected);
@@ -153,14 +158,37 @@ void VoiceSession::sendHeartbeatCallback() {
     dto::Heartbeat hbDto(mCallsign);
     if (mChannel.isOpen()) {
         mChannel.sendDto(hbDto);
+        mConsecutiveMissedHeartbeats++;
+
+        // Notify degraded state at halfway point
+        if (!mDegradedNotified && mConsecutiveMissedHeartbeats >= (afvMaxConsecutiveMissedHeartbeats / 2)) {
+            mDegradedNotified = true;
+            StateCallback.invokeAll(VoiceSessionState::Degraded);
+        }
+
+        if (mConsecutiveMissedHeartbeats >= afvMaxConsecutiveMissedHeartbeats) {
+            heartbeatTimedOut();
+            return;
+        }
         mHeartbeatTimer.enable(afvHeartbeatIntervalMs);
+    } else {
+        // Channel closed unexpectedly - treat as connection loss
+        mLastError = VoiceSessionError::UDPChannelError;
+        failSession();
     }
 }
 
 void VoiceSession::receivedHeartbeat() {
     mLastHeartbeatReceived = util::monotime_get();
+    bool wasDegraded = mDegradedNotified;
+    mConsecutiveMissedHeartbeats = 0;
+    mDegradedNotified = false;
     mHeartbeatTimeout.disable();
     mHeartbeatTimeout.enable(afvHeartbeatTimeoutMs);
+    // Notify recovery from degraded state
+    if (wasDegraded) {
+        StateCallback.invokeAll(VoiceSessionState::Connected);
+    }
 }
 
 void VoiceSession::heartbeatTimedOut() {
@@ -288,4 +316,10 @@ void VoiceSession::sessionStateCallback(APISessionState state) {
         default:
             break;
     }
+}
+
+void VoiceSession::onPacketReceived() {
+    mLastHeartbeatReceived = util::monotime_get();
+    mHeartbeatTimeout.disable();
+    mHeartbeatTimeout.enable(afvHeartbeatTimeoutMs);
 }
