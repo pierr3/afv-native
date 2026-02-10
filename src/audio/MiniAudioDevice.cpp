@@ -53,7 +53,7 @@ MiniAudioAudioDevice::MiniAudioAudioDevice(const std::string &userStreamName, co
 
     } else {
         LOG("MiniAudioAudioDevice", "Error initializing context: %s", ma_result_description(result));
-        throw new std::exception();
+        throw std::runtime_error("Failed to initialize miniaudio context");
     }
 }
 

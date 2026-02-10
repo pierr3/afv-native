@@ -392,10 +392,7 @@ void ATCClient::setPtt(bool pttState) {
         // if we're still pending an update, and the radios are out of
         // step, guard the Ptt.
         if (mTxUpdatePending) {
-            if (!mTxUpdatePending) {
-                LOG("ATCClient", "Wanted to Open PTT mid-update - guarding");
-                queueTransceiverUpdate();
-            }
+            LOG("ATCClient", "Wanted to Open PTT mid-update - guarding");
             return;
         }
     } else {

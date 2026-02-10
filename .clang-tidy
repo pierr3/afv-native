@@ -1,0 +1,29 @@
+---
+# Only check project headers, not third-party code in extern/ or vcpkg
+HeaderFilterRegex: 'include/afv-native/.*\.h$'
+
+Checks: >
+  -*,
+  bugprone-*,
+  misc-throw-by-value-catch-by-reference,
+  misc-unused-using-decls,
+  modernize-*,
+  performance-*,
+  readability-magic-numbers,
+  readability-redundant-smartptr-get,
+  readability-container-size-empty,
+  readability-make-member-function-const,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+  -modernize-use-nodiscard,
+
+CheckOptions:
+  - key: readability-magic-numbers.IgnoredIntegerValues
+    value: '0;1;2;-1;10;100;1000'
+  - key: readability-magic-numbers.IgnoredFloatingPointValues
+    value: '0.0;1.0;0.5;-1.0'
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: 'std::function'
+...

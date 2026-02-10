@@ -50,6 +50,7 @@
 #include <functional>
 #include <optional>
 #include <unordered_map>
+#include <vector>
 
 namespace afv_native { namespace cryptodto {
     typedef void (*DtoHandlerFunc)(const std::string &dtoName, const unsigned char *bufIn, size_t bufLen, void *user_data);
@@ -63,7 +64,7 @@ namespace afv_native { namespace cryptodto {
          * buffer, we can avoid reallocation hell which is worse than just
          * having to copy the payload out one extra time.
          */
-        unsigned char *mDatagramRxBuffer;
+        std::vector<unsigned char> mDatagramRxBuffer;
 
         Poco::Net::DatagramSocket mPocoUDPSocket;
         Poco::Net::SocketReactor  mPocoSocketReactor;

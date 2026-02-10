@@ -43,8 +43,7 @@ using namespace afv_native::cryptodto;
 using namespace std;
 
 UDPChannel::UDPChannel(int receiveSequenceHistorySize):
-    Channel(), mAddress(), mDatagramRxBuffer(nullptr), mPocoUDPSocket(), mPocoSocketReactor(), mReactorThread("UDP Socket Reactor Thread"), mTxSequence(0), receiveSequence(0, receiveSequenceHistorySize), mAcceptableCiphers(1U << cryptodto::CryptoDtoMode::CryptoModeChaCha20Poly1305), mDtoHandlers(), mLastErrno(0) {
-    mDatagramRxBuffer = new unsigned char[maxPermittedDatagramSize];
+    Channel(), mAddress(), mDatagramRxBuffer(maxPermittedDatagramSize), mPocoUDPSocket(), mPocoSocketReactor(), mReactorThread("UDP Socket Reactor Thread"), mTxSequence(0), receiveSequence(0, receiveSequenceHistorySize), mAcceptableCiphers(1U << cryptodto::CryptoDtoMode::CryptoModeChaCha20Poly1305), mDtoHandlers(), mLastErrno(0) {
     mReactorThread.start(mPocoSocketReactor);
 }
 
@@ -52,8 +51,6 @@ UDPChannel::~UDPChannel() {
     close();
     mPocoSocketReactor.stop();
     mReactorThread.join();
-    delete[] mDatagramRxBuffer;
-    mDatagramRxBuffer = nullptr;
 }
 
 void UDPChannel::registerDtoHandler(const string &dtoName, std::function<void(const unsigned char *data, size_t len)> callback) {
@@ -62,7 +59,7 @@ void UDPChannel::registerDtoHandler(const string &dtoName, std::function<void(co
 
 void UDPChannel::readCallback(const Poco::AutoPtr<Poco::Net::ReadableNotification> &notification) {
     Poco::Net::SocketAddress sender;
-    int dgSize = mPocoUDPSocket.receiveFrom(mDatagramRxBuffer, maxPermittedDatagramSize, sender);
+    int dgSize = mPocoUDPSocket.receiveFrom(mDatagramRxBuffer.data(), maxPermittedDatagramSize, sender);
 
     if (dgSize > maxPermittedDatagramSize) {
         LOG("udpchannel:readCallback", "recv'd datagram %d bytes, exceeding configured maximum of %d", dgSize, maxPermittedDatagramSize);
@@ -82,7 +79,7 @@ void UDPChannel::readCallback(const Poco::AutoPtr<Poco::Net::ReadableNotificatio
     msgpack::sbuffer dtoBuf;
     CryptoDtoMode    cipherMode;
 
-    if (!Decapsulate(mDatagramRxBuffer, dgSize, channelTag, seq, cipherMode, dtoName, dtoBuf)) {
+    if (!Decapsulate(mDatagramRxBuffer.data(), dgSize, channelTag, seq, cipherMode, dtoName, dtoBuf)) {
         LOG("udpchannel:readCallback", "recv'd invalid cryptodto frame.  Discarding");
         return;
     }

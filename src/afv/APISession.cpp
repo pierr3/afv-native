@@ -121,7 +121,6 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
                     const time_t expiry = dec_token.payload().get_claim_value<uint64_t>("exp");
                     const int timeRemaining = expiry - ::time(nullptr);
                     if (timeRemaining <= 60) {
-                        // FIXME: report error upstream.
                         LOG("APISession", "token TTL (%d) is <= 60s.  Please check your system clock.", timeRemaining);
                         mBearerToken = "";
                         raiseError(APISessionError::AuthTokenExpiryTimeInPast);
