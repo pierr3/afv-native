@@ -257,6 +257,8 @@ namespace afv_native {
         void playAdHocSound(const std::string &wavFilePath, float gain, AdHocOutputTarget target);
         void stopAdHocSounds();
 
+        void setLoopback(bool enabled, AdHocOutputTarget target = AdHocOutputTarget::Headset, float gain = 1.0f);
+
         void setHardware(HardwareType hardware);
 
         void setTick(std::shared_ptr<audio::ITick> tick);

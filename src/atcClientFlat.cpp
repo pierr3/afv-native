@@ -309,3 +309,7 @@ AFV_NATIVE_API void ATCClient_PlayAdHocSound(ATCClientHandle handle, char *wavFi
 AFV_NATIVE_API void ATCClient_StopAdHocSounds(ATCClientHandle handle) {
     handle->impl->StopAdHocSounds();
 }
+
+AFV_NATIVE_API void ATCClient_SetLoopback(ATCClientHandle handle, bool enabled, afv_native::AdHocOutputTarget target, float gain) {
+    handle->impl->SetLoopback(enabled, target, gain);
+}

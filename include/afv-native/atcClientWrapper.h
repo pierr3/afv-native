@@ -165,6 +165,8 @@ namespace afv_native::api {
         AFV_NATIVE_API void PlayAdHocSound(char *wavFilePath, float gain, afv_native::AdHocOutputTarget target);
         AFV_NATIVE_API void StopAdHocSounds();
 
+        AFV_NATIVE_API void SetLoopback(bool enabled, afv_native::AdHocOutputTarget target = afv_native::AdHocOutputTarget::Headset, float gain = 1.0f);
+
         AFV_NATIVE_API void SetHardware(afv_native::HardwareType hardware);
 
         AFV_NATIVE_API void RaiseClientEvent(std::function<void(afv_native::ClientEventType, void *, void *)> callback);

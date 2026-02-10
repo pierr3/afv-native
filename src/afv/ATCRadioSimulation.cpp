@@ -126,6 +126,12 @@ void ATCRadioSimulation::putAudioFrame(const audio::SampleType *bufferIn) {
         mVuMeter.addDatum(ratio);
     }
 
+    // Copy processed mic audio to loopback buffer if enabled
+    if (mLoopbackEnabled.load()) {
+        std::lock_guard<std::mutex> loopbackGuard(mLoopbackLock);
+        ::memcpy(mLoopbackBuffer, samples, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    }
+
     if (!mPtt.load() && !mLastFramePtt) {
         // Tick the sequence over when we have no Ptt as the compressed endpoint wont' get called to do that.
         std::atomic_fetch_add<uint32_t>(&mTxSequence, 1);
@@ -437,6 +443,32 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
                 mix_buffers(state->mRightMixingBuffer, mAdHocFetchBuffer);
             } else {
                 mix_buffers(state->mMixingBuffer, mAdHocFetchBuffer);
+            }
+        }
+    }
+
+    // Mix in loopback (sidetone) if enabled and target matches this output
+    if (mLoopbackEnabled.load()) {
+        bool shouldMix = false;
+        if (mLoopbackTarget == AdHocOutputTarget::Both) {
+            shouldMix = true;
+        } else if (mLoopbackTarget == AdHocOutputTarget::Headset && onHeadset) {
+            shouldMix = true;
+        } else if (mLoopbackTarget == AdHocOutputTarget::Speaker && !onHeadset) {
+            shouldMix = true;
+        }
+
+        if (shouldMix) {
+            audio::SampleType loopbackCopy[audio::frameSizeSamples];
+            {
+                std::lock_guard<std::mutex> loopbackGuard(mLoopbackLock);
+                ::memcpy(loopbackCopy, mLoopbackBuffer, sizeof(audio::SampleType) * audio::frameSizeSamples);
+            }
+            if (onHeadset) {
+                mix_buffers(state->mLeftMixingBuffer, loopbackCopy, mLoopbackGain);
+                mix_buffers(state->mRightMixingBuffer, loopbackCopy, mLoopbackGain);
+            } else {
+                mix_buffers(state->mMixingBuffer, loopbackCopy, mLoopbackGain);
             }
         }
     }
@@ -1118,4 +1150,15 @@ void ATCRadioSimulation::stopAdHocSounds() {
     std::lock_guard<std::mutex> lock(mStreamMapLock);
     mAdHocHeadsetMixer = audio::OutputMixer();
     mAdHocSpeakerMixer = audio::OutputMixer();
+}
+
+void ATCRadioSimulation::setLoopback(bool enabled, AdHocOutputTarget target, float gain) {
+    std::lock_guard<std::mutex> loopbackGuard(mLoopbackLock);
+    mLoopbackEnabled.store(enabled);
+    mLoopbackTarget = target;
+    mLoopbackGain   = gain;
+    if (!enabled) {
+        ::memset(mLoopbackBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    }
+    LOG("ATCRadioSimulation", "setLoopback: enabled=%i, target=%i, gain=%f", enabled, static_cast<int>(target), gain);
 }

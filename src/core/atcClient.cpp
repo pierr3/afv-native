@@ -739,3 +739,7 @@ void afv_native::ATCClient::playAdHocSound(const std::string &wavFilePath, float
 void afv_native::ATCClient::stopAdHocSounds() {
     mATCRadioStack->stopAdHocSounds();
 }
+
+void afv_native::ATCClient::setLoopback(bool enabled, AdHocOutputTarget target, float gain) {
+    mATCRadioStack->setLoopback(enabled, target, gain);
+}

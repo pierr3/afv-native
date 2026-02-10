@@ -46,8 +46,10 @@
 #include "afv-native/afv/dto/voice_server/AudioTxOnTransceivers.h"
 #include "afv-native/audio/ISampleSink.h"
 #include "afv-native/audio/ISampleSource.h"
+#include "afv-native/audio/ISampleStorage.h"
 #include "afv-native/audio/ITick.h"
 #include "afv-native/audio/OutputDeviceState.h"
+#include "afv-native/audio/OutputMixer.h"
 #include "afv-native/audio/PinkNoiseGenerator.h"
 #include "afv-native/audio/SimpleCompressorEffect.h"
 #include "afv-native/audio/SineToneSource.h"
@@ -231,6 +233,8 @@ namespace afv_native { namespace afv {
         void playAdHocSound(std::shared_ptr<audio::ISampleStorage> storage, float gain, AdHocOutputTarget target);
         void stopAdHocSounds();
 
+        void setLoopback(bool enabled, AdHocOutputTarget target = AdHocOutputTarget::Headset, float gain = 1.0f);
+
         /** Contains the number of IncomingAudioStreams known to the simulation stack */
         std::atomic<uint32_t> IncomingAudioStreams;
 
@@ -305,6 +309,12 @@ namespace afv_native { namespace afv {
         audio::OutputMixer mAdHocHeadsetMixer;
         audio::OutputMixer mAdHocSpeakerMixer;
         audio::SampleType  mAdHocFetchBuffer[audio::frameSizeSamples];
+
+        std::mutex        mLoopbackLock;
+        std::atomic<bool> mLoopbackEnabled {false};
+        AdHocOutputTarget mLoopbackTarget = AdHocOutputTarget::Headset;
+        float             mLoopbackGain   = 1.0f;
+        audio::SampleType mLoopbackBuffer[audio::frameSizeSamples] = {};
 
         void resetRadioFx(unsigned int radio, bool except_click = false);
 
