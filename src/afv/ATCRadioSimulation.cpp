@@ -126,10 +126,19 @@ void ATCRadioSimulation::putAudioFrame(const audio::SampleType *bufferIn) {
         mVuMeter.addDatum(ratio);
     }
 
-    // Copy processed mic audio to loopback buffer if enabled
-    if (mLoopbackEnabled.load()) {
+    // Copy processed mic audio to loopback buffer if enabled and PTT is active
+    if (mLoopbackEnabled.load() && mPtt.load()) {
         std::lock_guard<std::mutex> loopbackGuard(mLoopbackLock);
         ::memcpy(mLoopbackBuffer, samples, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        // Apply radio effects (VHF filter + compressor) to make it sound like radio
+        if (mLoopbackVhfFilter) {
+            mLoopbackVhfFilter->transformFrame(mLoopbackBuffer, mLoopbackBuffer);
+        }
+        mLoopbackCompressor.transformFrame(mLoopbackBuffer, mLoopbackBuffer);
+    } else if (mLoopbackEnabled.load()) {
+        // PTT released — zero the buffer so stale audio doesn't leak
+        std::lock_guard<std::mutex> loopbackGuard(mLoopbackLock);
+        ::memset(mLoopbackBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
     }
 
     if (!mPtt.load() && !mLastFramePtt) {
@@ -1152,13 +1161,17 @@ void ATCRadioSimulation::stopAdHocSounds() {
     mAdHocSpeakerMixer = audio::OutputMixer();
 }
 
-void ATCRadioSimulation::setLoopback(bool enabled, AdHocOutputTarget target, float gain) {
+void ATCRadioSimulation::setLoopback(bool enabled, AdHocOutputTarget target, float gain, HardwareType hardware) {
     std::lock_guard<std::mutex> loopbackGuard(mLoopbackLock);
     mLoopbackEnabled.store(enabled);
     mLoopbackTarget = target;
     mLoopbackGain   = gain;
-    if (!enabled) {
+    if (enabled) {
+        // Always recreate the filter to pick up hardware type changes
+        mLoopbackVhfFilter = std::make_shared<audio::VHFFilterSource>(hardware);
+    } else {
+        mLoopbackVhfFilter.reset();
         ::memset(mLoopbackBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
     }
-    LOG("ATCRadioSimulation", "setLoopback: enabled=%i, target=%i, gain=%f", enabled, static_cast<int>(target), gain);
+    LOG("ATCRadioSimulation", "setLoopback: enabled=%i, target=%i, gain=%f, hardware=%i", enabled, static_cast<int>(target), gain, static_cast<int>(hardware));
 }

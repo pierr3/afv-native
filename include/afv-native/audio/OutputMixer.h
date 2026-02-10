@@ -49,7 +49,7 @@ namespace afv_native { namespace audio {
     class OutputMixer: public ISampleSource {
       protected:
         std::forward_list<MixerSource> mSources;
-        float                          mGain;
+        float                          mGain = 1.0f;
 
       public:
         OutputMixer();

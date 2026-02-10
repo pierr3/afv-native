@@ -233,7 +233,7 @@ namespace afv_native { namespace afv {
         void playAdHocSound(std::shared_ptr<audio::ISampleStorage> storage, float gain, AdHocOutputTarget target);
         void stopAdHocSounds();
 
-        void setLoopback(bool enabled, AdHocOutputTarget target = AdHocOutputTarget::Headset, float gain = 1.0f);
+        void setLoopback(bool enabled, AdHocOutputTarget target = AdHocOutputTarget::Headset, float gain = 1.0f, HardwareType hardware = HardwareType::Schmid_ED_137B);
 
         /** Contains the number of IncomingAudioStreams known to the simulation stack */
         std::atomic<uint32_t> IncomingAudioStreams;
@@ -315,6 +315,8 @@ namespace afv_native { namespace afv {
         AdHocOutputTarget mLoopbackTarget = AdHocOutputTarget::Headset;
         float             mLoopbackGain   = 1.0f;
         audio::SampleType mLoopbackBuffer[audio::frameSizeSamples] = {};
+        std::shared_ptr<audio::VHFFilterSource> mLoopbackVhfFilter;
+        audio::SimpleCompressorEffect           mLoopbackCompressor;
 
         void resetRadioFx(unsigned int radio, bool except_click = false);
 

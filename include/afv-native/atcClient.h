@@ -257,7 +257,7 @@ namespace afv_native {
         void playAdHocSound(const std::string &wavFilePath, float gain, AdHocOutputTarget target);
         void stopAdHocSounds();
 
-        void setLoopback(bool enabled, AdHocOutputTarget target = AdHocOutputTarget::Headset, float gain = 1.0f);
+        void setLoopback(bool enabled, AdHocOutputTarget target = AdHocOutputTarget::Headset, float gain = 1.0f, HardwareType hardware = HardwareType::Schmid_ED_137B);
 
         void setHardware(HardwareType hardware);
 

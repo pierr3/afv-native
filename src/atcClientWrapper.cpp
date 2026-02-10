@@ -663,9 +663,9 @@ AFV_NATIVE_API void afv_native::api::atcClient::StopAdHocSounds() {
     client->stopAdHocSounds();
 }
 
-AFV_NATIVE_API void afv_native::api::atcClient::SetLoopback(bool enabled, afv_native::AdHocOutputTarget target, float gain) {
+AFV_NATIVE_API void afv_native::api::atcClient::SetLoopback(bool enabled, afv_native::AdHocOutputTarget target, float gain, afv_native::HardwareType hardware) {
     std::lock_guard<std::mutex> lock(afvMutex);
-    client->setLoopback(enabled, target, gain);
+    client->setLoopback(enabled, target, gain, hardware);
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetManualTransceivers(unsigned int freq, std::vector<afv_native::afv::dto::StationTransceiver> transceivers) {
