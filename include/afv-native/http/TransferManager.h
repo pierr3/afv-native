@@ -41,6 +41,13 @@
 
 namespace afv_native { namespace http {
 
+    struct CurlMultiDeleter {
+        void operator()(CURLM *p) const { curl_multi_cleanup(p); }
+    };
+    struct CurlShareDeleter {
+        void operator()(CURLSH *p) const { curl_share_cleanup(p); }
+    };
+
     class Request;
 
     /** TransferManager manages all of the running HTTP/HTTPS transfers, making sure
@@ -50,8 +57,8 @@ namespace afv_native { namespace http {
      */
     class TransferManager {
       protected:
-        CURLM  *mCurlMultiHandle;
-        CURLSH *mCurlShareHandle;
+        std::unique_ptr<CURLM, CurlMultiDeleter>  mCurlMultiHandle;
+        std::unique_ptr<CURLSH, CurlShareDeleter> mCurlShareHandle;
 
         std::unordered_map<CURL *, Request *> mPendingTransfers;
 

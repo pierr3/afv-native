@@ -36,6 +36,7 @@
 
 #include "afv-native/audio/ISampleSource.h"
 #include <memory>
+#include <vector>
 
 namespace afv_native { namespace audio {
     class SourceFrameSizeAdjuster: public ISampleSource {
@@ -43,12 +44,12 @@ namespace afv_native { namespace audio {
         std::shared_ptr<ISampleSource> mOriginSource;
         const unsigned int mDestinationFrameSize;
 
-        size_t      mSourceBufferOffset;
-        SampleType *mSourceBuffer;
+        size_t                  mSourceBufferOffset;
+        std::vector<SampleType> mSourceBuffer;
 
       public:
         SourceFrameSizeAdjuster(std::shared_ptr<ISampleSource> originSource, unsigned int outputFrameSize);
-        virtual ~SourceFrameSizeAdjuster();
+        virtual ~SourceFrameSizeAdjuster() = default;
         SourceStatus getAudioFrame(SampleType *bufferOut) override;
     };
 }} // namespace afv_native::audio

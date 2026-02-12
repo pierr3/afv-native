@@ -36,15 +36,23 @@
 #include "afv-native/cryptodto/dto/Header.h"
 #include <cstring>
 #include <ctime>
+#include <memory>
 #include <openssl/rand.h>
 #include <string>
+
+namespace {
+struct EvpCipherCtxDeleter {
+    void operator()(EVP_CIPHER_CTX *p) const { EVP_CIPHER_CTX_free(p); }
+};
+using EvpCipherCtxPtr = std::unique_ptr<EVP_CIPHER_CTX, EvpCipherCtxDeleter>;
+} // namespace
 
 using namespace afv_native::cryptodto;
 using namespace std;
 
 Channel::Channel(): ChannelTag() {
-    make_aead_key(aeadTransmitKey);
-    make_aead_key(aeadReceiveKey);
+    make_aead_key(aeadTransmitKey.data());
+    make_aead_key(aeadReceiveKey.data());
 }
 
 void Channel::make_aead_key(unsigned char keyBuffer[]) {
@@ -64,43 +72,37 @@ size_t Channel::encryptChaCha20Poly1305(unsigned char *cipherOut, const unsigned
 
     makeChaCha20Poly1305Nonce(header.Sequence, nonce);
 
-    auto *cipher_context = EVP_CIPHER_CTX_new();
+    EvpCipherCtxPtr cipher_context(EVP_CIPHER_CTX_new());
     // per EVP_EncryptInit, use null keys, then set the keys later with type null.
-    if (!EVP_EncryptInit_ex(cipher_context, EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
-        goto abort;
+    if (!EVP_EncryptInit_ex(cipher_context.get(), EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
+        return 0;
     }
-    if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_IVLEN, aeadModeIVSize, nullptr)) {
-        goto abort;
+    if (!EVP_CIPHER_CTX_ctrl(cipher_context.get(), EVP_CTRL_AEAD_SET_IVLEN, aeadModeIVSize, nullptr)) {
+        return 0;
     }
-    if (!EVP_EncryptInit_ex(cipher_context, nullptr, nullptr, aeadTransmitKey, nonce)) {
-        goto abort;
+    if (!EVP_EncryptInit_ex(cipher_context.get(), nullptr, nullptr, aeadTransmitKey.data(), nonce)) {
+        return 0;
     }
     if (aadLen > 0) {
-        if (!EVP_EncryptUpdate(cipher_context, nullptr, &enc_len, aadIn, aadLen)) {
-            goto abort;
+        if (!EVP_EncryptUpdate(cipher_context.get(), nullptr, &enc_len, aadIn, aadLen)) {
+            return 0;
         }
     }
-    if (!EVP_EncryptUpdate(cipher_context, cipherOut + cipherLen, &enc_len, plainIn, plainLen)) {
-        goto abort;
+    if (!EVP_EncryptUpdate(cipher_context.get(), cipherOut + cipherLen, &enc_len, plainIn, plainLen)) {
+        return 0;
     }
     cipherLen += enc_len;
-    if (!EVP_EncryptFinal_ex(cipher_context, cipherOut + cipherLen, &enc_len)) {
-        goto abort;
+    if (!EVP_EncryptFinal_ex(cipher_context.get(), cipherOut + cipherLen, &enc_len)) {
+        return 0;
     }
     cipherLen += enc_len;
     // append the tag.
-    if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_GET_TAG, aeadModeTagSize, cipherOut + cipherLen)) {
-        goto abort;
+    if (!EVP_CIPHER_CTX_ctrl(cipher_context.get(), EVP_CTRL_AEAD_GET_TAG, aeadModeTagSize, cipherOut + cipherLen)) {
+        return 0;
     }
 
     cipherLen += aeadModeTagSize;
-
-    EVP_CIPHER_CTX_free(cipher_context);
-
     return cipherLen;
-abort:
-    EVP_CIPHER_CTX_free(cipher_context);
-    return 0;
 }
 
 size_t Channel::decryptChaCha20Poly1305(unsigned char *bodyOut, const unsigned char *cipherIn, size_t cipherLen, const dto::Header &header, const unsigned char *aadIn, size_t aadLen) {
@@ -111,43 +113,38 @@ size_t Channel::decryptChaCha20Poly1305(unsigned char *bodyOut, const unsigned c
 
     size_t        bodyLen = 0;
     unsigned char nonce[aeadModeIVSize];
-    int           dec_len        = 0;
-    auto         *cipher_context = EVP_CIPHER_CTX_new();
+    int           dec_len = 0;
+    EvpCipherCtxPtr cipher_context(EVP_CIPHER_CTX_new());
 
     makeChaCha20Poly1305Nonce(header.Sequence, nonce);
-    if (!EVP_DecryptInit_ex(cipher_context, EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
-        goto abort;
+    if (!EVP_DecryptInit_ex(cipher_context.get(), EVP_chacha20_poly1305(), nullptr, nullptr, nullptr)) {
+        return 0;
     }
-    if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_IVLEN, aeadModeIVSize, nullptr)) {
-        goto abort;
+    if (!EVP_CIPHER_CTX_ctrl(cipher_context.get(), EVP_CTRL_AEAD_SET_IVLEN, aeadModeIVSize, nullptr)) {
+        return 0;
     }
-    if (!EVP_DecryptInit_ex(cipher_context, nullptr, nullptr, aeadReceiveKey, nonce)) {
-        goto abort;
+    if (!EVP_DecryptInit_ex(cipher_context.get(), nullptr, nullptr, aeadReceiveKey.data(), nonce)) {
+        return 0;
     }
-    if (!EVP_CIPHER_CTX_ctrl(cipher_context, EVP_CTRL_AEAD_SET_TAG, aeadModeTagSize, (void *) (cipherIn + (cipherLen - aeadModeTagSize)))) {
-        goto abort;
-    };
+    if (!EVP_CIPHER_CTX_ctrl(cipher_context.get(), EVP_CTRL_AEAD_SET_TAG, aeadModeTagSize, (void *) (cipherIn + (cipherLen - aeadModeTagSize)))) {
+        return 0;
+    }
     if (aadLen > 0) {
-        if (!EVP_DecryptUpdate(cipher_context, nullptr, &dec_len, aadIn, aadLen)) {
-            goto abort;
+        if (!EVP_DecryptUpdate(cipher_context.get(), nullptr, &dec_len, aadIn, aadLen)) {
+            return 0;
         }
         dec_len = 0;
     }
-    if (!EVP_DecryptUpdate(cipher_context, bodyOut, &dec_len, cipherIn, cipherLen - aeadModeTagSize)) {
-        goto abort;
+    if (!EVP_DecryptUpdate(cipher_context.get(), bodyOut, &dec_len, cipherIn, cipherLen - aeadModeTagSize)) {
+        return 0;
     }
     bodyLen += dec_len;
     dec_len = 0;
-    if (!EVP_DecryptFinal_ex(cipher_context, bodyOut + bodyLen, &dec_len)) {
-        goto abort;
+    if (!EVP_DecryptFinal_ex(cipher_context.get(), bodyOut + bodyLen, &dec_len)) {
+        return 0;
     }
     bodyLen += dec_len;
-    EVP_CIPHER_CTX_free(cipher_context);
-
     return bodyLen;
-abort:
-    EVP_CIPHER_CTX_free(cipher_context);
-    return 0;
 }
 
 bool Channel::Decapsulate(const unsigned char *cipherTextIn, size_t cipherTextLen, std::string &channelTag, sequence_t &sequence, CryptoDtoMode &modeOut, std::string &dtoNameOut, msgpack::sbuffer &dtoOut) {
@@ -263,7 +260,7 @@ size_t Channel::Encapsulate(const unsigned char *plainTextBuf, size_t plainTextL
 }
 
 void Channel::setChannelConfig(const dto::ChannelConfig &config) {
-    ::memcpy(aeadTransmitKey, config.AeadTransmitKey, aeadModeKeySize);
-    ::memcpy(aeadReceiveKey, config.AeadReceiveKey, aeadModeKeySize);
+    aeadTransmitKey = config.AeadTransmitKey;
+    aeadReceiveKey  = config.AeadReceiveKey;
     ChannelTag = config.ChannelTag;
 }

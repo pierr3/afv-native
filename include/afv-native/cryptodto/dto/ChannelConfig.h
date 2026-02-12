@@ -35,6 +35,7 @@
 #define AFV_NATIVE_CHANNELCONFIG_H
 
 #include "afv-native/cryptodto/params.h"
+#include <array>
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -44,13 +45,13 @@ namespace afv_native { namespace cryptodto {
     namespace dto {
         class ChannelConfig {
           public:
-            ChannelConfig();
-            ChannelConfig(const ChannelConfig &cpysrc);
-            ChannelConfig(ChannelConfig &&movesrc) noexcept;
+            ChannelConfig()                                = default;
+            ChannelConfig(const ChannelConfig &cpysrc)     = default;
+            ChannelConfig(ChannelConfig &&movesrc) noexcept = default;
 
             std::string ChannelTag;
-            unsigned char AeadReceiveKey[cryptodto::aeadModeKeySize];
-            unsigned char AeadTransmitKey[cryptodto::aeadModeKeySize];
+            std::array<unsigned char, cryptodto::aeadModeKeySize> AeadReceiveKey{};
+            std::array<unsigned char, cryptodto::aeadModeKeySize> AeadTransmitKey{};
 
             // hmacKey is not used anywhere, but we still need to be able to unmarshal it.
             std::string HmacKey;

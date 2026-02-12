@@ -274,7 +274,7 @@ std::string UDPChannel::getLastErrorMessage() const {
 void UDPChannel::setChannelConfig(const dto::ChannelConfig &config) {
     // if the channel keys change, we need to reset our rx expected sequence as the cipher
     // has probably restarted.  We do not need to reset tx since the other end will deal.
-    if (::memcmp(aeadReceiveKey, config.AeadReceiveKey, aeadModeKeySize) != 0) {
+    if (aeadReceiveKey != config.AeadReceiveKey) {
         receiveSequence.reset();
     }
     Channel::setChannelConfig(config);

@@ -35,13 +35,22 @@
 #define AFV_NATIVE_REQUEST_H
 
 #include "afv-native/http/http.h"
+#include <array>
 #include <curl/curl.h>
 #include <functional>
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
 
 namespace afv_native { namespace http {
     class TransferManager;
+
+    struct CurlEasyDeleter {
+        void operator()(CURL *p) const { curl_easy_cleanup(p); }
+    };
+    struct CurlSlistDeleter {
+        void operator()(curl_slist *p) const { curl_slist_free_all(p); }
+    };
 
     class Request {
       private:
@@ -60,8 +69,8 @@ namespace afv_native { namespace http {
 
         Progress mProgress;
 
-        CURL              *mCurlHandle;
-        struct curl_slist *mHeaders;
+        std::unique_ptr<CURL, CurlEasyDeleter>      mCurlHandle;
+        std::unique_ptr<curl_slist, CurlSlistDeleter> mHeaders;
         TransferManager   *mTM;
 
         std::vector<unsigned char> mReq;
@@ -72,7 +81,7 @@ namespace afv_native { namespace http {
 
         std::vector<unsigned char> mResp;
 
-        char mCurlErrorBuffer[CURL_ERROR_SIZE];
+        std::array<char, CURL_ERROR_SIZE> mCurlErrorBuffer;
 
         int mDownloadTotal;
         int mDownloadProgress;

@@ -225,7 +225,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
     bool ignoreaudio = false;
     std::shared_ptr<OutputDeviceState> state = onHeadset ? mHeadsetState : mSpeakerState;
 
-    ::memset(state->mChannelBuffer, 0, audio::frameSizeBytes);
+    ::memset(state->mChannelBuffer.data(), 0, audio::frameSizeBytes);
     if (mPtt.load() && mRadioState[rxIter].tx) {
         // don't analyze and mix-in the radios that are transmitting or muted,
         // but suppress the effects.
@@ -291,7 +291,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             // then include this stream.
             try {
                 if (!ignoreaudio && !mRadioState[rxIter].isOutputMuted) {
-                    mix_buffers(state->mChannelBuffer,
+                    mix_buffers(state->mChannelBuffer.data(),
                                 sampleCache.at(srcPair.second.source.get()),
                                 voiceGain * mRadioState[rxIter].Gain);
                 }
@@ -325,10 +325,10 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             }
 
             set_radio_effects(rxIter);
-            mRadioState[rxIter].vhfFilter->transformFrame(state->mChannelBuffer,
-                                                          state->mChannelBuffer);
-            mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer,
-                                                                      state->mChannelBuffer);
+            mRadioState[rxIter].vhfFilter->transformFrame(state->mChannelBuffer.data(),
+                                                          state->mChannelBuffer.data());
+            mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer.data(),
+                                                                      state->mChannelBuffer.data());
             if (!mix_effect(mRadioState[rxIter].Crackle,
                             crackleGain * mRadioState[rxIter].Gain, state)) {
                 mRadioState[rxIter].Crackle.reset();
@@ -394,18 +394,18 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         if (!ignoreaudio && !mRadioState[rxIter].isOutputMuted) {
             if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left ||
                 mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
-                mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
+                mix_buffers(state->mLeftMixingBuffer.data(), state->mChannelBuffer.data());
             }
 
             if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
                 mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
-                mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
+                mix_buffers(state->mRightMixingBuffer.data(), state->mChannelBuffer.data());
             }
         }
 
     } else {
         if (!ignoreaudio && !mRadioState[rxIter].isOutputMuted) {
-            mix_buffers(state->mMixingBuffer, state->mChannelBuffer);
+            mix_buffers(state->mMixingBuffer.data(), state->mChannelBuffer.data());
         }
     }
 
@@ -429,9 +429,9 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
         }
     }
 
-    ::memset(state->mLeftMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-    ::memset(state->mRightMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-    ::memset(state->mMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    ::memset(state->mLeftMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    ::memset(state->mRightMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    ::memset(state->mMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
 
     {
         std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
@@ -448,10 +448,10 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
         auto rv = mixer.getAudioFrame(mAdHocFetchBuffer);
         if (rv == audio::SourceStatus::OK) {
             if (onHeadset) {
-                mix_buffers(state->mLeftMixingBuffer, mAdHocFetchBuffer);
-                mix_buffers(state->mRightMixingBuffer, mAdHocFetchBuffer);
+                mix_buffers(state->mLeftMixingBuffer.data(), mAdHocFetchBuffer);
+                mix_buffers(state->mRightMixingBuffer.data(), mAdHocFetchBuffer);
             } else {
-                mix_buffers(state->mMixingBuffer, mAdHocFetchBuffer);
+                mix_buffers(state->mMixingBuffer.data(), mAdHocFetchBuffer);
             }
         }
     }
@@ -474,20 +474,20 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
                 ::memcpy(loopbackCopy, mLoopbackBuffer, sizeof(audio::SampleType) * audio::frameSizeSamples);
             }
             if (onHeadset) {
-                mix_buffers(state->mLeftMixingBuffer, loopbackCopy, mLoopbackGain);
-                mix_buffers(state->mRightMixingBuffer, loopbackCopy, mLoopbackGain);
+                mix_buffers(state->mLeftMixingBuffer.data(), loopbackCopy, mLoopbackGain);
+                mix_buffers(state->mRightMixingBuffer.data(), loopbackCopy, mLoopbackGain);
             } else {
-                mix_buffers(state->mMixingBuffer, loopbackCopy, mLoopbackGain);
+                mix_buffers(state->mMixingBuffer.data(), loopbackCopy, mLoopbackGain);
             }
         }
     }
 
     if (onHeadset) {
         audio::SampleType interleavedSamples[audio::frameSizeSamples * 2];
-        interleave(state->mLeftMixingBuffer, state->mRightMixingBuffer, interleavedSamples, audio::frameSizeSamples);
+        interleave(state->mLeftMixingBuffer.data(), state->mRightMixingBuffer.data(), interleavedSamples, audio::frameSizeSamples);
         ::memcpy(bufferOut, interleavedSamples, sizeof(audio::SampleType) * audio::frameSizeSamples * 2);
     } else {
-        ::memcpy(bufferOut, state->mMixingBuffer, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        ::memcpy(bufferOut, state->mMixingBuffer.data(), sizeof(audio::SampleType) * audio::frameSizeSamples);
     }
 
     return audio::SourceStatus::OK;
@@ -518,9 +518,9 @@ void ATCRadioSimulation::set_radio_effects(unsigned int rxIter) {
 
 bool ATCRadioSimulation::mix_effect(std::shared_ptr<audio::ISampleSource> effect, float gain, std::shared_ptr<OutputDeviceState> state) {
     if (effect && gain > 0.0f) {
-        auto rv = effect->getAudioFrame(state->mFetchBuffer);
+        auto rv = effect->getAudioFrame(state->mFetchBuffer.data());
         if (rv == audio::SourceStatus::OK) {
-            ATCRadioSimulation::mix_buffers(state->mChannelBuffer, state->mFetchBuffer, gain);
+            ATCRadioSimulation::mix_buffers(state->mChannelBuffer.data(), state->mFetchBuffer.data(), gain);
         } else {
             return false;
         }

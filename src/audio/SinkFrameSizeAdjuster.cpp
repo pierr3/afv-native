@@ -40,16 +40,7 @@
 using namespace afv_native::audio;
 
 SinkFrameSizeAdjuster::SinkFrameSizeAdjuster(std::shared_ptr<ISampleSink> destSink, unsigned int sinkFrameSize):
-    mDestinationSink(std::move(destSink)), mSourceFrameSize(sinkFrameSize), mSinkBufferOffset(0) {
-    const size_t bufferSize = frameSizeSamples * sizeof(SampleType);
-    mSinkBuffer             = new SampleType[bufferSize];
-    if (nullptr != mSinkBuffer) {
-        ::memset(mSinkBuffer, 0, bufferSize);
-    }
-}
-
-SinkFrameSizeAdjuster::~SinkFrameSizeAdjuster() {
-    delete[] mSinkBuffer;
+    mDestinationSink(std::move(destSink)), mSourceFrameSize(sinkFrameSize), mSinkBufferOffset(0), mSinkBuffer(frameSizeSamples, 0) {
 }
 
 void SinkFrameSizeAdjuster::putAudioFrame(const SampleType *bufferIn) {
@@ -62,18 +53,18 @@ void SinkFrameSizeAdjuster::putAudioFrame(const SampleType *bufferIn) {
     // bind to the smaller of the samples we have left, and the size the source.
     size_t sample_copy_count = std::min<size_t>(space_left_in_buffer, mSourceFrameSize);
     // then copy those into our sample send buffer.
-    memcpy(mSinkBuffer + mSinkBufferOffset, bufferIn, sample_copy_count * sizeof(SampleType));
+    memcpy(mSinkBuffer.data() + mSinkBufferOffset, bufferIn, sample_copy_count * sizeof(SampleType));
     mSinkBufferOffset += sample_copy_count;
     sourceOffset += sample_copy_count;
 
     while (mSinkBufferOffset >= frameSizeSamples) {
-        mDestinationSink->putAudioFrame(mSinkBuffer);
+        mDestinationSink->putAudioFrame(mSinkBuffer.data());
         mSinkBufferOffset = 0;
 
         // if there's any samples left in the frame, copy them up to a whole frame maximum.
         if ((mSourceFrameSize - sourceOffset) > 0) {
             sample_copy_count = std::min<size_t>(frameSizeSamples, mSourceFrameSize - sourceOffset);
-            memcpy(mSinkBuffer + mSinkBufferOffset, bufferIn + sourceOffset, sample_copy_count * sizeof(SampleType));
+            memcpy(mSinkBuffer.data() + mSinkBufferOffset, bufferIn + sourceOffset, sample_copy_count * sizeof(SampleType));
             mSinkBufferOffset += sample_copy_count;
         }
     }

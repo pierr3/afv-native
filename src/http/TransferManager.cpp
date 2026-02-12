@@ -37,37 +37,34 @@
 
 using namespace afv_native::http;
 
-TransferManager::TransferManager(): mPendingTransfers() {
-    mCurlMultiHandle = curl_multi_init();
-    mCurlShareHandle = curl_share_init();
+TransferManager::TransferManager():
+    mCurlMultiHandle(curl_multi_init()),
+    mCurlShareHandle(curl_share_init()),
+    mPendingTransfers() {
     // share everything.
-    curl_share_setopt(mCurlShareHandle, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
-    curl_share_setopt(mCurlShareHandle, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
-    curl_share_setopt(mCurlShareHandle, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
-    curl_share_setopt(mCurlShareHandle, CURLSHOPT_SHARE, CURL_LOCK_DATA_CONNECT);
-    curl_share_setopt(mCurlShareHandle, CURLSHOPT_SHARE, CURL_LOCK_DATA_PSL);
+    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
+    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
+    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
+    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_CONNECT);
+    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_PSL);
 }
 
 TransferManager::~TransferManager() {
     // First, remove all easy handles from the multi handle
     std::lock_guard<std::recursive_mutex> lock(mMutex);
     for (auto const &pair: mPendingTransfers) {
-        curl_multi_remove_handle(mCurlMultiHandle, pair.first);
+        curl_multi_remove_handle(mCurlMultiHandle.get(), pair.first);
     }
 
-    // Clear pending transfers
+    // Clear pending transfers before unique_ptrs clean up the handles
     mPendingTransfers.clear();
-
-    // Now it's safe to clean up the handles
-    curl_multi_cleanup(mCurlMultiHandle);
-    curl_share_cleanup(mCurlShareHandle);
 }
 
 void TransferManager::process() {
     std::lock_guard<std::recursive_mutex> lock(mMutex);
     int running = 0;
 
-    curl_multi_perform(mCurlMultiHandle, &running);
+    curl_multi_perform(mCurlMultiHandle.get(), &running);
 
     processPendingMultiEvents();
 }
@@ -77,7 +74,7 @@ void TransferManager::processPendingMultiEvents() {
     Request        *req;
     int             msgs_queued = 0;
 
-    while (nullptr != (cMsg = curl_multi_info_read(mCurlMultiHandle, &msgs_queued))) {
+    while (nullptr != (cMsg = curl_multi_info_read(mCurlMultiHandle.get(), &msgs_queued))) {
         // GAH.  STUPID STUPID CURL.  Never return pointers from stack or other transient memory.
         auto msgCopy = *cMsg;
 
@@ -85,7 +82,7 @@ void TransferManager::processPendingMultiEvents() {
         switch (msgCopy.msg) {
             case CURLMSG_DONE:
                 // remove the easy handle from our management
-                curl_multi_remove_handle(mCurlMultiHandle, msgCopy.easy_handle);
+                curl_multi_remove_handle(mCurlMultiHandle.get(), msgCopy.easy_handle);
                 // remove the shared_ptr hold we've got on the request itself.
                 mPendingTransfers.erase(msgCopy.easy_handle);
                 // and notify the request object.
@@ -103,7 +100,7 @@ void TransferManager::processPendingMultiEvents() {
 
 void TransferManager::AddToSession(Request *req) const {
     if (req) {
-        curl_easy_setopt(req->getCurlHandle(), CURLOPT_SHARE, mCurlShareHandle);
+        curl_easy_setopt(req->getCurlHandle(), CURLOPT_SHARE, mCurlShareHandle.get());
     }
 }
 
@@ -111,12 +108,12 @@ void TransferManager::HandleRequest(Request *req) {
     if (req) {
         auto curlHandle               = req->getCurlHandle();
         mPendingTransfers[curlHandle] = req;
-        curl_multi_add_handle(mCurlMultiHandle, curlHandle);
+        curl_multi_add_handle(mCurlMultiHandle.get(), curlHandle);
     }
 }
 
 CURLM *TransferManager::getCurlMultiHandle() const {
-    return mCurlMultiHandle;
+    return mCurlMultiHandle.get();
 }
 
 void TransferManager::registerForAsyncCallback(Request &req) {

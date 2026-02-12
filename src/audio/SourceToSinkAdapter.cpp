@@ -12,17 +12,10 @@ using namespace afv_native::audio;
 using namespace std;
 
 SourceToSinkAdapter::SourceToSinkAdapter(std::shared_ptr<ISampleSource> inSource, std::shared_ptr<ISampleSink> inSink):
-    mSink(std::move(inSink)), mSource(std::move(inSource))
-
-{
-    mBuffer = new audio::SampleType[audio::frameSizeSamples];
-}
-
-SourceToSinkAdapter::~SourceToSinkAdapter() {
-    delete[] mBuffer;
+    mBuffer(frameSizeSamples, 0), mSink(std::move(inSink)), mSource(std::move(inSource)) {
 }
 
 void SourceToSinkAdapter::tick() {
-    mSource->getAudioFrame(mBuffer);
-    mSink->putAudioFrame(mBuffer);
+    mSource->getAudioFrame(mBuffer.data());
+    mSink->putAudioFrame(mBuffer.data());
 }

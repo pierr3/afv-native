@@ -37,8 +37,10 @@
 
 using namespace afv_native::audio;
 
+VHFFilterSource::~VHFFilterSource() = default;
+
 VHFFilterSource::VHFFilterSource(HardwareType hd):
-    compressor(new chunkware_simple::SimpleComp()), limiter(new chunkware_simple::SimpleLimit()) {
+    compressor(std::make_unique<chunkware_simple::SimpleComp>()), limiter(std::make_unique<chunkware_simple::SimpleLimit>()) {
     compressor->setSampleRate(sampleRateHz);
     compressor->setAttack(0.1);
     compressor->setRelease(80.0);
@@ -58,11 +60,6 @@ VHFFilterSource::VHFFilterSource(HardwareType hd):
 
     setupPresets();
 }
-
-VHFFilterSource::~VHFFilterSource() {
-    delete compressor;
-    delete limiter;
-};
 
 void VHFFilterSource::setupPresets() {
     if (hardware == HardwareType::Schmid_ED_137B) {

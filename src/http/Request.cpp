@@ -44,35 +44,24 @@ using namespace std;
 using json = nlohmann::json;
 
 Request::Request(const string &url, Method method):
-    mMethod(method), mURL(url), mFollowRedirect(method == Method::GET), mProgress(Progress::New), mCurlHandle(), mHeaders(nullptr), mTM(nullptr), mReq(), mReqBufOffset(0), mRespStatusCode(0), mRespContentType(), mResp(), mCurlErrorBuffer(), mCompletionCallback(), mDownloadTotal(0), mDownloadProgress(0), mUploadTotal(0), mUploadProgress(0) {
-    ::memset(mCurlErrorBuffer, 0, CURL_ERROR_SIZE);
+    mMethod(method), mURL(url), mFollowRedirect(method == Method::GET), mProgress(Progress::New), mCurlHandle(), mHeaders(), mTM(nullptr), mReq(), mReqBufOffset(0), mRespStatusCode(0), mRespContentType(), mResp(), mCurlErrorBuffer(), mCompletionCallback(), mDownloadTotal(0), mDownloadProgress(0), mUploadTotal(0), mUploadProgress(0) {
+    mCurlErrorBuffer.fill(0);
 }
 
 Request::~Request() {
     reset();
-    curl_easy_cleanup(mCurlHandle);
-    mCurlHandle = nullptr;
-
-    if (mHeaders != nullptr) {
-        curl_slist_free_all(mHeaders);
-        mHeaders = nullptr;
-    }
 }
 
 void Request::reset() {
     if (mCurlHandle) {
         if (mTM != nullptr) {
-            curl_multi_remove_handle(mTM->getCurlMultiHandle(), mCurlHandle);
+            curl_multi_remove_handle(mTM->getCurlMultiHandle(), mCurlHandle.get());
             mTM->removeAsyncCallback(*this);
             mTM = nullptr;
         }
-        curl_easy_cleanup(mCurlHandle);
-        mCurlHandle = nullptr;
+        mCurlHandle.reset();
     }
-    if (mHeaders != nullptr) {
-        curl_slist_free_all(mHeaders);
-        mHeaders = nullptr;
-    }
+    mHeaders.reset();
     mResp.clear();
     mReq.clear();
     mReqBufOffset = 0;
@@ -80,50 +69,50 @@ void Request::reset() {
 }
 
 bool Request::setupHandle() {
-    assert(mCurlHandle == nullptr);
-    mCurlHandle = curl_easy_init();
-    curl_easy_setopt(mCurlHandle, CURLOPT_URL, mURL.c_str());
-    curl_easy_setopt(mCurlHandle, CURLOPT_WRITEFUNCTION, curlWriteCallback);
-    curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, this);
-    curl_easy_setopt(mCurlHandle, CURLOPT_ERRORBUFFER, mCurlErrorBuffer);
-    curl_easy_setopt(mCurlHandle, CURLOPT_USERAGENT, "AFV-Native/1.0");
-    curl_easy_setopt(mCurlHandle, CURLOPT_NOPROGRESS, 0);
-    curl_easy_setopt(mCurlHandle, CURLOPT_NOSIGNAL, 1);
-    curl_easy_setopt(mCurlHandle, CURLOPT_XFERINFOFUNCTION, curlTransferInfoCallback);
-    curl_easy_setopt(mCurlHandle, CURLOPT_XFERINFODATA, this);
-    curl_easy_setopt(mCurlHandle, CURLOPT_READFUNCTION, curlReadCallback);
-    curl_easy_setopt(mCurlHandle, CURLOPT_READDATA, this);
-    if (mHeaders != nullptr) {
-        curl_easy_setopt(mCurlHandle, CURLOPT_HTTPHEADER, mHeaders);
+    assert(!mCurlHandle);
+    mCurlHandle.reset(curl_easy_init());
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_URL, mURL.c_str());
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_WRITEFUNCTION, curlWriteCallback);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_WRITEDATA, this);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_ERRORBUFFER, mCurlErrorBuffer.data());
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_USERAGENT, "AFV-Native/1.0");
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_NOPROGRESS, 0);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_NOSIGNAL, 1);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_XFERINFOFUNCTION, curlTransferInfoCallback);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_XFERINFODATA, this);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_READFUNCTION, curlReadCallback);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_READDATA, this);
+    if (mHeaders) {
+        curl_easy_setopt(mCurlHandle.get(), CURLOPT_HTTPHEADER, mHeaders.get());
     }
 
     /* Disable Nagle because Mac says so.... */
-    curl_easy_setopt(mCurlHandle, CURLOPT_TCP_NODELAY, 1);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_TCP_NODELAY, 1);
 
-    curl_easy_setopt(mCurlHandle, CURLOPT_SSL_VERIFYPEER, 1);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_SSL_VERIFYPEER, 1);
 
     switch (mMethod) {
         case Method::GET:
-            curl_easy_setopt(mCurlHandle, CURLOPT_HTTPGET, 1);
-            curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 1);
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_HTTPGET, 1);
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_FOLLOWLOCATION, 1);
             break;
         case Method::POST:
-            curl_easy_setopt(mCurlHandle, CURLOPT_POST, 1);
-            curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
-            curl_easy_setopt(mCurlHandle, CURLOPT_POSTFIELDS, nullptr);
-            curl_easy_setopt(mCurlHandle, CURLOPT_POSTFIELDSIZE, mReq.size());
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_POST, 1);
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_FOLLOWLOCATION, 0);
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_POSTFIELDS, nullptr);
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_POSTFIELDSIZE, mReq.size());
             break;
         case Method::PUT:
-            curl_easy_setopt(mCurlHandle, CURLOPT_UPLOAD, 1);
-            curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
-            curl_easy_setopt(mCurlHandle, CURLOPT_INFILESIZE, mReq.size());
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_UPLOAD, 1);
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_FOLLOWLOCATION, 0);
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_INFILESIZE, mReq.size());
             break;
         case Method::DEL:
-            curl_easy_setopt(mCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
-            curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_CUSTOMREQUEST, "DELETE");
+            curl_easy_setopt(mCurlHandle.get(), CURLOPT_FOLLOWLOCATION, 0);
             break;
     }
-    curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, mFollowRedirect);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_FOLLOWLOCATION, mFollowRedirect);
     return true;
 }
 
@@ -132,17 +121,16 @@ void Request::setFollowRedirect(bool follow) {
 }
 
 void Request::setHeader(const std::string &header, const std::string &value) {
+    auto *raw = mHeaders.release();
     struct curl_slist *newHeaders;
     if (value.empty()) {
         auto headerOut = header + ";";
-        newHeaders     = curl_slist_append(mHeaders, headerOut.c_str());
+        newHeaders     = curl_slist_append(raw, headerOut.c_str());
     } else {
         auto headerOut = header + ": " + value;
-        newHeaders     = curl_slist_append(mHeaders, headerOut.c_str());
+        newHeaders     = curl_slist_append(raw, headerOut.c_str());
     }
-    if (newHeaders != nullptr) {
-        mHeaders = newHeaders;
-    }
+    mHeaders.reset(newHeaders ? newHeaders : raw);
 }
 
 void Request::setRequestBody(const unsigned char *buf, size_t len) {
@@ -206,8 +194,8 @@ bool Request::doSync() {
         return false;
     }
     mProgress = Progress::Connecting;
-    memset(mCurlErrorBuffer, 0, CURL_ERROR_SIZE);
-    auto rv = curl_easy_perform(mCurlHandle);
+    mCurlErrorBuffer.fill(0);
+    auto rv = curl_easy_perform(mCurlHandle.get());
     if (rv == CURLE_OK) {
         notifyTransferCompleted();
         return true;
@@ -227,7 +215,7 @@ void Request::notifyTransferError() {
 }
 
 std::string Request::getCurlError() const {
-    return string(mCurlErrorBuffer);
+    return string(mCurlErrorBuffer.data());
 }
 
 Progress Request::getProgress() const {
@@ -259,13 +247,13 @@ void Request::transferInfoCallback(curl_off_t dltotal, curl_off_t dlnow, curl_of
 void Request::notifyTransferCompleted() {
     mProgress = Progress::Finished;
     long resp_code;
-    if (CURLE_OK == curl_easy_getinfo(mCurlHandle, CURLINFO_RESPONSE_CODE, &resp_code)) {
+    if (CURLE_OK == curl_easy_getinfo(mCurlHandle.get(), CURLINFO_RESPONSE_CODE, &resp_code)) {
         // downcast on Unixen. (sizeof(long) > sizeof(int)).
         mRespStatusCode = resp_code;
     }
 
     char *ct_ptr = nullptr;
-    if (CURLE_OK == curl_easy_getinfo(mCurlHandle, CURLINFO_CONTENT_TYPE, &ct_ptr)) {
+    if (CURLE_OK == curl_easy_getinfo(mCurlHandle.get(), CURLINFO_CONTENT_TYPE, &ct_ptr)) {
         if (ct_ptr != nullptr) {
             mRespContentType = string(ct_ptr);
         } else {
@@ -303,7 +291,7 @@ string Request::getResponseBody() const {
 }
 
 CURL *Request::getCurlHandle() const {
-    return mCurlHandle;
+    return mCurlHandle.get();
 }
 
 void Request::setCompletionCallback(std::function<void(Request *, bool)> cb) {
@@ -316,14 +304,14 @@ bool Request::doAsync(TransferManager &transferManager) {
     }
 
     auto curlMultiHandle = transferManager.getCurlMultiHandle();
-    curl_multi_add_handle(curlMultiHandle, mCurlHandle);
+    curl_multi_add_handle(curlMultiHandle, mCurlHandle.get());
     transferManager.registerForAsyncCallback(*this);
     mTM = &transferManager;
     return true;
 }
 
 void Request::shareState(TransferManager &transferManager) {
-    curl_easy_setopt(mCurlHandle, CURLOPT_SHARE, transferManager.getCurlMultiHandle());
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_SHARE, transferManager.getCurlMultiHandle());
 }
 
 const string &Request::getUrl() const {

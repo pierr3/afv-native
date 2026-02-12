@@ -11,17 +11,18 @@
 #include "afv-native/audio/ISampleSource.h"
 #include "afv-native/audio/audio_params.h"
 #include <memory>
+#include <vector>
 
 namespace afv_native { namespace audio {
 
     class SourceToSinkAdapter {
       public:
         SourceToSinkAdapter(std::shared_ptr<ISampleSource> inSource, std::shared_ptr<ISampleSink> inSink);
-        ~SourceToSinkAdapter();
+        ~SourceToSinkAdapter() = default;
         void tick();
 
       private:
-        audio::SampleType             *mBuffer;
+        std::vector<SampleType>        mBuffer;
         std::shared_ptr<ISampleSource> mSource;
         std::shared_ptr<ISampleSink>   mSink;
     };

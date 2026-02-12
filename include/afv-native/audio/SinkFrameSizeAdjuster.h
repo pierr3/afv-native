@@ -37,6 +37,7 @@
 #include "afv-native/audio/ISampleSink.h"
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace afv_native { namespace audio {
     class SinkFrameSizeAdjuster: public ISampleSink {
@@ -44,12 +45,12 @@ namespace afv_native { namespace audio {
         std::shared_ptr<ISampleSink> mDestinationSink;
         const unsigned int           mSourceFrameSize;
 
-        size_t      mSinkBufferOffset;
-        SampleType *mSinkBuffer;
+        size_t                  mSinkBufferOffset;
+        std::vector<SampleType> mSinkBuffer;
 
       public:
         SinkFrameSizeAdjuster(std::shared_ptr<ISampleSink> destSink, unsigned int sinkFrameSize);
-        virtual ~SinkFrameSizeAdjuster();
+        virtual ~SinkFrameSizeAdjuster() = default;
         void putAudioFrame(const SampleType *bufferIn) override;
     };
 }} // namespace afv_native::audio

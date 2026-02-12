@@ -35,22 +35,28 @@
 #define AFV_NATIVE_SPEEXPREPROCESSOR_H
 
 #include "afv-native/audio/ISampleSink.h"
+#include <array>
 #include <math.h>
 #include <memory>
 #include <speex/speex_preprocess.h>
 
 namespace afv_native { namespace audio {
+
+    struct SpeexPreprocessorDeleter {
+        void operator()(SpeexPreprocessState *p) const { speex_preprocess_state_destroy(p); }
+    };
+
     class SpeexPreprocessor: public ISampleSink {
       protected:
         std::shared_ptr<ISampleSink> mUpstreamSink;
-        SpeexPreprocessState *mPreprocessorState;
+        std::unique_ptr<SpeexPreprocessState, SpeexPreprocessorDeleter> mPreprocessorState;
 
-        spx_int16_t mSpeexFrame[frameSizeSamples];
-        SampleType mOutputFrame[frameSizeSamples];
+        std::array<spx_int16_t, frameSizeSamples> mSpeexFrame;
+        std::array<SampleType, frameSizeSamples>  mOutputFrame;
 
       public:
         explicit SpeexPreprocessor(std::shared_ptr<ISampleSink> upstream);
-        virtual ~SpeexPreprocessor();
+        virtual ~SpeexPreprocessor() = default;
         void putAudioFrame(const SampleType *bufferIn) override;
         void transformFrame(SampleType *bufferOut, SampleType const bufferIn[]);
     };

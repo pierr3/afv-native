@@ -38,6 +38,7 @@
 #include "afv-native/cryptodto/SequenceTest.h"
 #include "afv-native/cryptodto/dto/ICryptoDTO.h"
 #include "afv-native/cryptodto/params.h"
+#include <array>
 #include <cstdint>
 #include <msgpack.hpp>
 #include <openssl/evp.h>
@@ -53,8 +54,8 @@ namespace afv_native { namespace cryptodto {
 
     class Channel {
       protected:
-        unsigned char aeadTransmitKey[aeadModeKeySize];
-        unsigned char aeadReceiveKey[aeadModeKeySize];
+        std::array<unsigned char, aeadModeKeySize> aeadTransmitKey;
+        std::array<unsigned char, aeadModeKeySize> aeadReceiveKey;
 
         static void make_aead_key(unsigned char keyBuffer[]);
 

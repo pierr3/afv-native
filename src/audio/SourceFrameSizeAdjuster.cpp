@@ -47,7 +47,7 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut) {
     // use residual frame first.
     if (mSourceBufferOffset > 0) {
         size_t framesToCopy = std::min<size_t>(frameSizeSamples - mSourceBufferOffset, mDestinationFrameSize);
-        ::memcpy(bufferOut + destOffset, mSourceBuffer + mSourceBufferOffset, framesToCopy * sizeof(SampleType));
+        ::memcpy(bufferOut + destOffset, mSourceBuffer.data() + mSourceBufferOffset, framesToCopy * sizeof(SampleType));
         mSourceBufferOffset = (mSourceBufferOffset + framesToCopy) % frameSizeSamples;
         destOffset += framesToCopy;
     }
@@ -68,7 +68,7 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut) {
         } else {
             // the remaining samples to copy must be less than a frame.
             // fill our holding buffer.
-            sourceRes           = mOriginSource->getAudioFrame(mSourceBuffer);
+            sourceRes           = mOriginSource->getAudioFrame(mSourceBuffer.data());
             mSourceBufferOffset = 0;
             if (sourceRes != SourceStatus::OK) {
                 // something broke. silencefill the buffer, and return OK, but kill our source handle.
@@ -77,7 +77,7 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut) {
                 return SourceStatus::OK;
             }
             // now, copy out the difference.
-            ::memcpy(bufferOut + destOffset, mSourceBuffer, samplesRemaining * sizeof(SampleType));
+            ::memcpy(bufferOut + destOffset, mSourceBuffer.data(), samplesRemaining * sizeof(SampleType));
             mSourceBufferOffset = samplesRemaining;
             destOffset += samplesRemaining;
         }
@@ -86,12 +86,5 @@ SourceStatus SourceFrameSizeAdjuster::getAudioFrame(SampleType *bufferOut) {
 }
 
 SourceFrameSizeAdjuster::SourceFrameSizeAdjuster(std::shared_ptr<ISampleSource> originSource, unsigned int outputFrameSize):
-    mOriginSource(std::move(originSource)), mDestinationFrameSize(outputFrameSize), mSourceBufferOffset(0) {
-    const size_t bufferSize = frameSizeSamples * sizeof(SampleType);
-    mSourceBuffer           = new SampleType[bufferSize];
-    ::memset(mSourceBuffer, 0, bufferSize);
-}
-
-SourceFrameSizeAdjuster::~SourceFrameSizeAdjuster() {
-    delete[] mSourceBuffer;
+    mOriginSource(std::move(originSource)), mDestinationFrameSize(outputFrameSize), mSourceBufferOffset(0), mSourceBuffer(frameSizeSamples, 0) {
 }

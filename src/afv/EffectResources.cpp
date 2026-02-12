@@ -39,21 +39,12 @@ using namespace afv_native;
 using namespace afv_native::afv;
 using namespace std;
 
-static audio::AudioSampleData *_load(const std::string &file_path) {
-    return audio::LoadWav(file_path.c_str());
-}
-
 static shared_ptr<audio::WavSampleStorage> try_load(const std::string &file) {
-    auto *audData = _load(file);
-    if (nullptr == audData) {
-        return shared_ptr<audio::WavSampleStorage>(nullptr);
+    auto audData = audio::LoadWav(file.c_str());
+    if (!audData) {
+        return nullptr;
     }
-    auto result = make_shared<audio::WavSampleStorage>(*audData);
-
-    // ME: Fix Leak
-    delete audData;
-
-    return result;
+    return make_shared<audio::WavSampleStorage>(*audData);
 }
 
 EffectResources::EffectResources(const string &file_path) {

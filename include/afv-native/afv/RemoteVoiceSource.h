@@ -39,11 +39,19 @@
 #include "afv-native/audio/SourceStatus.h"
 #include "afv-native/audio/audio_params.h"
 #include "afv-native/util/monotime.h"
+#include <memory>
 #include <mutex>
 #include <opus/opus.h>
 #include <speex/speex_jitter.h>
 
 namespace afv_native { namespace afv {
+
+    struct OpusDecoderDeleter {
+        void operator()(OpusDecoder *p) const { opus_decoder_destroy(p); }
+    };
+    struct JitterBufferDeleter {
+        void operator()(JitterBuffer *p) const { jitter_buffer_destroy(p); }
+    };
 
     /** frameTimeOut is the maximum number of frames we will receive without audio data before we
      * declare the stream dead.
@@ -60,8 +68,8 @@ namespace afv_native { namespace afv {
      */
     class RemoteVoiceSource: public audio::ISampleSource {
       protected:
-        JitterBuffer *mJitterBuffer;
-        OpusDecoder  *mDecoder;
+        std::unique_ptr<JitterBuffer, JitterBufferDeleter> mJitterBuffer;
+        std::unique_ptr<OpusDecoder, OpusDecoderDeleter>   mDecoder;
 
         std::mutex       mJitterBufferMutex;
         bool             mIsActive;
@@ -76,7 +84,7 @@ namespace afv_native { namespace afv {
 
       public:
         RemoteVoiceSource();
-        virtual ~RemoteVoiceSource();
+        virtual ~RemoteVoiceSource() = default;
         RemoteVoiceSource(const RemoteVoiceSource &copySrc) = delete;
 
         void                appendAudioDTO(const dto::IAudio &audio);

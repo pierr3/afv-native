@@ -169,7 +169,7 @@ inline bool freqIsHF(unsigned int freq) {
 bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache, size_t rxIter, bool onHeadset) {
     std::shared_ptr<OutputDeviceState> state = onHeadset ? mHeadsetState : mSpeakerState;
 
-    ::memset(state->mChannelBuffer, 0, audio::frameSizeBytes);
+    ::memset(state->mChannelBuffer.data(), 0, audio::frameSizeBytes);
     if (mPtt.load() && mTxRadio == rxIter) {
         // don't analyze and mix-in the radios transmitting, but suppress the
         // effects.
@@ -222,7 +222,7 @@ bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[au
         if (mUseStream) {
             // then include this stream.
             try {
-                mix_buffers(state->mChannelBuffer, sampleCache.at(srcPair.second.source.get()),
+                mix_buffers(state->mChannelBuffer.data(), sampleCache.at(srcPair.second.source.get()),
                             voiceGain * mRadioState[rxIter].Gain);
                 concurrentStreams++;
             } catch (const std::out_of_range &) {
@@ -243,8 +243,8 @@ bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[au
                 }
             }
 
-            mRadioState[rxIter].vhfFilter.transformFrame(state->mChannelBuffer, state->mChannelBuffer);
-            mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer, state->mChannelBuffer);
+            mRadioState[rxIter].vhfFilter.transformFrame(state->mChannelBuffer.data(), state->mChannelBuffer.data());
+            mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer.data(), state->mChannelBuffer.data());
 
             set_radio_effects(rxIter);
             if (!mix_effect(mRadioState[rxIter].Crackle, crackleGain * mRadioState[rxIter].Gain, state)) {
@@ -288,12 +288,12 @@ bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[au
     // now, finally, mix the channel buffer into the mixing buffer.
     if (mSplitChannels) {
         if (rxIter == 0) {
-            mix_buffers(state->mLeftMixingBuffer, state->mChannelBuffer);
+            mix_buffers(state->mLeftMixingBuffer.data(), state->mChannelBuffer.data());
         } else if (rxIter == 1) {
-            mix_buffers(state->mRightMixingBuffer, state->mChannelBuffer);
+            mix_buffers(state->mRightMixingBuffer.data(), state->mChannelBuffer.data());
         }
     } else {
-        mix_buffers(state->mMixingBuffer, state->mChannelBuffer);
+        mix_buffers(state->mMixingBuffer.data(), state->mChannelBuffer.data());
     }
 
     return false;
@@ -316,9 +316,9 @@ audio::SourceStatus RadioSimulation::getAudioFrame(audio::SampleType *bufferOut,
         }
     }
 
-    ::memset(state->mLeftMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-    ::memset(state->mRightMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-    ::memset(state->mMixingBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    ::memset(state->mLeftMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    ::memset(state->mRightMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    ::memset(state->mMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
 
     size_t rxIter = 0;
     for (rxIter = 0; rxIter < mRadioState.size(); rxIter++) {
@@ -329,10 +329,10 @@ audio::SourceStatus RadioSimulation::getAudioFrame(audio::SampleType *bufferOut,
 
     if (mSplitChannels) {
         audio::SampleType interleavedSamples[audio::frameSizeSamples * 2];
-        interleave(state->mLeftMixingBuffer, state->mRightMixingBuffer, interleavedSamples, audio::frameSizeSamples);
+        interleave(state->mLeftMixingBuffer.data(), state->mRightMixingBuffer.data(), interleavedSamples, audio::frameSizeSamples);
         ::memcpy(bufferOut, interleavedSamples, sizeof(audio::SampleType) * audio::frameSizeSamples * 2);
     } else {
-        ::memcpy(bufferOut, state->mMixingBuffer, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        ::memcpy(bufferOut, state->mMixingBuffer.data(), sizeof(audio::SampleType) * audio::frameSizeSamples);
     }
 
     return audio::SourceStatus::OK;
@@ -355,9 +355,9 @@ void RadioSimulation::set_radio_effects(size_t rxIter) {
 
 bool RadioSimulation::mix_effect(std::shared_ptr<audio::ISampleSource> effect, float gain, std::shared_ptr<OutputDeviceState> state) {
     if (effect && gain > 0.0f) {
-        auto rv = effect->getAudioFrame(state->mFetchBuffer);
+        auto rv = effect->getAudioFrame(state->mFetchBuffer.data());
         if (rv == audio::SourceStatus::OK) {
-            RadioSimulation::mix_buffers(state->mChannelBuffer, state->mFetchBuffer, gain);
+            RadioSimulation::mix_buffers(state->mChannelBuffer.data(), state->mFetchBuffer.data(), gain);
         } else {
             return false;
         }

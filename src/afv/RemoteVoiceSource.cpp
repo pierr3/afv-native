@@ -44,28 +44,21 @@ using namespace afv_native;
 using namespace std;
 
 RemoteVoiceSource::RemoteVoiceSource():
-    mJitterBufferMutex(), mIsActive(false), mSilentFrames(0), mEnding(false), mEndingSequence(0), mCurrentFrame(0) {
-    mJitterBuffer = jitter_buffer_init(1);
-    jitter_buffer_ctl(mJitterBuffer, JITTER_BUFFER_SET_DESTROY_CALLBACK, reinterpret_cast<void *>(::free));
-
-    // spx_uint32_t jitterMargin = 0;
-    // jitter_buffer_ctl(mJitterBuffer, JITTER_BUFFER_SET_MARGIN, &jitterMargin);
+    mJitterBuffer(jitter_buffer_init(1)),
+    mJitterBufferMutex(),
+    mIsActive(false),
+    mSilentFrames(0),
+    mEnding(false),
+    mEndingSequence(0),
+    mCurrentFrame(0) {
+    jitter_buffer_ctl(mJitterBuffer.get(), JITTER_BUFFER_SET_DESTROY_CALLBACK, reinterpret_cast<void *>(::free));
 
     int opus_status;
-    mDecoder = opus_decoder_create(sampleRateHz, 1, &opus_status);
+    mDecoder.reset(opus_decoder_create(sampleRateHz, 1, &opus_status));
     if (opus_status != OPUS_OK) {
         LOG("instreambuffer", "Got error initialising Opus Codec: %s", opus_strerror(opus_status));
-        mDecoder = nullptr;
+        mDecoder.reset();
     }
-}
-
-RemoteVoiceSource::~RemoteVoiceSource() {
-    if (mDecoder != nullptr) {
-        opus_decoder_destroy(mDecoder);
-        mDecoder = nullptr;
-    }
-    jitter_buffer_destroy(mJitterBuffer);
-    mJitterBuffer = nullptr;
 }
 
 void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio) {
@@ -92,7 +85,7 @@ void RemoteVoiceSource::appendAudioDTO(const dto::IAudio &audio) {
     {
         std::lock_guard<std::mutex> lock(mJitterBufferMutex);
 
-        jitter_buffer_put(mJitterBuffer, &newPacket);
+        jitter_buffer_put(mJitterBuffer.get(), &newPacket);
         mSilentFrames = 0;
         mLastActive = currentTime;
     }
@@ -109,9 +102,9 @@ SourceStatus RemoteVoiceSource::getAudioFrame(SampleType *bufferOut) {
     int         opus_res = OPUS_OK;
     {
         std::lock_guard<std::mutex> lock(mJitterBufferMutex);
-        jitter_status = jitter_buffer_get(mJitterBuffer, &pktOut, 1, &tsOut);
+        jitter_status = jitter_buffer_get(mJitterBuffer.get(), &pktOut, 1, &tsOut);
     }
-    if (mDecoder != nullptr) {
+    if (mDecoder) {
         switch (jitter_status) {
             case JITTER_BUFFER_MISSING:
                 mCurrentFrame++;
@@ -120,7 +113,7 @@ SourceStatus RemoteVoiceSource::getAudioFrame(SampleType *bufferOut) {
                     rv = SourceStatus::Closed;
                 } else {
                     // prod opus to perform gap compensation.
-                    opus_res = opus_decode_float(mDecoder, nullptr, 0, bufferOut, frameSizeSamples, false);
+                    opus_res = opus_decode_float(mDecoder.get(), nullptr, 0, bufferOut, frameSizeSamples, false);
                 }
                 break;
             case JITTER_BUFFER_INSERTION:
@@ -129,7 +122,7 @@ SourceStatus RemoteVoiceSource::getAudioFrame(SampleType *bufferOut) {
                 break;
             case JITTER_BUFFER_OK:
                 mCurrentFrame = tsOut;
-                opus_res = opus_decode_float(mDecoder, reinterpret_cast<unsigned char *>(pktOut.data),
+                opus_res = opus_decode_float(mDecoder.get(), reinterpret_cast<unsigned char *>(pktOut.data),
                                              pktOut.len, bufferOut, frameSizeSamples, false);
                 ::free(pktOut.data);
                 break;
@@ -148,10 +141,10 @@ SourceStatus RemoteVoiceSource::getAudioFrame(SampleType *bufferOut) {
     }
     {
         std::lock_guard<std::mutex> lock(mJitterBufferMutex);
-        jitter_buffer_tick(mJitterBuffer);
+        jitter_buffer_tick(mJitterBuffer.get());
         // if we don't have a terminally flagged marker, check for timeouts.
         spx_int32_t bufCount = 0;
-        jitter_buffer_ctl(mJitterBuffer, JITTER_BUFFER_GET_AVAILABLE_COUNT, &bufCount);
+        jitter_buffer_ctl(mJitterBuffer.get(), JITTER_BUFFER_GET_AVAILABLE_COUNT, &bufCount);
         if (bufCount == 0) {
             mSilentFrames += 1;
             if (mSilentFrames > frameTimeOut) {
@@ -171,9 +164,9 @@ void RemoteVoiceSource::flush() {
     {
         std::lock_guard<std::mutex> lock(mJitterBufferMutex);
         // this nukes the jitter buffer contents, without resetting the latency timers.
-        jitter_buffer_reset(mJitterBuffer);
+        jitter_buffer_reset(mJitterBuffer.get());
     }
-    opus_decoder_ctl(mDecoder, OPUS_RESET_STATE);
+    opus_decoder_ctl(mDecoder.get(), OPUS_RESET_STATE);
 }
 
 bool RemoteVoiceSource::isActive() const {

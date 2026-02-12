@@ -160,8 +160,8 @@ void ATISClient::sessionStateCallback(afv::APISessionState state) {
 
 void ATISClient::startAudio() {
     looped        = false;
-    auto *wavData = audio::LoadWav(mATISFileName.c_str());
-    if (nullptr == wavData) {
+    auto wavData = audio::LoadWav(mATISFileName.c_str());
+    if (!wavData) {
         LOG("ATISClient", "failed to load atis wavfile");
     } else {
         mWavSampleStorage = std::make_shared<audio::WavSampleStorage>(*wavData);

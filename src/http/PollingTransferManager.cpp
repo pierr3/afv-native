@@ -11,7 +11,7 @@ PollingTransferManager::PollingTransferManager():
 
 PollingTransferManager::~PollingTransferManager() {
     mRunning.store(false);
-    curl_multi_wakeup(mCurlMultiHandle);
+    curl_multi_wakeup(mCurlMultiHandle.get());
     if (mPollThread.joinable()) {
         mPollThread.join();
     }
@@ -27,11 +27,11 @@ void PollingTransferManager::pollLoop() {
         {
             std::lock_guard<std::recursive_mutex> lock(mMutex);
             int running = 0;
-            curl_multi_perform(mCurlMultiHandle, &running);
+            curl_multi_perform(mCurlMultiHandle.get(), &running);
             processPendingMultiEvents();
         }
         int numfds = 0;
-        curl_multi_poll(mCurlMultiHandle, nullptr, 0, 100, &numfds);
+        curl_multi_poll(mCurlMultiHandle.get(), nullptr, 0, 100, &numfds);
     }
     LOG("PollingTransferManager", "Poll thread stopped");
 }

@@ -36,6 +36,7 @@
 
 #include "afv-native/audio/ISampleSource.h"
 #include "afv-native/audio/WhiteNoiseGenerator.h"
+#include <array>
 
 namespace afv_native { namespace audio {
     /** PinkNoiseGenerator generates pink noise.
@@ -47,7 +48,7 @@ namespace afv_native { namespace audio {
       public:
         explicit PinkNoiseGenerator(float gain = 1.0):
             white(), mGain(gain),
-            mB {0.0, 0.0, 0.0, 0.0, 0.0, 0.0} {
+            mB{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}} {
         }
 
         inline SampleType iterateOneSample() {
@@ -76,7 +77,7 @@ namespace afv_native { namespace audio {
         WhiteNoiseGenerator white;
         float               mGain;
 
-        SampleType mB[7];
+        std::array<SampleType, 7> mB;
     };
 }} // namespace afv_native::audio
 

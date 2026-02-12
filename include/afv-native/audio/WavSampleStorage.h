@@ -36,12 +36,12 @@
 
 #include "afv-native/audio/ISampleStorage.h"
 #include "afv-native/audio/WavFile.h"
+#include <vector>
 
 namespace afv_native { namespace audio {
     class WavSampleStorage: public ISampleStorage {
       protected:
-        SampleType *mBuffer;
-        size_t      mBufferSize;
+        std::vector<SampleType> mBuffer;
 
       public:
         // no default constructor - these have to
@@ -49,12 +49,12 @@ namespace afv_native { namespace audio {
         WavSampleStorage() = delete;
 
         explicit WavSampleStorage(const AudioSampleData &srcdata);
-        WavSampleStorage(const WavSampleStorage &cpysrc);
-        WavSampleStorage(WavSampleStorage &&movesrc) noexcept;
-        virtual ~WavSampleStorage();
+        WavSampleStorage(const WavSampleStorage &cpysrc) = default;
+        WavSampleStorage(WavSampleStorage &&movesrc) noexcept = default;
+        virtual ~WavSampleStorage() = default;
 
-        WavSampleStorage &operator=(const WavSampleStorage &copySrc);
-        WavSampleStorage &operator=(WavSampleStorage &&copySrc) noexcept;
+        WavSampleStorage &operator=(const WavSampleStorage &copySrc) = default;
+        WavSampleStorage &operator=(WavSampleStorage &&copySrc) noexcept = default;
 
         SampleType *data() const override;
         size_t lengthInSamples() const override;

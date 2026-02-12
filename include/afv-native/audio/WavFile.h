@@ -45,6 +45,8 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <memory>
+#include <vector>
 
 namespace afv_native { namespace audio {
     class AudioSampleData {
@@ -54,16 +56,16 @@ namespace afv_native { namespace audio {
         uint8_t mSampleAlignment;
         int     mSampleRate;
 
-        unsigned mSampleCount;
-        void    *mSampleData;
+        unsigned             mSampleCount;
+        std::vector<uint8_t> mSampleData;
 
         bool mIsFloat;
 
       public:
         AudioSampleData(int numChannels, int bitsPerSample, int sampleRate, bool isFloat = false);
-        AudioSampleData(AudioSampleData &&move_src) noexcept;
-        AudioSampleData(const AudioSampleData &cpy_src);
-        virtual ~AudioSampleData();
+        AudioSampleData(AudioSampleData &&move_src) noexcept = default;
+        AudioSampleData(const AudioSampleData &cpy_src)      = default;
+        virtual ~AudioSampleData()                           = default;
 
         int8_t      getNumChannels() const;
         int8_t      getBitsPerSample() const;
@@ -75,7 +77,7 @@ namespace afv_native { namespace audio {
         void AppendSamples(uint8_t blockSize, unsigned count, void *data);
     };
 
-    AudioSampleData *LoadWav(const char *fileName);
+    std::unique_ptr<AudioSampleData> LoadWav(const char *fileName);
 }} // namespace afv_native::audio
 
 #endif /* AFV_NATIVE_WAVFILE_H */

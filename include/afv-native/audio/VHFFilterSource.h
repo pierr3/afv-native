@@ -67,8 +67,8 @@ namespace afv_native { namespace audio {
       protected:
         void setupPresets();
 
-        chunkware_simple::SimpleComp  *compressor;
-        chunkware_simple::SimpleLimit *limiter;
+        std::unique_ptr<chunkware_simple::SimpleComp>  compressor;
+        std::unique_ptr<chunkware_simple::SimpleLimit> limiter;
         float compressorPostGain;
         std::vector<BiQuadFilter> mFilters;
         HardwareType hardware = HardwareType::Schmid_ED_137B;

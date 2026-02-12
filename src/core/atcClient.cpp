@@ -722,13 +722,12 @@ void afv_native::ATCClient::reset() {
 }
 
 void afv_native::ATCClient::playAdHocSound(const std::string &wavFilePath, float gain, AdHocOutputTarget target) {
-    auto *audData = audio::LoadWav(wavFilePath.c_str());
-    if (audData == nullptr) {
+    auto audData = audio::LoadWav(wavFilePath.c_str());
+    if (!audData) {
         LOG("afv::ATCClient", "playAdHocSound: failed to load WAV file: %s", wavFilePath.c_str());
         return;
     }
     auto storage = std::make_shared<audio::WavSampleStorage>(*audData);
-    delete audData;
     mATCRadioStack->playAdHocSound(storage, gain, target);
 }
 

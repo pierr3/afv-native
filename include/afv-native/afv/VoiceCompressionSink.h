@@ -35,10 +35,15 @@
 #define AFV_NATIVE_VOICECOMPRESSIONSINK_H
 
 #include "afv-native/audio/ISampleSink.h"
+#include <memory>
 #include <opus/opus.h>
 #include <vector>
 
 namespace afv_native { namespace afv {
+
+    struct OpusEncoderDeleter {
+        void operator()(OpusEncoder *p) const { opus_encoder_destroy(p); }
+    };
     class ICompressedFrameSink {
       public:
         virtual void processCompressedFrame(std::vector<unsigned char> compressedData) = 0;
@@ -49,8 +54,8 @@ namespace afv_native { namespace afv {
      */
     class VoiceCompressionSink: public audio::ISampleSink {
       protected:
-        OpusEncoder          *mEncoder;
-        ICompressedFrameSink &mCompressedFrameSink;
+        std::unique_ptr<OpusEncoder, OpusEncoderDeleter> mEncoder;
+        ICompressedFrameSink                            &mCompressedFrameSink;
 
       public:
         VoiceCompressionSink(ICompressedFrameSink &sink);

@@ -43,23 +43,6 @@ using namespace afv_native::cryptodto::dto;
 using namespace afv_native::cryptodto;
 using namespace afv_native::util;
 
-ChannelConfig::ChannelConfig(): ChannelTag(), HmacKey() {
-    memset(AeadTransmitKey, 0, aeadModeKeySize);
-    memset(AeadReceiveKey, 0, aeadModeKeySize);
-}
-
-ChannelConfig::ChannelConfig(const ChannelConfig &cpysrc):
-    ChannelTag(cpysrc.ChannelTag), HmacKey(cpysrc.HmacKey) {
-    memcpy(AeadTransmitKey, cpysrc.AeadTransmitKey, aeadModeKeySize);
-    memcpy(AeadReceiveKey, cpysrc.AeadReceiveKey, aeadModeKeySize);
-}
-
-ChannelConfig::ChannelConfig(ChannelConfig &&movesrc) noexcept:
-    ChannelTag(std::move(movesrc.ChannelTag)), HmacKey(std::move(movesrc.HmacKey)) {
-    memcpy(AeadTransmitKey, movesrc.AeadTransmitKey, aeadModeKeySize);
-    memcpy(AeadReceiveKey, movesrc.AeadReceiveKey, aeadModeKeySize);
-}
-
 static void setKey(unsigned char *key, const string &base64_key, size_t outputSize) {
     size_t      input_limit = 4 * ((outputSize + 2) / 3);
     std::string key_copy;
@@ -76,8 +59,8 @@ static void setKey(unsigned char *key, const string &base64_key, size_t outputSi
 }
 
 void afv_native::cryptodto::dto::to_json(json &j, const ChannelConfig &cc) {
-    auto receiveKey  = Base64Encode(cc.AeadReceiveKey, aeadModeKeySize);
-    auto transmitKey = Base64Encode(cc.AeadTransmitKey, aeadModeKeySize);
+    auto receiveKey  = Base64Encode(cc.AeadReceiveKey.data(), aeadModeKeySize);
+    auto transmitKey = Base64Encode(cc.AeadTransmitKey.data(), aeadModeKeySize);
     j                = json {
                        {"channelTag", cc.ChannelTag},
                        {"aeadReceiveKey", receiveKey},
@@ -94,6 +77,6 @@ void afv_native::cryptodto::dto::from_json(const json &j, ChannelConfig &cc) {
     j.at("aeadReceiveKey").get_to(receiveKeyB64);
     j.at("aeadTransmitKey").get_to(transmitKeyB64);
     // j.at("hmacKey").get_to(cc.HmacKey);
-    setKey(cc.AeadReceiveKey, receiveKeyB64, aeadModeKeySize);
-    setKey(cc.AeadTransmitKey, transmitKeyB64, aeadModeKeySize);
+    setKey(cc.AeadReceiveKey.data(), receiveKeyB64, aeadModeKeySize);
+    setKey(cc.AeadTransmitKey.data(), transmitKeyB64, aeadModeKeySize);
 };
