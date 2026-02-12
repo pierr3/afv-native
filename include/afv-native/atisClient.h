@@ -182,9 +182,9 @@ namespace afv_native {
         std::shared_ptr<audio::RecordedSampleSource> mRecordedSampleSource;
         std::shared_ptr<audio::SourceToSinkAdapter>  mAdapter;
         std::vector<std::vector<unsigned char>>      mStoredData;
-        bool                                         looped;
-        bool                                         playCachedData;
-        unsigned int                                 cacheNum;
+        bool                                         looped = false;
+        bool                                         playCachedData = false;
+        unsigned int                                 cacheNum = 0;
         std::string                                  mClientName;
         std::string                                  mATISFileName;
 

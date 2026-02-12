@@ -311,7 +311,7 @@ bool Request::doAsync(TransferManager &transferManager) {
 }
 
 void Request::shareState(TransferManager &transferManager) {
-    curl_easy_setopt(mCurlHandle.get(), CURLOPT_SHARE, transferManager.getCurlMultiHandle());
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_SHARE, transferManager.getCurlShareHandle());
 }
 
 const string &Request::getUrl() const {

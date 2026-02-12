@@ -225,7 +225,7 @@ static std::unique_ptr<AudioSampleData> extractData(FILE *fh, const vector<WavTO
         chunkSize = sizeof(WavFormatChunk);
     }
 
-    struct WavFormatChunk fc;
+    struct WavFormatChunk fc = {};
     if (1 != fread(&fc, chunkSize, 1, fh)) {
         return nullptr;
     }

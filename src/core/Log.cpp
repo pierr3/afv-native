@@ -97,7 +97,7 @@ void afv_native::__Log(const char *file, int line, const char *subsystem, const 
 }
 
 void afv_native::setLegacyLogger(afv_native::log_fn newLogger) {
-    gLogger = [&newLogger](std::string subsystem, std::string file, int line, std::string lineOut) {
+    gLogger = [newLogger](std::string subsystem, std::string file, int line, std::string lineOut) {
         newLogger(subsystem.c_str(), file.c_str(), line, lineOut.c_str());
     };
 }

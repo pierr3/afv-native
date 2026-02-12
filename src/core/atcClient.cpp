@@ -211,6 +211,7 @@ void ATCClient::startAudio() {
             LOG("afv::ATCClient", "Could not initiate speaker audio context.");
             const char *error = "Could not initiate speaker audio context.";
             event::EventBus::Instance().OnEvent(AudioErrorEvent {error});
+            return;
         } else {
             mSpeakerDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
             LOG("afv::ATCClient", "Speaker Device %s notification setup",
@@ -239,7 +240,9 @@ void ATCClient::startAudio() {
         if (!mAudioDevice) {
             LOG("afv::ATCClient", "Could not initiate headset audio context.");
             const char *error = "Could not initiate headset audio context.";
+            stopAudio();
             event::EventBus::Instance().OnEvent(AudioErrorEvent {error});
+            return;
         } else {
             mAudioDevice->setNotificationFunc(std::bind(&ATCClient::deviceStoppedCallback, this, std::placeholders::_1, std::placeholders::_2));
             LOG("afv::ATCClient", "Headset Device %s notification setup",

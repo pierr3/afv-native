@@ -105,6 +105,7 @@ namespace afv_native { namespace http {
          * @return the internal CURLM handle
          */
         CURLM *getCurlMultiHandle() const;
+        CURLSH *getCurlShareHandle() const;
     };
 }}     // namespace afv_native::http
 #endif // AFV_NATIVE_TRANSFERMANAGER_H

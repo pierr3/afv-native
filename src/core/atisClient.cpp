@@ -304,7 +304,7 @@ void ATISClient::sendCachedFrame() {
         audioOutDto.Callsign = mCallsign;
         audioOutDto.Audio    = mStoredData[cacheNum];
         cacheNum++;
-        if (cacheNum > mStoredData.size()) {
+        if (cacheNum >= mStoredData.size()) {
             cacheNum = 0;
         }
 

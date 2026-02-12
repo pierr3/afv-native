@@ -116,6 +116,10 @@ CURLM *TransferManager::getCurlMultiHandle() const {
     return mCurlMultiHandle.get();
 }
 
+CURLSH *TransferManager::getCurlShareHandle() const {
+    return mCurlShareHandle.get();
+}
+
 void TransferManager::registerForAsyncCallback(Request &req) {
     auto curlHandle = req.getCurlHandle();
     if (curlHandle != nullptr) {

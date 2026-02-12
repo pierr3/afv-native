@@ -105,7 +105,7 @@ void Client::setClientPosition(double lat, double lon, double amslm, double aglm
 
 void Client::setRadioState(unsigned int radioNum, int freq)
 {
-    if (radioNum > mRadioState.size()) {
+    if (radioNum >= mRadioState.size()) {
         return;
     }
     if (mRadioState[radioNum].mNextFreq == freq) {
