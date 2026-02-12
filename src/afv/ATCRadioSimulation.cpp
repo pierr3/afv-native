@@ -67,7 +67,12 @@ AtcOutputAudioDevice::AtcOutputAudioDevice(std::weak_ptr<ATCRadioSimulation> rad
 }
 
 audio::SourceStatus AtcOutputAudioDevice::getAudioFrame(audio::SampleType *bufferOut) {
-    return mRadio.lock()->getAudioFrame(bufferOut, onHeadset);
+    auto radio = mRadio.lock();
+    if (!radio) {
+        ::memset(bufferOut, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        return audio::SourceStatus::OK;
+    }
+    return radio->getAudioFrame(bufferOut, onHeadset);
 }
 
 ATCRadioSimulation::ATCRadioSimulation(std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel):
@@ -409,6 +414,10 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
 
 audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferOut, bool onHeadset) {
     std::shared_ptr<OutputDeviceState> state = onHeadset ? mHeadsetState : mSpeakerState;
+    if (!state) {
+        ::memset(bufferOut, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        return audio::SourceStatus::OK;
+    }
 
     std::lock_guard<std::mutex> streamGuard(mStreamMapLock);
 

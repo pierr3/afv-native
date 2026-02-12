@@ -306,7 +306,7 @@ namespace afv_native {
         int linkNewTransceiversFrequencyFlag = -1;
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
 
-        HardwareType activeHardware;
+        HardwareType activeHardware = HardwareType::Schmid_ED_137B;
 
       public:
     };

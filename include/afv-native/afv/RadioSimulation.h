@@ -76,7 +76,7 @@ namespace afv_native {
          */
         class RadioState {
         public:
-            unsigned int Frequency;
+            unsigned int Frequency = 0;
             float Gain = 1.0;
             std::shared_ptr<audio::RecordedSampleSource> Click;
             std::shared_ptr<audio::RecordedSampleSource> Crackle;
@@ -86,10 +86,10 @@ namespace afv_native {
             std::shared_ptr<audio::SineToneSource> BlockTone;
             audio::SimpleCompressorEffect simpleCompressorEffect;
             audio::VHFFilterSource vhfFilter;
-            int mLastRxCount;
-            bool mBypassEffects;
-            bool mHfSquelch;
-            bool mIsReceiving;
+            int mLastRxCount = 0;
+            bool mBypassEffects = false;
+            bool mHfSquelch = false;
+            bool mIsReceiving = false;
             bool onHeadset = true;
         };
 

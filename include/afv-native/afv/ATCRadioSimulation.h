@@ -92,7 +92,7 @@ namespace afv_native { namespace afv {
      */
     class AtcRadioState {
       public:
-        unsigned int                                 Frequency;
+        unsigned int                                 Frequency = 0;
         float                                        Gain = 1.0;
         std::shared_ptr<audio::RecordedSampleSource> Click;
         std::shared_ptr<audio::RecordedSampleSource> Crackle;
@@ -102,7 +102,7 @@ namespace afv_native { namespace afv {
         std::shared_ptr<audio::SineToneSource>       BlockTone;
         audio::SimpleCompressorEffect                simpleCompressorEffect;
         std::shared_ptr<audio::VHFFilterSource>      vhfFilter;
-        int                                          mLastRxCount;
+        int                                          mLastRxCount = 0;
         bool                                         mBypassEffects    = false;
         bool                                         mHfSquelch        = false;
         bool                                         onHeadset         = true;
@@ -119,7 +119,7 @@ namespace afv_native { namespace afv {
 
         std::string              lastTransmitCallsign      = "";
         std::vector<std::string> liveTransmittingCallsigns = {};
-        time_t                   lastVoiceTime;
+        time_t                   lastVoiceTime = 0;
     };
 
     /** CallsignMeta is the per-packetstream metadata stored within the ATCRadioSimulation object.

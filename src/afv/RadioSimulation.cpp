@@ -61,7 +61,12 @@ OutputAudioDevice::OutputAudioDevice(std::weak_ptr<RadioSimulation> radio, bool 
 }
 
 audio::SourceStatus OutputAudioDevice::getAudioFrame(audio::SampleType *bufferOut) {
-    return mRadio.lock()->getAudioFrame(bufferOut, onHeadset);
+    auto radio = mRadio.lock();
+    if (!radio) {
+        ::memset(bufferOut, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        return audio::SourceStatus::OK;
+    }
+    return radio->getAudioFrame(bufferOut, onHeadset);
 }
 
 RadioSimulation::RadioSimulation(std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel, unsigned int radioCount):
@@ -301,6 +306,10 @@ bool RadioSimulation::_process_radio(const std::map<void *, audio::SampleType[au
 
 audio::SourceStatus RadioSimulation::getAudioFrame(audio::SampleType *bufferOut, bool onHeadset) {
     std::shared_ptr<OutputDeviceState> state = onHeadset ? mHeadsetState : mSpeakerState;
+    if (!state) {
+        ::memset(bufferOut, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        return audio::SourceStatus::OK;
+    }
 
     std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
     std::lock_guard<std::mutex> streamGuard(mStreamMapLock);

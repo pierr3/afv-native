@@ -731,6 +731,10 @@ void afv_native::ATCClient::reset() {
 }
 
 void afv_native::ATCClient::playAdHocSound(const std::string &wavFilePath, float gain, AdHocOutputTarget target) {
+    if (!mAudioDevice) {
+        LOG("afv::ATCClient", "playAdHocSound: audio not running, ignoring");
+        return;
+    }
     auto audData = audio::LoadWav(wavFilePath.c_str());
     if (!audData) {
         LOG("afv::ATCClient", "playAdHocSound: failed to load WAV file: %s", wavFilePath.c_str());
@@ -741,9 +745,16 @@ void afv_native::ATCClient::playAdHocSound(const std::string &wavFilePath, float
 }
 
 void afv_native::ATCClient::stopAdHocSounds() {
+    if (!mAudioDevice) {
+        return;
+    }
     mATCRadioStack->stopAdHocSounds();
 }
 
 void afv_native::ATCClient::setLoopback(bool enabled, AdHocOutputTarget target, float gain, HardwareType hardware) {
+    if (!mAudioDevice) {
+        LOG("afv::ATCClient", "setLoopback: audio not running, ignoring");
+        return;
+    }
     mATCRadioStack->setLoopback(enabled, target, gain, hardware);
 }
