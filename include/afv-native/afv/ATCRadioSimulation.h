@@ -59,7 +59,6 @@
 #include "afv-native/event.h"
 #include "afv-native/event/CallbackTimer.h"
 #include "afv-native/hardwareType.h"
-#include "afv-native/util/ChainedCallback.h"
 #include "afv-native/util/other.h"
 #include "afv-native/utility.h"
 #include <atomic>
@@ -131,11 +130,6 @@ namespace afv_native { namespace afv {
         std::shared_ptr<RemoteVoiceSource> source;
         std::vector<dto::RxTransceiver>    transceivers;
         AtcCallsignMeta();
-    };
-
-    enum class AtcRadioSimulationState {
-        RxStarted,
-        RxStopped
     };
 
     /** ATCRadioSimulation provides the foundation for handling radio channels and mixing them
@@ -220,7 +214,7 @@ namespace afv_native { namespace afv {
         void setEnableOutputEffects(bool enableEffects);
         void setEnableHfSquelch(bool enableHfSquelch);
 
-        void setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback);
+        void setupDevices();
 
         void setOnHeadset(unsigned int radio, bool onHeadset);
         bool getOnHeadset(unsigned int freq);
@@ -241,7 +235,6 @@ namespace afv_native { namespace afv {
         void setTick(std::shared_ptr<audio::ITick> tick);
 
         int lastReceivedRadio() const;
-        util::ChainedCallback<void(AtcRadioSimulationState)> RadioStateCallback;
 
         std::shared_ptr<audio::ISampleSource> speakerDevice() {
             return mSpeakerDevice;
@@ -263,8 +256,6 @@ namespace afv_native { namespace afv {
         static const int maintenanceTimerIntervalMs = 30 * 1000; /* every 30s */
         static const int voiceTimeoutIntervalMs     = 2 * 1000;
         static const int voiceTimeoutIntervalS      = 2;
-
-        util::ChainedCallback<void(ClientEventType, void *, void *)> *ClientEventCallback;
 
         std::shared_ptr<EffectResources> mResources;
         cryptodto::UDPChannel           *mChannel;

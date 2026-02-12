@@ -3,6 +3,7 @@
 #include "afv_native_export.h"
 #include "event.h"
 #include "hardwareType.h"
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <string>
@@ -178,5 +179,9 @@ namespace afv_native::api {
         [[deprecated("Use SetPlaybackChannelAll instead")]] AFV_NATIVE_DEPRECATED void SetHeadsetOutputChannel(int channel);
         [[deprecated("Use SetRadioGainAll instead")]] AFV_NATIVE_DEPRECATED void SetRadiosGain(float gain);
         [[deprecated("Use modern afv_native::api::setLogger() instead")]] AFV_NATIVE_DEPRECATED static void setLogger(afv_native::log_fn gLogger);
+
+      private:
+        void registerEventBusHandlers(std::function<void(afv_native::ClientEventType, void *, void *)> callback);
+        std::vector<std::size_t> mEventHandlerIds;
     };
 } // namespace afv_native::api

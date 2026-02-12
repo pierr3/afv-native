@@ -308,7 +308,6 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             // Post Begin Voice Receiving Notfication
             unsigned int freq = rxIter;
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting yet
-            ClientEventCallback->invokeAll(ClientEventType::FrequencyRxBegin, &freq, nullptr);
             EventBus::Instance().OnEvent(FrequencyRxBeginEvent {freq});
 
             LOG("ATCRadioSimulation", "FrequencyRxBegin event: %i", freq);
@@ -366,16 +365,12 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
                 std::make_shared<audio::RecordedSampleSource>(mResources->mClick, false);
 
             for (const auto &c: mRadioState[rxIter].liveTransmittingCallsigns) {
-                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &rxIter,
-                                               (void *) c.c_str());
-
                 EventBus::Instance().OnEvent(
                     StationRxEndEvent {rxIter, c, mRadioState[rxIter].liveTransmittingCallsigns});
                 LOG("ATCRadioSimulation", "StationRxEnd Forced event: %i: %s", rxIter, c.c_str());
             }
 
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting anymore
-            ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &rxIter, nullptr);
             EventBus::Instance().OnEvent(FrequencyRxEndEvent {rxIter});
             mRadioState[rxIter].lastVoiceTime = 0;
             LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", rxIter);
@@ -547,10 +542,6 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
                 pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns);
 
             if (hasBeenDeleted) {
-                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd,
-                                               &trans.Frequency,
-                                               (void *) pkt.Callsign.c_str());
-
                 // Just send who's still transmitting
                 EventBus::Instance().OnEvent(StationRxEndEvent {
                     trans.Frequency, pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns});
@@ -567,10 +558,6 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
 
                 LOG("ATCRadioSimulation", "StationRxBegin event: %i: %s", trans.Frequency,
                     pkt.Callsign.c_str());
-
-                ClientEventCallback->invokeAll(ClientEventType::StationRxBegin,
-                                               &trans.Frequency,
-                                               (void *) pkt.Callsign.c_str());
 
                 mRadioState[trans.Frequency].liveTransmittingCallsigns.emplace_back(pkt.Callsign);
 
@@ -707,17 +694,11 @@ void ATCRadioSimulation::maintainVoiceTimeout() {
             LOG("ATCRadioSimulation", "Found VoiceTimeout.. %i", it->second.Frequency);
             it->second.lastVoiceTime = 0;
             for (const auto &c: it->second.liveTransmittingCallsigns) {
-                ClientEventCallback->invokeAll(ClientEventType::StationRxEnd,
-                                               &it->second.Frequency, (void *) c.c_str());
-
                 EventBus::Instance().OnEvent(
                     StationRxEndEvent {it->second.Frequency, c, it->second.liveTransmittingCallsigns});
                 LOG("ATCRadioSimulation", "StationRxEnd TIMEOUT event: %i: %s",
                     it->second.Frequency, c.c_str());
             }
-
-            ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd,
-                                           &it->second.Frequency, nullptr);
 
             EventBus::Instance().OnEvent(FrequencyRxEndEvent {it->second.Frequency});
             LOG("ATCRadioSimulation", "FrequencyRxEnd TIMEOUT event: %i",
@@ -822,14 +803,12 @@ void ATCRadioSimulation::setEnableHfSquelch(bool enableSquelch) {
     LOG("ATCRadioSimulation", "setEnableHfSquelch: %i", enableSquelch);
 }
 
-void ATCRadioSimulation::setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback) {
+void ATCRadioSimulation::setupDevices() {
     mHeadsetDevice = std::make_shared<AtcOutputAudioDevice>(shared_from_this(), true);
     mSpeakerDevice = std::make_shared<AtcOutputAudioDevice>(shared_from_this(), false);
 
     mHeadsetState = std::make_shared<OutputDeviceState>();
     mSpeakerState = std::make_shared<OutputDeviceState>();
-
-    ClientEventCallback = eventCallback;
 }
 
 void ATCRadioSimulation::setOnHeadset(unsigned int radio, bool onHeadset) {
@@ -858,14 +837,10 @@ void afv_native::afv::ATCRadioSimulation::setRx(unsigned int freq, bool rx) {
         return;
     }
     if (!rx) {
-        // Emit client callback for the end of station transmission
-        ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &freq, nullptr);
+        // Emit event for the end of station transmission
         EventBus::Instance().OnEvent(FrequencyRxEndEvent {freq});
         LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", freq);
         for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
-            ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq,
-                                           (void *) callsign.c_str());
-
             EventBus::Instance().OnEvent(StationRxEndEvent {
                 freq, callsign,
                 mRadioState[freq].liveTransmittingCallsigns // Send remaining transmitters
@@ -1108,12 +1083,9 @@ void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
         LOG("ATCRadioSimulation", "removeFrequency cancelled, frequency does not exist: %i", freq);
         return;
     }
-    ClientEventCallback->invokeAll(ClientEventType::FrequencyRxEnd, &freq, nullptr);
     EventBus::Instance().OnEvent(FrequencyRxEndEvent {freq});
     LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", freq);
     for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
-        ClientEventCallback->invokeAll(ClientEventType::StationRxEnd, &freq,
-                                       (void *) callsign.c_str());
         EventBus::Instance().OnEvent(
             StationRxEndEvent {freq, callsign, mRadioState[freq].liveTransmittingCallsigns});
         LOG("ATCRadioSimulation", "removeFrequency StationRxEnd event: %i: %s", freq,

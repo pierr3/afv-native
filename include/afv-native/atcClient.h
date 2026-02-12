@@ -171,17 +171,6 @@ namespace afv_native {
         void setEnableInputFilters(bool enableInputFilters);
         void setEnableOutputEffects(bool enableEffects);
 
-        /** ClientEventCallback provides notifications when certain client events occur.  These can be used to
-         * provide feedback within the client itself without needing to poll Client's methods.
-         *
-         * The callbacks take two paremeters-  the first is the ClientEventType which informs the client what type
-         * of event occured.
-         *
-         * The second argument is a pointer to data relevant to the callback. The memory it points to is only
-         * guaranteed to be available for the duration of the callback.
-         */
-        util::ChainedCallback<void(ClientEventType, void *, void *)> ClientEventCallback;
-
         /** getStationAliases returns a vector of all the known station aliases.
          *
          * @note this method uses a copy in place to prevent race inside the

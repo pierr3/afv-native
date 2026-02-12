@@ -103,12 +103,6 @@ namespace afv_native {
             CallsignMeta();
         };
 
-        enum class RadioSimulationState
-        {
-            RxStarted,
-            RxStopped
-        };
-
         /** RadioSimulation provides the foundation for handling radio channels and mixing them
          * into an audio stream, as well as handling the samples from the micrphone input.
          *
@@ -170,7 +164,6 @@ namespace afv_native {
             std::atomic<uint32_t> IncomingAudioStreams;
 
             int lastReceivedRadio() const;
-            util::ChainedCallback<void(RadioSimulationState)>  RadioStateCallback;
 
             std::shared_ptr<audio::ISampleSource> speakerDevice() { return mSpeakerDevice; }
             std::shared_ptr<audio::ISampleSource> headsetDevice() { return mHeadsetDevice; }

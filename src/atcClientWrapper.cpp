@@ -55,6 +55,12 @@ afv_native::api::atcClient::atcClient(char *clientName, char *resourcePath, char
 }
 
 afv_native::api::atcClient::~atcClient() {
+    auto &bus = event::EventBus::Instance();
+    for (auto id : mEventHandlerIds) {
+        bus.RemoveHandler(id);
+    }
+    mEventHandlerIds.clear();
+
     client.reset();
     isInitialized = false;
 #ifdef WIN32
@@ -483,15 +489,141 @@ bool afv_native::api::atcClient::IsAtisPlayingBack() {
 }
 
 void afv_native::api::atcClient::RaiseClientEvent(std::function<void(afv_native::ClientEventType, void *, void *)> callback) {
-    std::lock_guard<std::mutex> lock(afvMutex);
-    client->ClientEventCallback.addCallback(nullptr, [callback](afv_native::ClientEventType evt, void *data, void *data2) {
+    registerEventBusHandlers(callback);
+}
+
+void afv_native::api::atcClient::RaiseClientEvent(void *handle, void (*callback)(afv_native::ClientEventType, void *, void *)) {
+    registerEventBusHandlers([callback](afv_native::ClientEventType evt, void *data, void *data2) {
         callback(evt, data, data2);
     });
 }
 
-void afv_native::api::atcClient::RaiseClientEvent(void *handle, void (*callback)(afv_native::ClientEventType, void *, void *)) {
-    std::lock_guard<std::mutex> lock(afvMutex);
-    client->ClientEventCallback.addCallback(handle, std::function(callback));
+void afv_native::api::atcClient::registerEventBusHandlers(std::function<void(afv_native::ClientEventType, void *, void *)> callback) {
+    // Remove any previously registered handlers
+    auto &bus = event::EventBus::Instance();
+    for (auto id : mEventHandlerIds) {
+        bus.RemoveHandler(id);
+    }
+    mEventHandlerIds.clear();
+
+    // Simple events (no data)
+    mEventHandlerIds.push_back(bus.AddHandler<APIServerConnectedEvent>(
+        [callback](const APIServerConnectedEvent &) {
+            callback(ClientEventType::APIServerConnected, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<APIServerDisconnectedEvent>(
+        [callback](const APIServerDisconnectedEvent &) {
+            callback(ClientEventType::APIServerDisconnected, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectedEvent>(
+        [callback](const VoiceServerConnectedEvent &) {
+            callback(ClientEventType::VoiceServerConnected, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerDisconnectedEvent>(
+        [callback](const VoiceServerDisconnectedEvent &) {
+            callback(ClientEventType::VoiceServerDisconnected, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectionDegradedEvent>(
+        [callback](const VoiceServerConnectionDegradedEvent &) {
+            callback(ClientEventType::VoiceServerConnectionDegraded, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectionResumedEvent>(
+        [callback](const VoiceServerConnectionResumedEvent &) {
+            callback(ClientEventType::VoiceServerConnectionResumed, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<PttOpenEvent>(
+        [callback](const PttOpenEvent &) {
+            callback(ClientEventType::PttOpen, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<PttClosedEvent>(
+        [callback](const PttClosedEvent &) {
+            callback(ClientEventType::PttClosed, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationAliasesUpdatedEvent>(
+        [callback](const StationAliasesUpdatedEvent &) {
+            callback(ClientEventType::StationAliasesUpdated, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<InputDeviceErrorEvent>(
+        [callback](const InputDeviceErrorEvent &) {
+            callback(ClientEventType::InputDeviceError, nullptr, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<AudioDisabledEvent>(
+        [callback](const AudioDisabledEvent &) {
+            callback(ClientEventType::AudioDisabled, nullptr, nullptr);
+        }));
+
+    // Events with int/error data
+    mEventHandlerIds.push_back(bus.AddHandler<APIServerErrorEvent>(
+        [callback](const APIServerErrorEvent &e) {
+            int code = e.errorCode;
+            callback(ClientEventType::APIServerError, &code, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerChannelErrorEvent>(
+        [callback](const VoiceServerChannelErrorEvent &e) {
+            int errNo = e.channelErrno;
+            callback(ClientEventType::VoiceServerChannelError, &errNo, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerErrorEvent>(
+        [callback](const VoiceServerErrorEvent &e) {
+            int code = e.errorCode;
+            callback(ClientEventType::VoiceServerError, &code, nullptr);
+        }));
+
+    // Events with string data
+    mEventHandlerIds.push_back(bus.AddHandler<AudioErrorEvent>(
+        [callback](const AudioErrorEvent &e) {
+            callback(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(e.message.c_str())), nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<AudioDeviceStoppedErrorEvent>(
+        [callback](const AudioDeviceStoppedErrorEvent &e) {
+            callback(ClientEventType::AudioDeviceStoppedError, (void *)e.deviceName.c_str(), nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationTransceiversUpdatedEvent>(
+        [callback](const StationTransceiversUpdatedEvent &e) {
+            auto namePtr = e.stationName.c_str();
+            callback(ClientEventType::StationTransceiversUpdated, &namePtr, nullptr);
+        }));
+
+    // Events with frequency data
+    mEventHandlerIds.push_back(bus.AddHandler<FrequencyRxBeginEvent>(
+        [callback](const FrequencyRxBeginEvent &e) {
+            unsigned int freq = e.frequency;
+            callback(ClientEventType::FrequencyRxBegin, &freq, nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<FrequencyRxEndEvent>(
+        [callback](const FrequencyRxEndEvent &e) {
+            unsigned int freq = e.frequency;
+            callback(ClientEventType::FrequencyRxEnd, &freq, nullptr);
+        }));
+
+    // Events with frequency + callsign data
+    mEventHandlerIds.push_back(bus.AddHandler<StationRxBeginEvent>(
+        [callback](const StationRxBeginEvent &e) {
+            unsigned int freq = e.frequency;
+            callback(ClientEventType::StationRxBegin, &freq, (void *)e.callsign.c_str());
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationRxEndEvent>(
+        [callback](const StationRxEndEvent &e) {
+            unsigned int freq = e.frequency;
+            callback(ClientEventType::StationRxEnd, &freq, (void *)e.callsign.c_str());
+        }));
+
+    // Complex data events
+    // NOTE: data2 was previously a raw std::map<string,Station>* — unusable from C.
+    // Now nullptr; C++ consumers should subscribe to VccsReceivedEvent via EventBus instead.
+    mEventHandlerIds.push_back(bus.AddHandler<VccsReceivedEvent>(
+        [callback](const VccsReceivedEvent &e) {
+            callback(ClientEventType::VccsReceived, (void *)e.stationName.c_str(), nullptr);
+        }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationDataReceivedEvent>(
+        [callback](const StationDataReceivedEvent &e) {
+            bool found = e.found;
+            unsigned int freq = 0;
+            if (e.stationData.second.has_value()) {
+                freq = e.stationData.second->frequency;
+            }
+            callback(ClientEventType::StationDataReceived, &found, &freq);
+        }));
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetRadioGainAll(float gain) {

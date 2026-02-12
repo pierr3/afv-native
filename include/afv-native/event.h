@@ -138,7 +138,7 @@ namespace afv_native {
         StationRxBegin, // data is a pointer to an unsigned int containing the frequency, data2 is pointer to char* containing callsign
         StationRxEnd, // data is a pointer to an unsigned int containing the frequency, data2 is pointer to char* containing callsign
         AudioError,
-        VccsReceived,
+        VccsReceived, // data is pointer to char* station name. NOTE: data2 was previously a raw pointer to std::map<string,Station> (unusable from C) — now nullptr. Use VccsReceivedEvent via EventBus for typed access.
         StationDataReceived,
         InputDeviceError,
         AudioDisabled,
