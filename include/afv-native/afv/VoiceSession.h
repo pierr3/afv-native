@@ -40,12 +40,11 @@
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/afv/dto/VoiceServerConnectionData.h"
 #include "afv-native/cryptodto/UDPChannel.h"
-#include "afv-native/event/EventCallbackTimer.h"
+#include "afv-native/event/CallbackTimer.h"
 #include "afv-native/http/RESTRequest.h"
 #include "afv-native/http/Request.h"
 #include "afv-native/util/ChainedCallback.h"
 #include "afv-native/util/monotime.h"
-#include <event2/util.h>
 #include <string>
 
 namespace afv_native { namespace afv {
@@ -103,9 +102,9 @@ namespace afv_native { namespace afv {
 
         VoiceSessionType mSessionType;
 
-        event::EventCallbackTimer mHeartbeatTimer;
-        util::monotime_t          mLastHeartbeatReceived;
-        event::EventCallbackTimer mHeartbeatTimeout;
+        event::CallbackTimer mHeartbeatTimer;
+        util::monotime_t     mLastHeartbeatReceived;
+        event::CallbackTimer mHeartbeatTimeout;
 
         VoiceSessionError mLastError;
 

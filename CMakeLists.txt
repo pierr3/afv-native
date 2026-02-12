@@ -87,9 +87,8 @@ target_sources(afv_native PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/UDPChannel.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/dto/ChannelConfig.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/dto/Header.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/src/event/EventCallbackTimer.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/src/event/EventTimer.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/src/http/EventTransferManager.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/event/CallbackTimer.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/http/PollingTransferManager.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/http/TransferManager.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/http/Request.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/http/RESTRequest.cpp
@@ -127,7 +126,6 @@ endif()
 find_package(OpenSSL REQUIRED)
 find_package(cpp-jwt CONFIG REQUIRED)
 find_package(CURL CONFIG REQUIRED)
-find_package(Libevent CONFIG REQUIRED)
 find_package(msgpack-cxx CONFIG REQUIRED)
 find_package(Opus CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -137,18 +135,16 @@ find_package(Poco REQUIRED COMPONENTS Foundation Net Util)
 # Speexdsp does not have find_package
 if (UNIX)
 	find_library(SPEEXDSP_LIBRARY libspeexdsp.a)
-	target_link_libraries(afv_native PRIVATE libevent::pthreads)
 endif()
 
 if (WIN32)
 	find_library(SPEEXDSP_LIBRARY speexdsp.lib)
 endif()
 
-set(LIBRARIES 
+set(LIBRARIES
 		OpenSSL::SSL OpenSSL::Crypto
 		cpp-jwt::cpp-jwt
 		CURL::libcurl
-		libevent::core libevent::extra
 		msgpack-cxx
 		Opus::opus
 		nlohmann_json::nlohmann_json

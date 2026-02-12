@@ -57,7 +57,7 @@
 #include "afv-native/audio/VHFFilterSource.h"
 #include "afv-native/cryptodto/UDPChannel.h"
 #include "afv-native/event.h"
-#include "afv-native/event/EventCallbackTimer.h"
+#include "afv-native/event/CallbackTimer.h"
 #include "afv-native/hardwareType.h"
 #include "afv-native/util/ChainedCallback.h"
 #include "afv-native/util/other.h"
@@ -150,7 +150,7 @@ namespace afv_native { namespace afv {
      */
     class ATCRadioSimulation: public std::enable_shared_from_this<ATCRadioSimulation>, public audio::ISampleSink, public ICompressedFrameSink {
       public:
-        ATCRadioSimulation(struct event_base *evBase, std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel);
+        ATCRadioSimulation(std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel);
         virtual ~ATCRadioSimulation();
 
         ATCRadioSimulation(const ATCRadioSimulation &copySrc) = delete;
@@ -266,7 +266,6 @@ namespace afv_native { namespace afv {
 
         util::ChainedCallback<void(ClientEventType, void *, void *)> *ClientEventCallback;
 
-        struct event_base               *mEvBase;
         std::shared_ptr<EffectResources> mResources;
         cryptodto::UDPChannel           *mChannel;
         std::string                      mCallsign;
@@ -302,8 +301,8 @@ namespace afv_native { namespace afv {
         std::shared_ptr<VoiceCompressionSink>     mVoiceSink;
         std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
 
-        event::EventCallbackTimer mMaintenanceTimer;
-        event::EventCallbackTimer mVoiceTimeoutTimer;
+        event::CallbackTimer mMaintenanceTimer;
+        event::CallbackTimer mVoiceTimeoutTimer;
         RollingAverage<double>    mVuMeter;
 
         audio::OutputMixer mAdHocHeadsetMixer;

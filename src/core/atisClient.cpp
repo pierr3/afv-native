@@ -19,8 +19,8 @@
 using namespace afv_native;
 using namespace afv_native::afv;
 
-ATISClient::ATISClient(struct event_base *evBase, std::string atisFile, const std::string &clientName, std::string baseUrl):
-    mEvBase(evBase), mTransferManager(mEvBase), mVoiceSink(std::make_shared<VoiceCompressionSink>(*this)), mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession), mClientLatitude(0.0), mClientLongitude(0.0), mClientAltitudeMSLM(100.0), mClientAltitudeGLM(100.0), mCallsign(), mTransceiverUpdateTimer(mEvBase, std::bind(&ATISClient::sendTransceiverUpdate, this)), mClientName(clientName), ClientEventCallback(), mATISFileName(atisFile),
+ATISClient::ATISClient(std::string atisFile, const std::string &clientName, std::string baseUrl):
+    mTransferManager(), mVoiceSink(std::make_shared<VoiceCompressionSink>(*this)), mAPISession(mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession), mClientLatitude(0.0), mClientLongitude(0.0), mClientAltitudeMSLM(100.0), mClientAltitudeGLM(100.0), mCallsign(), mTransceiverUpdateTimer(std::bind(&ATISClient::sendTransceiverUpdate, this)), mClientName(clientName), ClientEventCallback(), mATISFileName(atisFile),
     mChannel(&mVoiceSession.getUDPChannel()), looped(false), playCachedData(false)
 
 {

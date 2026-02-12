@@ -32,7 +32,7 @@
  */
 
 #include "afv-native/http/Request.h"
-#include "afv-native/http/EventTransferManager.h"
+#include "afv-native/http/TransferManager.h"
 #include <algorithm>
 #include <cstring>
 #include <curl/curl.h>

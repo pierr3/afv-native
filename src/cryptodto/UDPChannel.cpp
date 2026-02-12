@@ -37,7 +37,6 @@
 #include "afv-native/util/monotime.h"
 #include <Poco/Net/IPAddress.h>
 #include <cerrno>
-#include <event2/util.h>
 
 using namespace afv_native::cryptodto;
 using namespace std;

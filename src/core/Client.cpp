@@ -43,17 +43,15 @@
 using namespace afv_native;
 
 Client::Client(
-        struct event_base *evBase,
         std::string resourceBasePath,
         unsigned int numRadios,
         const std::string &clientName,
         std::string baseUrl):
         mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)),
-        mEvBase(evBase),
-        mTransferManager(mEvBase),
-        mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName),
+        mTransferManager(),
+        mAPISession(mTransferManager, std::move(baseUrl), clientName),
         mVoiceSession(mAPISession),
-        mRadioSim(std::make_shared<afv::RadioSimulation>(mEvBase, mFxRes, &mVoiceSession.getUDPChannel(), numRadios)),
+        mRadioSim(std::make_shared<afv::RadioSimulation>(mFxRes, &mVoiceSession.getUDPChannel(), numRadios)),
         mSpeakerDevice(),
         mHeadsetDevice(),
         mClientLatitude(0.0),
@@ -65,7 +63,7 @@ Client::Client(
         mTxUpdatePending(false),
         mWantPtt(false),
         mPtt(false),
-        mTransceiverUpdateTimer(mEvBase, std::bind(&Client::sendTransceiverUpdate, this)),
+        mTransceiverUpdateTimer(std::bind(&Client::sendTransceiverUpdate, this)),
         mClientName(clientName),
         mAudioApi(0),
         mAudioInputDeviceName(),

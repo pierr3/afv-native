@@ -47,8 +47,8 @@ using namespace ::afv_native::afv;
 using namespace ::afv_native;
 using json = nlohmann::json;
 
-APISession::APISession(event_base *evBase, http::TransferManager &tm, std::string baseUrl, std::string clientName):
-    StateCallback(), AliasUpdateCallback(), mEvBase(evBase), mTransferManager(tm), mBaseURL(std::move(baseUrl)), mUsername(), mPassword(), mClientName(std::move(clientName)), mBearerToken(), mAuthenticationRequest(mBaseURL + "/api/v1/auth", http::Method::POST, json()), mRefreshTokenTimer(mEvBase, std::bind(&APISession::Connect, this)), mLastError(APISessionError::NoError), mStationAliasRequest(mBaseURL + "/api/v1/stations/aliased", http::Method::GET, nullptr), mState(APISessionState::Disconnected), mStationTransceiversRequest(mBaseURL, http::Method::GET, nullptr), StationTransceiversUpdateCallback(), StationVccsCallback(), StationSearchCallback(), mGetStationRequest(mBaseURL, http::Method::GET, nullptr), mVccsRequest(mBaseURL, http::Method::GET, nullptr) {
+APISession::APISession(http::TransferManager &tm, std::string baseUrl, std::string clientName):
+    StateCallback(), AliasUpdateCallback(), mTransferManager(tm), mBaseURL(std::move(baseUrl)), mUsername(), mPassword(), mClientName(std::move(clientName)), mBearerToken(), mAuthenticationRequest(mBaseURL + "/api/v1/auth", http::Method::POST, json()), mRefreshTokenTimer(std::bind(&APISession::Connect, this)), mLastError(APISessionError::NoError), mStationAliasRequest(mBaseURL + "/api/v1/stations/aliased", http::Method::GET, nullptr), mState(APISessionState::Disconnected), mStationTransceiversRequest(mBaseURL, http::Method::GET, nullptr), StationTransceiversUpdateCallback(), StationVccsCallback(), StationSearchCallback(), mGetStationRequest(mBaseURL, http::Method::GET, nullptr), mVccsRequest(mBaseURL, http::Method::GET, nullptr) {
 }
 
 void APISession::Connect() {
@@ -181,10 +181,6 @@ void APISession::setAuthenticationFor(http::Request &r) {
 
 http::TransferManager &APISession::getTransferManager() const {
     return mTransferManager;
-}
-
-struct event_base *APISession::getEventBase() const {
-    return mEvBase;
 }
 
 APISessionState APISession::getState() const {

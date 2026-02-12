@@ -46,7 +46,6 @@
 #include <Poco/Thread.h>
 #include <Poco/Exception.h>
 #include <atomic>
-#include <event2/event.h>
 #include <functional>
 #include <optional>
 #include <unordered_map>

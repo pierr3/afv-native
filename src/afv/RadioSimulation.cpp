@@ -64,8 +64,8 @@ audio::SourceStatus OutputAudioDevice::getAudioFrame(audio::SampleType *bufferOu
     return mRadio.lock()->getAudioFrame(bufferOut, onHeadset);
 }
 
-RadioSimulation::RadioSimulation(struct event_base *evBase, std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel, unsigned int radioCount):
-    IncomingAudioStreams(0), mEvBase(evBase), mResources(std::move(resources)), mChannel(), mStreamMapLock(), mHeadsetIncomingStreams(), mSpeakerIncomingStreams(), mRadioStateLock(), mPtt(false), mLastFramePtt(false), mTxRadio(0), mTxSequence(0), mRadioState(radioCount), mVoiceSink(std::make_shared<VoiceCompressionSink>(*this)), mVoiceFilter(), mMaintenanceTimer(mEvBase, std::bind(&RadioSimulation::maintainIncomingStreams, this)), mVuMeter(300 / audio::frameLengthMs) // VU is a 300ms zero to peak response...
+RadioSimulation::RadioSimulation(std::shared_ptr<EffectResources> resources, cryptodto::UDPChannel *channel, unsigned int radioCount):
+    IncomingAudioStreams(0), mResources(std::move(resources)), mChannel(), mStreamMapLock(), mHeadsetIncomingStreams(), mSpeakerIncomingStreams(), mRadioStateLock(), mPtt(false), mLastFramePtt(false), mTxRadio(0), mTxSequence(0), mRadioState(radioCount), mVoiceSink(std::make_shared<VoiceCompressionSink>(*this)), mVoiceFilter(), mMaintenanceTimer(std::bind(&RadioSimulation::maintainIncomingStreams, this)), mVuMeter(300 / audio::frameLengthMs) // VU is a 300ms zero to peak response...
 {
     setUDPChannel(channel);
     mMaintenanceTimer.enable(maintenanceTimerIntervalMs);

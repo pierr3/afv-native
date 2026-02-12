@@ -48,8 +48,8 @@ using json = nlohmann::json;
 
 VoiceSession::VoiceSession(APISession &session, const std::string &callsign):
     mSession(session), mCallsign(callsign), mBaseUrl(""), mVoiceSessionSetupRequest("", http::Method::POST, json()), mVoiceSessionTeardownRequest("", http::Method::DEL, json()), mTransceiverUpdateRequest("", http::Method::POST, json()), mCrossCoupleGroupUpdateRequest("", http::Method::POST, json()),
-    mChannel(), mHeartbeatTimer(mSession.getEventBase(), std::bind(&VoiceSession::sendHeartbeatCallback, this)), mLastHeartbeatReceived(0),
-    mHeartbeatTimeout(mSession.getEventBase(), std::bind(&VoiceSession::heartbeatTimedOut, this)), mLastError(VoiceSessionError::NoError) {
+    mChannel(), mHeartbeatTimer(std::bind(&VoiceSession::sendHeartbeatCallback, this)), mLastHeartbeatReceived(0),
+    mHeartbeatTimeout(std::bind(&VoiceSession::heartbeatTimedOut, this)), mLastError(VoiceSessionError::NoError) {
     mSessionType = VoiceSessionType::Pilot;
     updateBaseUrl();
 }

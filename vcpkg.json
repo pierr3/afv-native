@@ -15,7 +15,6 @@
         "curl",
         "nlohmann-json",
         "openssl",
-        "libevent",
         "sdl2",
         {
             "name": "poco",

@@ -37,7 +37,6 @@
 #include "afv-native/afv/RadioSimulation.h"
 
 #include <memory>
-#include <event2/event.h>
 
 #include "afv-native/event.h"
 #include "afv-native/afv/APISession.h"
@@ -45,8 +44,8 @@
 #include "afv-native/afv/VoiceSession.h"
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
-#include "afv-native/event/EventCallbackTimer.h"
-#include "afv-native/http/EventTransferManager.h"
+#include "afv-native/event/CallbackTimer.h"
+#include "afv-native/http/PollingTransferManager.h"
 
 namespace afv_native {
     /** Client provides a fully functional PilotClient that can be integrated into
@@ -60,25 +59,16 @@ namespace afv_native {
          * the credentials, position and other configuration options set before
          * attempting to connect.
          *
-         * The containing client must provide and run a libevent eventloop for
-         * AFV-native to attach its operations against, and must ensure that
-         * this loop is run constantly, even when the client is not connected.
-         * (It's used for some tear-down operations which must run to completion
-         * after the client is shut-down if possible.)
-         *
-         * @param evBase an initialised libevent event_base to register the client's
-         *      asynchronous IO and deferred operations against.
          * @param resourceBasePath A relative or absolute path to where the AFV-native
          *      resource files are located.
-         * @param baseUrl The baseurl for the AFV API server to connect to.  The
-         *      default should be used in most cases.
          * @param numRadios The number of transceivers to instantiate for this
          *      client.
          * @param clientName The name of this client to advertise to the
          *      audio-subsystem.
+         * @param baseUrl The baseurl for the AFV API server to connect to.  The
+         *      default should be used in most cases.
          */
         Client(
-                struct event_base *evBase,
                 std::string resourceBasePath,
                 unsigned int numRadios = 2,
                 const std::string &clientName = "AFV-Native",
@@ -245,10 +235,9 @@ namespace afv_native {
             int mNextFreq;
         };
 
-        struct event_base *mEvBase;
         std::shared_ptr<afv::EffectResources> mFxRes;
 
-        http::EventTransferManager mTransferManager;
+        http::PollingTransferManager mTransferManager;
         afv::APISession mAPISession;
         afv::VoiceSession mVoiceSession;
         std::shared_ptr<afv::RadioSimulation> mRadioSim;
@@ -286,7 +275,7 @@ namespace afv_native {
     private:
         void unguardPtt();
     protected:
-        event::EventCallbackTimer mTransceiverUpdateTimer;
+        event::CallbackTimer mTransceiverUpdateTimer;
 
         std::string mClientName;
         audio::AudioDevice::Api mAudioApi;

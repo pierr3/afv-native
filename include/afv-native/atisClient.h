@@ -22,10 +22,9 @@
 #include "afv-native/audio/SpeexPreprocessor.h"
 #include "afv-native/audio/WavSampleStorage.h"
 #include "afv-native/event.h"
-#include "afv-native/event/EventCallbackTimer.h"
-#include "afv-native/http/EventTransferManager.h"
+#include "afv-native/event/CallbackTimer.h"
+#include "afv-native/http/PollingTransferManager.h"
 #include "afv-native/http/RESTRequest.h"
-#include <event2/event.h>
 #include <memory>
 
 namespace afv_native {
@@ -34,28 +33,19 @@ namespace afv_native {
      */
     class ATISClient: public audio::ISampleSink, public afv::ICompressedFrameSink, public std::enable_shared_from_this<ATISClient>, public audio::ITick {
       public:
-        /** Construct an AFV-native ATC Client.
+        /** Construct an AFV-native ATIS Client.
          *
-         * The pilot client will be in the disconnected state and ready to have
+         * The client will be in the disconnected state and ready to have
          * the credentials, position and other configuration options set before
          * attempting to connect.
          *
-         * The containing client must provide and run a libevent eventloop for
-         * AFV-native to attach its operations against, and must ensure that
-         * this loop is run constantly, even when the client is not connected.
-         * (It's used for some tear-down operations which must run to completion
-         * after the client is shut-down if possible.)
-         *
-         * @param evBase an initialised libevent event_base to register the client's
-         *      asynchronous IO and deferred operations against.
-         * @param resourceBasePath A relative or absolute path to where the AFV-native
-         *      resource files are located.
-         * @param baseUrl The baseurl for the AFV API server to connect to.  The
-         *      default should be used in most cases.
+         * @param atisFile The ATIS audio file to play.
          * @param clientName The name of this client to advertise to the
          *      audio-subsystem.
+         * @param baseUrl The baseurl for the AFV API server to connect to.  The
+         *      default should be used in most cases.
          */
-        ATISClient(struct event_base *evBase, std::string atisFile, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.net");
+        ATISClient(std::string atisFile, const std::string &clientName = "AFV-Native", std::string baseUrl = "https://voice1.vatsim.net");
 
         virtual ~ATISClient();
 
@@ -153,9 +143,7 @@ namespace afv_native {
         void putAudioFrame(const audio::SampleType *bufferIn);
 
       protected:
-        struct event_base *mEvBase;
-
-        http::EventTransferManager mTransferManager;
+        http::PollingTransferManager mTransferManager;
         afv::APISession            mAPISession;
         afv::VoiceSession          mVoiceSession;
 
@@ -185,7 +173,7 @@ namespace afv_native {
         void stopTransceiverUpdate();
 
       protected:
-        event::EventCallbackTimer                    mTransceiverUpdateTimer;
+        event::CallbackTimer                         mTransceiverUpdateTimer;
         cryptodto::UDPChannel                       *mChannel;
         std::atomic<uint32_t>                        mTxSequence;
         std::shared_ptr<afv::VoiceCompressionSink>   mVoiceSink;

@@ -21,12 +21,11 @@
 
 using namespace afv_native;
 
-ATCClient::ATCClient(struct event_base *evBase, const std::string &resourceBasePath, const std::string &clientName, std::string baseUrl):
-    mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)), mEvBase(evBase), mTransferManager(mEvBase), mAPISession(mEvBase, mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession),
-    mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mEvBase,
-                                                             mFxRes,
+ATCClient::ATCClient(const std::string &resourceBasePath, const std::string &clientName, std::string baseUrl):
+    mFxRes(std::make_shared<afv::EffectResources>(resourceBasePath)), mTransferManager(), mAPISession(mTransferManager, std::move(baseUrl), clientName), mVoiceSession(mAPISession),
+    mATCRadioStack(std::make_shared<afv::ATCRadioSimulation>(mFxRes,
                                                              &mVoiceSession.getUDPChannel())),
-    mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(mEvBase, std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), mAudioInputDeviceId(), mAudioOutputDeviceId(), ClientEventCallback() {
+    mAudioDevice(), mSpeakerDevice(), mCallsign(), mTxUpdatePending(false), mWantPtt(false), mPtt(false), mAtisRecording(false), mTransceiverUpdateTimer(std::bind(&ATCClient::sendTransceiverUpdate, this)), mClientName(clientName), mAudioApi(-1), mAudioInputDeviceId(), mAudioOutputDeviceId(), ClientEventCallback() {
     mAPISession.StateCallback.addCallback(this, std::bind(&ATCClient::sessionStateCallback, this, std::placeholders::_1));
     mAPISession.AliasUpdateCallback.addCallback(this, std::bind(&ATCClient::aliasUpdateCallback, this));
     mAPISession.StationTransceiversUpdateCallback.addCallback(this, std::bind(&ATCClient::stationTransceiversUpdateCallback, this, std::placeholders::_1));

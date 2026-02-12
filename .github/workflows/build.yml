@@ -2,10 +2,11 @@ name: Build afv-native
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -15,15 +16,13 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          ref: master
+          submodules: recursive
       - name: Setup environment
         run: |
           sudo apt-get update
           sudo apt-get install -y autoconf automake libtool pkg-config libltdl-dev
-          git submodule update --init -- vcpkg
-          pip install cmake
           cmake --version
       - name: Bootstrap vcpkg
         run: |
@@ -31,65 +30,43 @@ jobs:
       - name: Configure cmake
         run: |
           cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-      - name: Build cmake
-        run: |
-          cmake --build build/
-  build-osx-intel:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: master
-      - name: Setup environment
-        run: |
-          git submodule update --init -- vcpkg
-          brew update
-          brew upgrade cmake
-      - name: Bootstrap vcpkg
-        run: |
-          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
-      - name: Configure cmake
-        run: |
-          cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-      - name: Build cmake
+      - name: Build
         run: |
           cmake --build build/
   build-osx-arm:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          ref: master
+          submodules: recursive
       - name: Setup environment
         run: |
-          git submodule update --init -- vcpkg
-          brew update
           brew install cmake pkg-config
+          cmake --version
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
       - name: Configure cmake
         run: |
           cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_OSX_ARCHITECTURES=arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx
-      - name: Build cmake
+      - name: Build
         run: |
           cmake --build build/
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          ref: master
+          submodules: recursive
       - name: Setup environment
         run: |
-          git submodule update --init -- vcpkg
-          pip install cmake
+          cmake --version
       - name: Bootstrap vcpkg
         run: |
           ./vcpkg/bootstrap-vcpkg.bat -disableMetrics
       - name: Configure cmake
         run: |
           cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-      - name: Build cmake
+      - name: Build
         run: |
-          cmake --build build/
+          cmake --build build/ --config ${{ env.BUILD_TYPE }}

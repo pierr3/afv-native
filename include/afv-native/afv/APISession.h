@@ -37,12 +37,11 @@
 #include "afv-native/afv/dto/Station.h"
 #include "afv-native/afv/dto/StationTransceiver.h"
 #include "afv-native/event.h"
-#include "afv-native/event/EventCallbackTimer.h"
+#include "afv-native/event/CallbackTimer.h"
 #include "afv-native/http/RESTRequest.h"
 #include "afv-native/http/Request.h"
 #include "afv-native/http/TransferManager.h"
 #include "afv-native/util/ChainedCallback.h"
-#include <event2/event.h>
 #include <map>
 #include <memory>
 #include <string>
@@ -52,7 +51,7 @@ namespace afv_native { namespace afv {
 
     class APISession {
       public:
-        APISession(event_base *evBase, http::TransferManager &tm, std::string baseUrl, std::string clientName);
+        APISession(http::TransferManager &tm, std::string baseUrl, std::string clientName);
 
         const std::string &getUsername() const;
 
@@ -63,8 +62,6 @@ namespace afv_native { namespace afv {
         void setAuthenticationFor(http::Request &r);
 
         http::TransferManager &getTransferManager() const;
-
-        struct event_base *getEventBase() const;
 
         APISessionState getState() const;
 
@@ -101,7 +98,6 @@ namespace afv_native { namespace afv {
         void setState(APISessionState newState);
         void raiseError(APISessionError error);
 
-        struct event_base     *mEvBase;
         http::TransferManager &mTransferManager;
         std::string            mBaseURL;
         std::string            mUsername;
@@ -112,7 +108,7 @@ namespace afv_native { namespace afv {
 
         http::RESTRequest mAuthenticationRequest;
 
-        event::EventCallbackTimer mRefreshTokenTimer;
+        event::CallbackTimer mRefreshTokenTimer;
 
         APISessionError mLastError;
 
