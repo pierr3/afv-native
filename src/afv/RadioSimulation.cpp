@@ -312,6 +312,10 @@ audio::SourceStatus RadioSimulation::getAudioFrame(audio::SampleType *bufferOut,
             const auto rv = src.second.source->getAudioFrame(sampleCache[src.second.source.get()]);
             if (rv != audio::SourceStatus::OK) {
                 sampleCache.erase(src.second.source.get());
+            } else {
+                src.second.agc.transformFrame(
+                    sampleCache[src.second.source.get()],
+                    sampleCache[src.second.source.get()]);
             }
         }
     }
@@ -368,11 +372,23 @@ bool RadioSimulation::mix_effect(std::shared_ptr<audio::ISampleSource> effect, f
 void RadioSimulation::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pkt) {
     std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
     // FIXME:  Deal with the case of a single-callsign transmitting multiple different voicestreams simultaneously.
+    bool isNewHeadset = (mHeadsetIncomingStreams.find(pkt.Callsign) == mHeadsetIncomingStreams.end());
+    bool isNewSpeaker = (mSpeakerIncomingStreams.find(pkt.Callsign) == mSpeakerIncomingStreams.end());
+
     mHeadsetIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
     mHeadsetIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
 
     mSpeakerIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
     mSpeakerIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
+
+    if (isNewHeadset) {
+        mHeadsetIncomingStreams[pkt.Callsign].agc.setEnabled(mDefaultEnableAgc);
+        mHeadsetIncomingStreams[pkt.Callsign].agc.setTargetLevelDb(mDefaultAgcTargetDb);
+    }
+    if (isNewSpeaker) {
+        mSpeakerIncomingStreams[pkt.Callsign].agc.setEnabled(mDefaultEnableAgc);
+        mSpeakerIncomingStreams[pkt.Callsign].agc.setTargetLevelDb(mDefaultAgcTargetDb);
+    }
 }
 
 void RadioSimulation::setFrequency(unsigned int radio, unsigned int frequency) {
@@ -538,6 +554,38 @@ void RadioSimulation::setEnableHfSquelch(bool enableSquelch) {
     for (auto &thisRadio: mRadioState) {
         thisRadio.mHfSquelch = enableSquelch;
     }
+}
+
+void RadioSimulation::setEnableAgc(bool enableAgc) {
+    std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
+    mDefaultEnableAgc = enableAgc;
+    for (auto &[_, meta]: mHeadsetIncomingStreams) {
+        meta.agc.setEnabled(enableAgc);
+    }
+    for (auto &[_, meta]: mSpeakerIncomingStreams) {
+        meta.agc.setEnabled(enableAgc);
+    }
+    LOG("RadioSimulation", "setEnableAgc: %i", enableAgc);
+}
+
+bool RadioSimulation::getEnableAgc() const {
+    return mDefaultEnableAgc;
+}
+
+void RadioSimulation::setAgcTargetDb(double targetDb) {
+    std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
+    mDefaultAgcTargetDb = targetDb;
+    for (auto &[_, meta]: mHeadsetIncomingStreams) {
+        meta.agc.setTargetLevelDb(targetDb);
+    }
+    for (auto &[_, meta]: mSpeakerIncomingStreams) {
+        meta.agc.setTargetLevelDb(targetDb);
+    }
+    LOG("RadioSimulation", "setAgcTargetDb: %f", targetDb);
+}
+
+double RadioSimulation::getAgcTargetDb() const {
+    return mDefaultAgcTargetDb;
 }
 
 void RadioSimulation::setupDevices(util::ChainedCallback<void(ClientEventType, void *, void *)> *eventCallback) {

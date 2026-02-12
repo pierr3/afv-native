@@ -86,6 +86,11 @@ namespace afv_native::api {
         AFV_NATIVE_API void SetEnableOutputEffects(bool enableEffects);
         AFV_NATIVE_API bool GetEnableInputFilters() const;
 
+        AFV_NATIVE_API void   SetEnableAgc(bool enableAgc);
+        AFV_NATIVE_API bool   GetEnableAgc() const;
+        AFV_NATIVE_API void   SetAgcTargetDb(double targetDb);
+        AFV_NATIVE_API double GetAgcTargetDb() const;
+
         AFV_NATIVE_API void StartAudio();
         AFV_NATIVE_API void StopAudio();
         AFV_NATIVE_API bool IsAudioRunning();

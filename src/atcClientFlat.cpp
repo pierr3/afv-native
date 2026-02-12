@@ -136,6 +136,22 @@ AFV_NATIVE_API void ATCClient_SetEnableOutputEffects(ATCClientHandle handle, boo
     handle->impl->SetEnableOutputEffects(enableEffects);
 }
 
+AFV_NATIVE_API void ATCClient_SetEnableAgc(ATCClientHandle handle, bool enableAgc) {
+    handle->impl->SetEnableAgc(enableAgc);
+}
+
+AFV_NATIVE_API bool ATCClient_GetEnableAgc(ATCClientHandle handle) {
+    return handle->impl->GetEnableAgc();
+}
+
+AFV_NATIVE_API void ATCClient_SetAgcTargetDb(ATCClientHandle handle, double targetDb) {
+    handle->impl->SetAgcTargetDb(targetDb);
+}
+
+AFV_NATIVE_API double ATCClient_GetAgcTargetDb(ATCClientHandle handle) {
+    return handle->impl->GetAgcTargetDb();
+}
+
 AFV_NATIVE_API bool ATCClient_GetEnableInputFilters(ATCClientHandle handle) {
     return handle->impl->GetEnableInputFilters();
 }

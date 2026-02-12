@@ -51,6 +51,7 @@
 #include "afv-native/audio/OutputDeviceState.h"
 #include "afv-native/audio/OutputMixer.h"
 #include "afv-native/audio/PinkNoiseGenerator.h"
+#include "afv-native/audio/RmsAgc.h"
 #include "afv-native/audio/SimpleCompressorEffect.h"
 #include "afv-native/audio/SineToneSource.h"
 #include "afv-native/audio/SpeexPreprocessor.h"
@@ -129,6 +130,7 @@ namespace afv_native { namespace afv {
     struct AtcCallsignMeta {
         std::shared_ptr<RemoteVoiceSource> source;
         std::vector<dto::RxTransceiver>    transceivers;
+        audio::RmsAgc                      agc;
         AtcCallsignMeta();
     };
 
@@ -214,6 +216,11 @@ namespace afv_native { namespace afv {
         void setEnableOutputEffects(bool enableEffects);
         void setEnableHfSquelch(bool enableHfSquelch);
 
+        void   setEnableAgc(bool enableAgc);
+        bool   getEnableAgc() const;
+        void   setAgcTargetDb(double targetDb);
+        double getAgcTargetDb() const;
+
         void setupDevices();
 
         void setOnHeadset(unsigned int radio, bool onHeadset);
@@ -276,8 +283,10 @@ namespace afv_native { namespace afv {
         std::map<unsigned int, AtcRadioState> mRadioState;
         std::shared_ptr<audio::ITick>         mTick;
 
-        bool mDefaultEnableHfSquelch = false;
-        bool mDefaultBypassEffects   = false;
+        bool   mDefaultEnableHfSquelch = false;
+        bool   mDefaultBypassEffects   = false;
+        bool   mDefaultEnableAgc       = true;
+        double mDefaultAgcTargetDb     = -18.0;
 
         std::shared_ptr<AtcOutputAudioDevice> mHeadsetDevice;
         std::shared_ptr<AtcOutputAudioDevice> mSpeakerDevice;

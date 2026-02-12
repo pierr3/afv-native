@@ -71,6 +71,10 @@ extern "C" {
     AFV_NATIVE_API void ATCClient_SetEnableInputFilters(ATCClientHandle handle, bool enableInputFilters);
     AFV_NATIVE_API void ATCClient_SetEnableOutputEffects(ATCClientHandle handle, bool enableEffects);
     AFV_NATIVE_API bool ATCClient_GetEnableInputFilters(ATCClientHandle handle);
+    AFV_NATIVE_API void ATCClient_SetEnableAgc(ATCClientHandle handle, bool enableAgc);
+    AFV_NATIVE_API bool ATCClient_GetEnableAgc(ATCClientHandle handle);
+    AFV_NATIVE_API void ATCClient_SetAgcTargetDb(ATCClientHandle handle, double targetDb);
+    AFV_NATIVE_API double ATCClient_GetAgcTargetDb(ATCClientHandle handle);
     AFV_NATIVE_API void ATCClient_StartAudio(ATCClientHandle handle);
     AFV_NATIVE_API void ATCClient_StopAudio(ATCClientHandle handle);
     AFV_NATIVE_API bool ATCClient_IsAudioRunning(ATCClientHandle handle);

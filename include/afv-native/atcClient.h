@@ -172,6 +172,11 @@ namespace afv_native {
         void setEnableInputFilters(bool enableInputFilters);
         void setEnableOutputEffects(bool enableEffects);
 
+        void   setEnableAgc(bool enableAgc);
+        bool   getEnableAgc() const;
+        void   setAgcTargetDb(double targetDb);
+        double getAgcTargetDb() const;
+
         /** getStationAliases returns a vector of all the known station aliases.
          *
          * @note this method uses a copy in place to prevent race inside the

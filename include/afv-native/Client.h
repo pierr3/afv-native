@@ -184,6 +184,11 @@ namespace afv_native {
         void setEnableOutputEffects(bool enableEffects);
         void setEnableHfSquelch(bool enableSquelch);
 
+        void   setEnableAgc(bool enableAgc);
+        bool   getEnableAgc() const;
+        void   setAgcTargetDb(double targetDb);
+        double getAgcTargetDb() const;
+
         void setOnHeadset(unsigned int radio, bool onHeadset);
         void setSplitAudioChannels(bool split);
 

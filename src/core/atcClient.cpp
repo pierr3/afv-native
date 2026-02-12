@@ -477,6 +477,32 @@ void ATCClient::setEnableOutputEffects(bool enableEffects) {
     mATCRadioStack->setEnableOutputEffects(enableEffects);
 }
 
+void ATCClient::setEnableAgc(bool enableAgc) {
+    if (mATCRadioStack) {
+        mATCRadioStack->setEnableAgc(enableAgc);
+    }
+}
+
+bool ATCClient::getEnableAgc() const {
+    if (mATCRadioStack) {
+        return mATCRadioStack->getEnableAgc();
+    }
+    return true;
+}
+
+void ATCClient::setAgcTargetDb(double targetDb) {
+    if (mATCRadioStack) {
+        mATCRadioStack->setAgcTargetDb(targetDb);
+    }
+}
+
+double ATCClient::getAgcTargetDb() const {
+    if (mATCRadioStack) {
+        return mATCRadioStack->getAgcTargetDb();
+    }
+    return -18.0;
+}
+
 void ATCClient::aliasUpdateCallback() {
     event::EventBus::Instance().OnEvent(StationAliasesUpdatedEvent {});
 }

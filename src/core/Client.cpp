@@ -533,6 +533,22 @@ void Client::setEnableHfSquelch(bool enableSquelch)
     mRadioSim->setEnableHfSquelch(enableSquelch);
 }
 
+void Client::setEnableAgc(bool enableAgc) {
+    mRadioSim->setEnableAgc(enableAgc);
+}
+
+bool Client::getEnableAgc() const {
+    return mRadioSim->getEnableAgc();
+}
+
+void Client::setAgcTargetDb(double targetDb) {
+    mRadioSim->setAgcTargetDb(targetDb);
+}
+
+double Client::getAgcTargetDb() const {
+    return mRadioSim->getAgcTargetDb();
+}
+
 void Client::setOnHeadset(unsigned int radio, bool onHeadset)
 {
     mRadioSim->setOnHeadset(radio, onHeadset);

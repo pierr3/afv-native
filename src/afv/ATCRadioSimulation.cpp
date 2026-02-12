@@ -420,6 +420,10 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
                 src.second.source->getAudioFrame(sampleCache[src.second.source.get()]);
             if (rv != audio::SourceStatus::OK) {
                 sampleCache.erase(src.second.source.get());
+            } else {
+                src.second.agc.transformFrame(
+                    sampleCache[src.second.source.get()],
+                    sampleCache[src.second.source.get()]);
             }
         }
     }
@@ -573,11 +577,23 @@ void ATCRadioSimulation::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pk
     // FIXME:  Deal with the case of a single-callsign transmitting multiple different voicestreams simultaneously.
     if (_packetListening(pkt)) {
         std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
+        bool isNewHeadset = (mHeadsetIncomingStreams.find(pkt.Callsign) == mHeadsetIncomingStreams.end());
+        bool isNewSpeaker = (mSpeakerIncomingStreams.find(pkt.Callsign) == mSpeakerIncomingStreams.end());
+
         mHeadsetIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
         mHeadsetIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
 
         mSpeakerIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
         mSpeakerIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
+
+        if (isNewHeadset) {
+            mHeadsetIncomingStreams[pkt.Callsign].agc.setEnabled(mDefaultEnableAgc);
+            mHeadsetIncomingStreams[pkt.Callsign].agc.setTargetLevelDb(mDefaultAgcTargetDb);
+        }
+        if (isNewSpeaker) {
+            mSpeakerIncomingStreams[pkt.Callsign].agc.setEnabled(mDefaultEnableAgc);
+            mSpeakerIncomingStreams[pkt.Callsign].agc.setTargetLevelDb(mDefaultAgcTargetDb);
+        }
     }
 }
 
@@ -801,6 +817,38 @@ void ATCRadioSimulation::setEnableHfSquelch(bool enableSquelch) {
     }
     mDefaultEnableHfSquelch = enableSquelch;
     LOG("ATCRadioSimulation", "setEnableHfSquelch: %i", enableSquelch);
+}
+
+void ATCRadioSimulation::setEnableAgc(bool enableAgc) {
+    std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
+    mDefaultEnableAgc = enableAgc;
+    for (auto &[_, meta]: mHeadsetIncomingStreams) {
+        meta.agc.setEnabled(enableAgc);
+    }
+    for (auto &[_, meta]: mSpeakerIncomingStreams) {
+        meta.agc.setEnabled(enableAgc);
+    }
+    LOG("ATCRadioSimulation", "setEnableAgc: %i", enableAgc);
+}
+
+bool ATCRadioSimulation::getEnableAgc() const {
+    return mDefaultEnableAgc;
+}
+
+void ATCRadioSimulation::setAgcTargetDb(double targetDb) {
+    std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
+    mDefaultAgcTargetDb = targetDb;
+    for (auto &[_, meta]: mHeadsetIncomingStreams) {
+        meta.agc.setTargetLevelDb(targetDb);
+    }
+    for (auto &[_, meta]: mSpeakerIncomingStreams) {
+        meta.agc.setTargetLevelDb(targetDb);
+    }
+    LOG("ATCRadioSimulation", "setAgcTargetDb: %f", targetDb);
+}
+
+double ATCRadioSimulation::getAgcTargetDb() const {
+    return mDefaultAgcTargetDb;
 }
 
 void ATCRadioSimulation::setupDevices() {

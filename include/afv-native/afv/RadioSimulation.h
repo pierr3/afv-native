@@ -48,6 +48,7 @@
 #include "afv-native/audio/ISampleSource.h"
 #include "afv-native/audio/SineToneSource.h"
 #include "afv-native/audio/SpeexPreprocessor.h"
+#include "afv-native/audio/RmsAgc.h"
 #include "afv-native/audio/SimpleCompressorEffect.h"
 #include "afv-native/audio/VHFFilterSource.h"
 #include "afv-native/cryptodto/UDPChannel.h"
@@ -100,6 +101,7 @@ namespace afv_native {
         struct CallsignMeta {
             std::shared_ptr<RemoteVoiceSource> source;
             std::vector<dto::RxTransceiver> transceivers;
+            audio::RmsAgc agc;
             CallsignMeta();
         };
 
@@ -151,6 +153,11 @@ namespace afv_native {
 
             void setEnableOutputEffects(bool enableEffects);
             void setEnableHfSquelch(bool enableHfSquelch);
+
+            void setEnableAgc(bool enableAgc);
+            bool getEnableAgc() const;
+            void setAgcTargetDb(double targetDb);
+            double getAgcTargetDb() const;
 
             void setupDevices(util::ChainedCallback<void(ClientEventType, void*, void*)> *eventCallback);
 
@@ -211,6 +218,9 @@ namespace afv_native {
 
             std::shared_ptr<VoiceCompressionSink> mVoiceSink;
             std::shared_ptr<audio::SpeexPreprocessor> mVoiceFilter;
+
+            bool mDefaultEnableAgc = true;
+            double mDefaultAgcTargetDb = -18.0;
 
             event::CallbackTimer mMaintenanceTimer;
             RollingAverage<double> mVuMeter;
