@@ -30,7 +30,7 @@ endif()
 
 project(
     afv_native
-    VERSION 1.24.0
+    VERSION 1.3.1
     LANGUAGES C CXX)
 
 if (APPLE)
@@ -102,6 +102,7 @@ target_sources(afv_native PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/OutputDeviceState.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/VHFFilterSource.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/SimpleCompressorEffect.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/RmsAgc.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atcClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/core/atisClient.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/atcClientWrapper.cpp

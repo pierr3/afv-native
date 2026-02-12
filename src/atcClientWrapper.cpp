@@ -18,7 +18,7 @@
 #endif // WIN32
 
 namespace atcapi {
-    std::mutex                             afvMutex;
+    std::recursive_mutex                   afvMutex;
     std::unique_ptr<afv_native::ATCClient> client;
     std::atomic<bool>                      isInitialized {false};
 } // namespace atcapi
@@ -56,7 +56,7 @@ afv_native::api::atcClient::atcClient(char *clientName, char *resourcePath, char
 
 afv_native::api::atcClient::~atcClient() {
     auto &bus = event::EventBus::Instance();
-    for (auto id : mEventHandlerIds) {
+    for (auto id: mEventHandlerIds) {
         bus.RemoveHandler(id);
     }
     mEventHandlerIds.clear();
@@ -73,7 +73,7 @@ bool afv_native::api::atcClient::IsInitialized() {
 }
 
 void afv_native::api::atcClient::SetCredentials(std::string username, std::string password) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setCredentials(std::string(username), std::string(password));
 }
 
@@ -82,7 +82,7 @@ void afv_native::api::atcClient::SetCredentials(char *username, char *password) 
 }
 
 void afv_native::api::atcClient::SetCallsign(std::string callsign) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setCallsign(std::string(callsign));
 }
 
@@ -91,7 +91,7 @@ void afv_native::api::atcClient::SetCallsign(char *callsign) {
 }
 
 void afv_native::api::atcClient::SetClientPosition(double lat, double lon, double amslm, double aglm) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setClientPosition(lat, lon, amslm, aglm);
 }
 
@@ -104,17 +104,17 @@ bool afv_native::api::atcClient::IsAPIConnected() {
 }
 
 bool afv_native::api::atcClient::Connect() {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     return client->connect();
 }
 
 void afv_native::api::atcClient::Disconnect() {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     return client->disconnect();
 }
 
 void afv_native::api::atcClient::SetAudioApi(int api) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setAudioApi(api);
 }
 
@@ -139,7 +139,7 @@ const char **afv_native::api::atcClient::GetAudioApisNative() {
 }
 
 void afv_native::api::atcClient::SetAudioInputDevice(std::string inputDevice) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setAudioInputDevice(inputDevice);
 }
 
@@ -148,7 +148,7 @@ void afv_native::api::atcClient::SetAudioInputDevice(char *inputDevice) {
 }
 
 void afv_native::api::atcClient::SetAudioOutputDevice(std::string outputDevice) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setAudioOutputDevice(outputDevice);
 }
 
@@ -157,7 +157,7 @@ void afv_native::api::atcClient::SetAudioOutputDevice(char *outputDevice) {
 }
 
 void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(std::string outputDevice) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setSpeakerOutputDevice(outputDevice);
 }
 
@@ -166,7 +166,7 @@ void afv_native::api::atcClient::SetAudioSpeakersOutputDevice(char *outputDevice
 }
 
 void afv_native::api::atcClient::SetHeadsetOutputChannel(int channel) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     auto                        chan = PlaybackChannel::Both;
     if (channel == 1) {
         chan = PlaybackChannel::Left;
@@ -275,18 +275,36 @@ double afv_native::api::atcClient::GetInputVu() const {
 }
 
 void afv_native::api::atcClient::SetMicrophoneVolume(float volume) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setMicrophoneVolume(volume);
 }
 
 void afv_native::api::atcClient::SetEnableInputFilters(bool enableInputFilters) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setEnableInputFilters(enableInputFilters);
 }
 
 void afv_native::api::atcClient::SetEnableOutputEffects(bool enableEffects) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setEnableOutputEffects(enableEffects);
+}
+
+void afv_native::api::atcClient::SetEnableAgc(bool enableAgc) {
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
+    client->setEnableAgc(enableAgc);
+}
+
+bool afv_native::api::atcClient::GetEnableAgc() const {
+    return client->getEnableAgc();
+}
+
+void afv_native::api::atcClient::SetAgcTargetDb(double targetDb) {
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
+    client->setAgcTargetDb(targetDb);
+}
+
+double afv_native::api::atcClient::GetAgcTargetDb() const {
+    return client->getAgcTargetDb();
 }
 
 bool afv_native::api::atcClient::GetEnableInputFilters() const {
@@ -294,12 +312,12 @@ bool afv_native::api::atcClient::GetEnableInputFilters() const {
 }
 
 void afv_native::api::atcClient::StartAudio() {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->startAudio();
 }
 
 void afv_native::api::atcClient::StopAudio() {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->stopAudio();
 }
 
@@ -312,27 +330,27 @@ bool afv_native::api::atcClient::IsAudioRunning() {
 }
 
 void afv_native::api::atcClient::SetTx(unsigned int freq, bool active) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setTx(freq, active);
 }
 
 void afv_native::api::atcClient::SetRx(unsigned int freq, bool active) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setRx(freq, active);
 }
 
 void afv_native::api::atcClient::SetXc(unsigned int freq, bool active) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setXc(freq, active);
 }
 
 void afv_native::api::atcClient::SetOnHeadset(unsigned int freq, bool active) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setOnHeadset(freq, active);
 }
 
 void afv_native::api::atcClient::SetOutputMute(unsigned int freq, bool mute) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setOutputMute(freq, mute);
 }
 
@@ -369,7 +387,7 @@ bool afv_native::api::atcClient::GetIsOutputMutedState(unsigned int freq) {
 };
 
 void afv_native::api::atcClient::UseTransceiversFromStation(std::string station, unsigned int freq) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->linkTransceivers(station, freq);
 };
 
@@ -422,7 +440,7 @@ void afv_native::api::atcClient::FetchStationVccs(char *station) {
 }
 
 void afv_native::api::atcClient::SetPtt(bool pttState) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setPtt(pttState);
 }
 
@@ -435,7 +453,7 @@ const char *afv_native::api::atcClient::LastTransmitOnFreqNative(unsigned int fr
 }
 
 bool afv_native::api::atcClient::AddFrequency(unsigned int freq, std::string stationName) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     return client->addFrequency(freq, true, stationName);
 }
 
@@ -444,7 +462,7 @@ bool afv_native::api::atcClient::AddFrequency(unsigned int freq, char *stationNa
 }
 
 void afv_native::api::atcClient::RemoveFrequency(unsigned int freq) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->removeFrequency(freq);
 }
 
@@ -453,7 +471,7 @@ bool afv_native::api::atcClient::IsFrequencyActive(unsigned int freq) {
 }
 
 void afv_native::api::atcClient::SetAtisRecording(bool state) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setRecordAtis(state);
 }
 
@@ -462,7 +480,7 @@ bool afv_native::api::atcClient::IsAtisRecording() {
 }
 
 void afv_native::api::atcClient::SetAtisListening(bool state) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->listenToAtis(state);
 }
 
@@ -471,7 +489,7 @@ bool afv_native::api::atcClient::IsAtisListening() {
 }
 
 void afv_native::api::atcClient::StartAtisPlayback(std::string callsign, unsigned int freq) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->startAtisPlayback(callsign, freq);
 }
 
@@ -480,12 +498,12 @@ void afv_native::api::atcClient::StartAtisPlayback(char *callsign, unsigned int 
 }
 
 void afv_native::api::atcClient::StopAtisPlayback() {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->stopAtisPlayback();
 }
 
 void afv_native::api::atcClient::SetHardware(afv_native::HardwareType hardware) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setHardware(hardware);
 }
 
@@ -506,167 +524,145 @@ void afv_native::api::atcClient::RaiseClientEvent(void *handle, void (*callback)
 void afv_native::api::atcClient::registerEventBusHandlers(std::function<void(afv_native::ClientEventType, void *, void *)> callback) {
     // Remove any previously registered handlers
     auto &bus = event::EventBus::Instance();
-    for (auto id : mEventHandlerIds) {
+    for (auto id: mEventHandlerIds) {
         bus.RemoveHandler(id);
     }
     mEventHandlerIds.clear();
 
     // Simple events (no data)
-    mEventHandlerIds.push_back(bus.AddHandler<APIServerConnectedEvent>(
-        [callback](const APIServerConnectedEvent &) {
-            callback(ClientEventType::APIServerConnected, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<APIServerDisconnectedEvent>(
-        [callback](const APIServerDisconnectedEvent &) {
-            callback(ClientEventType::APIServerDisconnected, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectedEvent>(
-        [callback](const VoiceServerConnectedEvent &) {
-            callback(ClientEventType::VoiceServerConnected, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerDisconnectedEvent>(
-        [callback](const VoiceServerDisconnectedEvent &) {
-            callback(ClientEventType::VoiceServerDisconnected, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectionDegradedEvent>(
-        [callback](const VoiceServerConnectionDegradedEvent &) {
-            callback(ClientEventType::VoiceServerConnectionDegraded, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectionResumedEvent>(
-        [callback](const VoiceServerConnectionResumedEvent &) {
-            callback(ClientEventType::VoiceServerConnectionResumed, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<PttOpenEvent>(
-        [callback](const PttOpenEvent &) {
-            callback(ClientEventType::PttOpen, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<PttClosedEvent>(
-        [callback](const PttClosedEvent &) {
-            callback(ClientEventType::PttClosed, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<StationAliasesUpdatedEvent>(
-        [callback](const StationAliasesUpdatedEvent &) {
-            callback(ClientEventType::StationAliasesUpdated, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<InputDeviceErrorEvent>(
-        [callback](const InputDeviceErrorEvent &) {
-            callback(ClientEventType::InputDeviceError, nullptr, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<AudioDisabledEvent>(
-        [callback](const AudioDisabledEvent &) {
-            callback(ClientEventType::AudioDisabled, nullptr, nullptr);
-        }));
+    mEventHandlerIds.push_back(bus.AddHandler<APIServerConnectedEvent>([callback](const APIServerConnectedEvent &) {
+        callback(ClientEventType::APIServerConnected, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<APIServerDisconnectedEvent>([callback](const APIServerDisconnectedEvent &) {
+        callback(ClientEventType::APIServerDisconnected, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectedEvent>([callback](const VoiceServerConnectedEvent &) {
+        callback(ClientEventType::VoiceServerConnected, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerDisconnectedEvent>([callback](const VoiceServerDisconnectedEvent &) {
+        callback(ClientEventType::VoiceServerDisconnected, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectionDegradedEvent>([callback](const VoiceServerConnectionDegradedEvent &) {
+        callback(ClientEventType::VoiceServerConnectionDegraded, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerConnectionResumedEvent>([callback](const VoiceServerConnectionResumedEvent &) {
+        callback(ClientEventType::VoiceServerConnectionResumed, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<PttOpenEvent>([callback](const PttOpenEvent &) {
+        callback(ClientEventType::PttOpen, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<PttClosedEvent>([callback](const PttClosedEvent &) {
+        callback(ClientEventType::PttClosed, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationAliasesUpdatedEvent>([callback](const StationAliasesUpdatedEvent &) {
+        callback(ClientEventType::StationAliasesUpdated, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<InputDeviceErrorEvent>([callback](const InputDeviceErrorEvent &) {
+        callback(ClientEventType::InputDeviceError, nullptr, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<AudioDisabledEvent>([callback](const AudioDisabledEvent &) {
+        callback(ClientEventType::AudioDisabled, nullptr, nullptr);
+    }));
 
     // Events with int/error data
-    mEventHandlerIds.push_back(bus.AddHandler<APIServerErrorEvent>(
-        [callback](const APIServerErrorEvent &e) {
-            int code = e.errorCode;
-            callback(ClientEventType::APIServerError, &code, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerChannelErrorEvent>(
-        [callback](const VoiceServerChannelErrorEvent &e) {
-            int errNo = e.channelErrno;
-            callback(ClientEventType::VoiceServerChannelError, &errNo, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerErrorEvent>(
-        [callback](const VoiceServerErrorEvent &e) {
-            int code = e.errorCode;
-            callback(ClientEventType::VoiceServerError, &code, nullptr);
-        }));
+    mEventHandlerIds.push_back(bus.AddHandler<APIServerErrorEvent>([callback](const APIServerErrorEvent &e) {
+        int code = e.errorCode;
+        callback(ClientEventType::APIServerError, &code, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerChannelErrorEvent>([callback](const VoiceServerChannelErrorEvent &e) {
+        int errNo = e.channelErrno;
+        callback(ClientEventType::VoiceServerChannelError, &errNo, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<VoiceServerErrorEvent>([callback](const VoiceServerErrorEvent &e) {
+        int code = e.errorCode;
+        callback(ClientEventType::VoiceServerError, &code, nullptr);
+    }));
 
     // Events with string data
-    mEventHandlerIds.push_back(bus.AddHandler<AudioErrorEvent>(
-        [callback](const AudioErrorEvent &e) {
-            callback(ClientEventType::AudioError, reinterpret_cast<void *>(const_cast<char *>(e.message.c_str())), nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<AudioDeviceStoppedErrorEvent>(
-        [callback](const AudioDeviceStoppedErrorEvent &e) {
-            callback(ClientEventType::AudioDeviceStoppedError, (void *)e.deviceName.c_str(), nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<StationTransceiversUpdatedEvent>(
-        [callback](const StationTransceiversUpdatedEvent &e) {
-            auto namePtr = e.stationName.c_str();
-            callback(ClientEventType::StationTransceiversUpdated, &namePtr, nullptr);
-        }));
+    mEventHandlerIds.push_back(bus.AddHandler<AudioErrorEvent>([callback](const AudioErrorEvent &e) {
+        callback(ClientEventType::AudioError,
+                 reinterpret_cast<void *>(const_cast<char *>(e.message.c_str())), nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<AudioDeviceStoppedErrorEvent>([callback](const AudioDeviceStoppedErrorEvent &e) {
+        callback(ClientEventType::AudioDeviceStoppedError, (void *) e.deviceName.c_str(), nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationTransceiversUpdatedEvent>([callback](const StationTransceiversUpdatedEvent &e) {
+        auto namePtr = e.stationName.c_str();
+        callback(ClientEventType::StationTransceiversUpdated, &namePtr, nullptr);
+    }));
 
     // Events with frequency data
-    mEventHandlerIds.push_back(bus.AddHandler<FrequencyRxBeginEvent>(
-        [callback](const FrequencyRxBeginEvent &e) {
-            unsigned int freq = e.frequency;
-            callback(ClientEventType::FrequencyRxBegin, &freq, nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<FrequencyRxEndEvent>(
-        [callback](const FrequencyRxEndEvent &e) {
-            unsigned int freq = e.frequency;
-            callback(ClientEventType::FrequencyRxEnd, &freq, nullptr);
-        }));
+    mEventHandlerIds.push_back(bus.AddHandler<FrequencyRxBeginEvent>([callback](const FrequencyRxBeginEvent &e) {
+        unsigned int freq = e.frequency;
+        callback(ClientEventType::FrequencyRxBegin, &freq, nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<FrequencyRxEndEvent>([callback](const FrequencyRxEndEvent &e) {
+        unsigned int freq = e.frequency;
+        callback(ClientEventType::FrequencyRxEnd, &freq, nullptr);
+    }));
 
     // Events with frequency + callsign data
-    mEventHandlerIds.push_back(bus.AddHandler<StationRxBeginEvent>(
-        [callback](const StationRxBeginEvent &e) {
-            unsigned int freq = e.frequency;
-            callback(ClientEventType::StationRxBegin, &freq, (void *)e.callsign.c_str());
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<StationRxEndEvent>(
-        [callback](const StationRxEndEvent &e) {
-            unsigned int freq = e.frequency;
-            callback(ClientEventType::StationRxEnd, &freq, (void *)e.callsign.c_str());
-        }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationRxBeginEvent>([callback](const StationRxBeginEvent &e) {
+        unsigned int freq = e.frequency;
+        callback(ClientEventType::StationRxBegin, &freq, (void *) e.callsign.c_str());
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationRxEndEvent>([callback](const StationRxEndEvent &e) {
+        unsigned int freq = e.frequency;
+        callback(ClientEventType::StationRxEnd, &freq, (void *) e.callsign.c_str());
+    }));
 
     // Complex data events
     // NOTE: data2 was previously a raw std::map<string,Station>* — unusable from C.
     // Now nullptr; C++ consumers should subscribe to VccsReceivedEvent via EventBus instead.
-    mEventHandlerIds.push_back(bus.AddHandler<VccsReceivedEvent>(
-        [callback](const VccsReceivedEvent &e) {
-            callback(ClientEventType::VccsReceived, (void *)e.stationName.c_str(), nullptr);
-        }));
-    mEventHandlerIds.push_back(bus.AddHandler<StationDataReceivedEvent>(
-        [callback](const StationDataReceivedEvent &e) {
-            bool found = e.found;
-            unsigned int freq = 0;
-            if (e.stationData.second.has_value()) {
-                freq = e.stationData.second->frequency;
-            }
-            callback(ClientEventType::StationDataReceived, &found, &freq);
-        }));
+    mEventHandlerIds.push_back(bus.AddHandler<VccsReceivedEvent>([callback](const VccsReceivedEvent &e) {
+        callback(ClientEventType::VccsReceived, (void *) e.stationName.c_str(), nullptr);
+    }));
+    mEventHandlerIds.push_back(bus.AddHandler<StationDataReceivedEvent>([callback](const StationDataReceivedEvent &e) {
+        bool         found = e.found;
+        unsigned int freq  = 0;
+        if (e.stationData.second.has_value()) {
+            freq = e.stationData.second->frequency;
+        }
+        callback(ClientEventType::StationDataReceived, &found, &freq);
+    }));
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetRadioGainAll(float gain) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setRadioGainAll(gain);
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetRadioGain(unsigned int freq, float gain) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setRadioGain(freq, gain);
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetPlaybackChannelAll(PlaybackChannel channel) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setPlaybackChannelAll(channel);
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetPlaybackChannel(unsigned int freq, PlaybackChannel channel) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setPlaybackChannel(freq, channel);
 }
 
 AFV_NATIVE_API int afv_native::api::atcClient::GetPlaybackChannel(unsigned int freq) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     return static_cast<int>(client->getPlaybackChannel(freq));
 }
 
 AFV_NATIVE_API int afv_native::api::atcClient::GetTransceiverCountForFrequency(unsigned int freq) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     return client->getTransceiverCountForFrequency(freq);
 };
 AFV_NATIVE_API void afv_native::api::atcClient::reset() {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->reset();
 };
 
 AFV_NATIVE_API std::map<unsigned int, afv_native::SimpleAtcRadioState> afv_native::api::atcClient::getRadioState() {
-    std::lock_guard<std::mutex>                             lock(afvMutex);
+    std::lock_guard<std::recursive_mutex>                             lock(afvMutex);
     std::map<unsigned int, afv_native::SimpleAtcRadioState> state;
     for (const auto &[freq, radio]: client->getRadioState()) {
         afv_native::SimpleAtcRadioState radioState;
@@ -707,7 +703,7 @@ AFV_NATIVE_API afv_native::SimpleAtcRadioState **afv_native::api::atcClient::get
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetCrossCoupleAcross(unsigned int freq, bool active) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setCrossCoupleAcross(freq, active);
 }
 
@@ -747,7 +743,7 @@ AFV_NATIVE_API void afv_native::api::atcClient::FreeRadioState(afv_native::Simpl
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::PlayAdHocSound(std::string wavFilePath, float gain, afv_native::AdHocOutputTarget target) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->playAdHocSound(wavFilePath, gain, target);
 }
 
@@ -756,16 +752,16 @@ AFV_NATIVE_API void afv_native::api::atcClient::PlayAdHocSound(char *wavFilePath
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::StopAdHocSounds() {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->stopAdHocSounds();
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetLoopback(bool enabled, afv_native::AdHocOutputTarget target, float gain, afv_native::HardwareType hardware) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setLoopback(enabled, target, gain, hardware);
 }
 
 AFV_NATIVE_API void afv_native::api::atcClient::SetManualTransceivers(unsigned int freq, std::vector<afv_native::afv::dto::StationTransceiver> transceivers) {
-    std::lock_guard<std::mutex> lock(afvMutex);
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->setManualTransceivers(freq, transceivers);
 }
