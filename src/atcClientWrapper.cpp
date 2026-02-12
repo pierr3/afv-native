@@ -274,6 +274,11 @@ double afv_native::api::atcClient::GetInputVu() const {
     return client->getInputVu();
 }
 
+void afv_native::api::atcClient::SetMicrophoneVolume(float volume) {
+    std::lock_guard<std::mutex> lock(afvMutex);
+    client->setMicrophoneVolume(volume);
+}
+
 void afv_native::api::atcClient::SetEnableInputFilters(bool enableInputFilters) {
     std::lock_guard<std::mutex> lock(afvMutex);
     client->setEnableInputFilters(enableInputFilters);

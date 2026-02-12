@@ -81,6 +81,7 @@ namespace afv_native::api {
         AFV_NATIVE_API double GetInputPeak() const;
         AFV_NATIVE_API double GetInputVu() const;
 
+        AFV_NATIVE_API void SetMicrophoneVolume(float volume);
         AFV_NATIVE_API void SetEnableInputFilters(bool enableInputFilters);
         AFV_NATIVE_API void SetEnableOutputEffects(bool enableEffects);
         AFV_NATIVE_API bool GetEnableInputFilters() const;

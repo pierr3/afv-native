@@ -124,6 +124,10 @@ AFV_NATIVE_API const double ATCClient_GetInputVu(ATCClientHandle handle) {
     return handle->impl->GetInputVu();
 }
 
+AFV_NATIVE_API void ATCClient_SetMicrophoneVolume(ATCClientHandle handle, float volume) {
+    handle->impl->SetMicrophoneVolume(volume);
+}
+
 AFV_NATIVE_API void ATCClient_SetEnableInputFilters(ATCClientHandle handle, bool enableInputFilters) {
     handle->impl->SetEnableInputFilters(enableInputFilters);
 }

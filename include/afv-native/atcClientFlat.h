@@ -67,6 +67,7 @@ extern "C" {
     AFV_NATIVE_API void ATCClient_FreeAudioDevices(ATCClientHandle handle, afv_native::api::AudioInterfaceNative **in);
     AFV_NATIVE_API const double ATCClient_GetInputPeak(ATCClientHandle handle);
     AFV_NATIVE_API const double ATCClient_GetInputVu(ATCClientHandle handle);
+    AFV_NATIVE_API void ATCClient_SetMicrophoneVolume(ATCClientHandle handle, float volume);
     AFV_NATIVE_API void ATCClient_SetEnableInputFilters(ATCClientHandle handle, bool enableInputFilters);
     AFV_NATIVE_API void ATCClient_SetEnableOutputEffects(ATCClientHandle handle, bool enableEffects);
     AFV_NATIVE_API bool ATCClient_GetEnableInputFilters(ATCClientHandle handle);

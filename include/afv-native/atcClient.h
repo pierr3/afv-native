@@ -168,6 +168,7 @@ namespace afv_native {
         double getInputVu() const;
 
         bool getEnableInputFilters() const;
+        void setMicrophoneVolume(float volume);
         void setEnableInputFilters(bool enableInputFilters);
         void setEnableOutputEffects(bool enableEffects);
 

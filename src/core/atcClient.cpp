@@ -449,6 +449,12 @@ bool ATCClient::getEnableInputFilters() const {
     return mATCRadioStack->getEnableInputFilters();
 }
 
+void ATCClient::setMicrophoneVolume(float volume) {
+    if (volume < 0.0f) volume = 0.0f;
+    if (volume > 2.0f) volume = 2.0f;
+    mATCRadioStack->setMicrophoneVolume(volume);
+}
+
 void ATCClient::setEnableInputFilters(bool enableInputFilters) {
     mATCRadioStack->setEnableInputFilters(enableInputFilters);
 }
