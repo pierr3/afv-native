@@ -62,6 +62,17 @@ SampleType convert16bit(const void *base, size_t stride, size_t offset, int chan
     return sampleOut;
 }
 
+SampleType convert32bit(const void *base, size_t stride, size_t offset, int channels) {
+    auto *sampleStart = reinterpret_cast<const int32_t *>(reinterpret_cast<const char *>(base) + (stride * offset));
+    float sampleOut = 0.0f;
+    sampleOut       = static_cast<float>(sampleStart[0]) / 2147483648.0f;
+    if (channels == 2) {
+        sampleOut += static_cast<float>(sampleStart[1]) / 2147483648.0f;
+        sampleOut /= 2;
+    }
+    return sampleOut;
+}
+
 SampleType convertfloat(const void *base, size_t stride, size_t offset, int channels) {
     auto *sampleStart = reinterpret_cast<const float *>(reinterpret_cast<const char *>(base) + (stride * offset));
     float sampleOut = sampleStart[0];
@@ -85,10 +96,15 @@ WavSampleStorage::WavSampleStorage(const AudioSampleData &srcdata) {
         case 32:
             if (srcdata.isFloat()) {
                 sampleFetch = convertfloat;
+            } else {
+                sampleFetch = convert32bit;
             }
             break;
         default:
             return;
+    }
+    if (!sampleFetch) {
+        return;
     }
     const size_t len      = srcdata.getSampleCount();
     const void  *sData    = srcdata.getSampleData();

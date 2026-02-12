@@ -30,7 +30,7 @@ endif()
 
 project(
     afv_native
-    VERSION 1.3.3
+    VERSION 1.3.4
     LANGUAGES C CXX)
 
 if (APPLE)
