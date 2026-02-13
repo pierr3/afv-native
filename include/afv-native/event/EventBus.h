@@ -1,8 +1,13 @@
 #pragma once
+#include <atomic>
+#include <condition_variable>
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <shared_mutex>
+#include <thread>
 #include <typeindex>
 #include <unordered_map>
 #include <iostream>
@@ -114,14 +119,70 @@ namespace afv_native::event {
             static_cast<EventStream<T>*>(stream.get())->OnEvent(event);
         }
 
+        template <typename T>
+        void OnEventAsync(const T &event) {
+            ensureAsyncWorker();
+            {
+                std::lock_guard lock(asyncMutex_);
+                asyncQueue_.push([this, event]() { this->OnEvent(event); });
+            }
+            asyncCv_.notify_one();
+        }
+
         void Reset() {
             std::unique_lock lock(mutex_);
             streams_.clear();
             handlerTypes_.clear();
         }
 
+        ~EventBus() {
+            stopAsyncWorker();
+        }
+
     private:
         EventBus() = default;
+
+        void ensureAsyncWorker() {
+            if (asyncWorkerRunning_.load()) {
+                return;
+            }
+            std::lock_guard lock(asyncMutex_);
+            if (asyncWorkerRunning_.load()) {
+                return; // double-check under lock
+            }
+            asyncWorkerRunning_.store(true);
+            asyncWorker_ = std::thread([this]() {
+                while (true) {
+                    std::function<void()> task;
+                    {
+                        std::unique_lock lock(asyncMutex_);
+                        asyncCv_.wait(lock, [this]() {
+                            return !asyncQueue_.empty() || !asyncWorkerRunning_.load();
+                        });
+                        if (!asyncWorkerRunning_.load() && asyncQueue_.empty()) {
+                            break;
+                        }
+                        task = std::move(asyncQueue_.front());
+                        asyncQueue_.pop();
+                    }
+                    task();
+                }
+            });
+        }
+
+        void stopAsyncWorker() {
+            {
+                std::lock_guard lock(asyncMutex_);
+                if (!asyncWorkerRunning_.load()) {
+                    return;
+                }
+                asyncWorkerRunning_.store(false);
+            }
+            asyncCv_.notify_one();
+            if (asyncWorker_.joinable()) {
+                asyncWorker_.join();
+            }
+        }
 
         template <typename T>
         EventStream<T> &GetStream() {
@@ -135,5 +196,12 @@ namespace afv_native::event {
         std::map<std::type_index, std::shared_ptr<IEventStream>> streams_;
         std::unordered_map<HandlerIdType, std::type_index> handlerTypes_;
         std::shared_mutex mutex_;
+
+        // Async event dispatch
+        std::queue<std::function<void()>> asyncQueue_;
+        std::mutex asyncMutex_;
+        std::condition_variable asyncCv_;
+        std::thread asyncWorker_;
+        std::atomic<bool> asyncWorkerRunning_{false};
     };
 } // namespace afv_native::event

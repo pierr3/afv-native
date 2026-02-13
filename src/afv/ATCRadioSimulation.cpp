@@ -313,7 +313,7 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             // Post Begin Voice Receiving Notfication
             unsigned int freq = rxIter;
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting yet
-            EventBus::Instance().OnEvent(FrequencyRxBeginEvent {freq});
+            EventBus::Instance().OnEventAsync(FrequencyRxBeginEvent {freq});
 
             LOG("ATCRadioSimulation", "FrequencyRxBegin event: %i", freq);
         }
@@ -370,13 +370,13 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
                 std::make_shared<audio::RecordedSampleSource>(mResources->mClick, false);
 
             for (const auto &c: mRadioState[rxIter].liveTransmittingCallsigns) {
-                EventBus::Instance().OnEvent(
+                EventBus::Instance().OnEventAsync(
                     StationRxEndEvent {rxIter, c, mRadioState[rxIter].liveTransmittingCallsigns});
                 LOG("ATCRadioSimulation", "StationRxEnd Forced event: %i: %s", rxIter, c.c_str());
             }
 
             mRadioState[rxIter].liveTransmittingCallsigns = {}; // We know for sure nobody is transmitting anymore
-            EventBus::Instance().OnEvent(FrequencyRxEndEvent {rxIter});
+            EventBus::Instance().OnEventAsync(FrequencyRxEndEvent {rxIter});
             mRadioState[rxIter].lastVoiceTime = 0;
             LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", rxIter);
         }
@@ -419,50 +419,52 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
         return audio::SourceStatus::OK;
     }
 
-    std::lock_guard<std::mutex> streamGuard(mStreamMapLock);
-
-    std::map<void *, audio::SampleType[audio::frameSizeSamples]> sampleCache;
-    for (auto &src: (onHeadset ? mHeadsetIncomingStreams : mSpeakerIncomingStreams)) {
-        if (src.second.source && src.second.source->isActive() &&
-            (sampleCache.find(src.second.source.get()) == sampleCache.end())) {
-            const auto rv =
-                src.second.source->getAudioFrame(sampleCache[src.second.source.get()]);
-            if (rv != audio::SourceStatus::OK) {
-                sampleCache.erase(src.second.source.get());
-            } else {
-                src.second.agc.transformFrame(
-                    sampleCache[src.second.source.get()],
-                    sampleCache[src.second.source.get()]);
-            }
-        }
-    }
-
-    ::memset(state->mLeftMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-    ::memset(state->mRightMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-    ::memset(state->mMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
-
     {
-        std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
-        for (auto &[freq, radio]: mRadioState) {
-            if (radio.onHeadset == onHeadset) {
-                _process_radio(sampleCache, freq, onHeadset);
-            }
-        }
-    }
+        std::lock_guard<std::mutex> streamGuard(mStreamMapLock);
 
-    // Mix in ad-hoc sounds for this output device
-    {
-        auto &mixer = onHeadset ? mAdHocHeadsetMixer : mAdHocSpeakerMixer;
-        auto rv = mixer.getAudioFrame(mAdHocFetchBuffer);
-        if (rv == audio::SourceStatus::OK) {
-            if (onHeadset) {
-                mix_buffers(state->mLeftMixingBuffer.data(), mAdHocFetchBuffer);
-                mix_buffers(state->mRightMixingBuffer.data(), mAdHocFetchBuffer);
-            } else {
-                mix_buffers(state->mMixingBuffer.data(), mAdHocFetchBuffer);
+        std::map<void *, audio::SampleType[audio::frameSizeSamples]> sampleCache;
+        for (auto &src: (onHeadset ? mHeadsetIncomingStreams : mSpeakerIncomingStreams)) {
+            if (src.second.source && src.second.source->isActive() &&
+                (sampleCache.find(src.second.source.get()) == sampleCache.end())) {
+                const auto rv =
+                    src.second.source->getAudioFrame(sampleCache[src.second.source.get()]);
+                if (rv != audio::SourceStatus::OK) {
+                    sampleCache.erase(src.second.source.get());
+                } else {
+                    src.second.agc.transformFrame(
+                        sampleCache[src.second.source.get()],
+                        sampleCache[src.second.source.get()]);
+                }
             }
         }
-    }
+
+        ::memset(state->mLeftMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        ::memset(state->mRightMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        ::memset(state->mMixingBuffer.data(), 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+
+        {
+            std::lock_guard<std::mutex> radioStateGuard(mRadioStateLock);
+            for (auto &[freq, radio]: mRadioState) {
+                if (radio.onHeadset == onHeadset) {
+                    _process_radio(sampleCache, freq, onHeadset);
+                }
+            }
+        }
+
+        // Mix in ad-hoc sounds for this output device
+        {
+            auto &mixer = onHeadset ? mAdHocHeadsetMixer : mAdHocSpeakerMixer;
+            auto rv = mixer.getAudioFrame(mAdHocFetchBuffer);
+            if (rv == audio::SourceStatus::OK) {
+                if (onHeadset) {
+                    mix_buffers(state->mLeftMixingBuffer.data(), mAdHocFetchBuffer);
+                    mix_buffers(state->mRightMixingBuffer.data(), mAdHocFetchBuffer);
+                } else {
+                    mix_buffers(state->mMixingBuffer.data(), mAdHocFetchBuffer);
+                }
+            }
+        }
+    } // mStreamMapLock released — loopback and output don't need it
 
     // Mix in loopback (sidetone) if enabled and target matches this output
     if (mLoopbackEnabled.load()) {
@@ -556,7 +558,7 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
 
             if (hasBeenDeleted) {
                 // Just send who's still transmitting
-                EventBus::Instance().OnEvent(StationRxEndEvent {
+                EventBus::Instance().OnEventAsync(StationRxEndEvent {
                     trans.Frequency, pkt.Callsign, mRadioState[trans.Frequency].liveTransmittingCallsigns});
 
                 LOG("ATCRadioSimulation", "StationRxEnd event: %i: %s", trans.Frequency,
@@ -574,7 +576,7 @@ bool ATCRadioSimulation::_packetListening(const afv::dto::AudioRxOnTransceivers 
 
                 mRadioState[trans.Frequency].liveTransmittingCallsigns.emplace_back(pkt.Callsign);
 
-                EventBus::Instance().OnEvent(StationRxBeginEvent {trans.Frequency, pkt.Callsign, allTransmitters});
+                EventBus::Instance().OnEventAsync(StationRxBeginEvent {trans.Frequency, pkt.Callsign, allTransmitters});
             }
         }
         return true;
@@ -719,13 +721,13 @@ void ATCRadioSimulation::maintainVoiceTimeout() {
             LOG("ATCRadioSimulation", "Found VoiceTimeout.. %i", it->second.Frequency);
             it->second.lastVoiceTime = 0;
             for (const auto &c: it->second.liveTransmittingCallsigns) {
-                EventBus::Instance().OnEvent(
+                EventBus::Instance().OnEventAsync(
                     StationRxEndEvent {it->second.Frequency, c, it->second.liveTransmittingCallsigns});
                 LOG("ATCRadioSimulation", "StationRxEnd TIMEOUT event: %i: %s",
                     it->second.Frequency, c.c_str());
             }
 
-            EventBus::Instance().OnEvent(FrequencyRxEndEvent {it->second.Frequency});
+            EventBus::Instance().OnEventAsync(FrequencyRxEndEvent {it->second.Frequency});
             LOG("ATCRadioSimulation", "FrequencyRxEnd TIMEOUT event: %i",
                 it->second.Frequency);
         }
@@ -895,10 +897,10 @@ void afv_native::afv::ATCRadioSimulation::setRx(unsigned int freq, bool rx) {
     }
     if (!rx) {
         // Emit event for the end of station transmission
-        EventBus::Instance().OnEvent(FrequencyRxEndEvent {freq});
+        EventBus::Instance().OnEventAsync(FrequencyRxEndEvent {freq});
         LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", freq);
         for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
-            EventBus::Instance().OnEvent(StationRxEndEvent {
+            EventBus::Instance().OnEventAsync(StationRxEndEvent {
                 freq, callsign,
                 mRadioState[freq].liveTransmittingCallsigns // Send remaining transmitters
             });
@@ -1140,10 +1142,10 @@ void afv_native::afv::ATCRadioSimulation::removeFrequency(unsigned int freq) {
         LOG("ATCRadioSimulation", "removeFrequency cancelled, frequency does not exist: %i", freq);
         return;
     }
-    EventBus::Instance().OnEvent(FrequencyRxEndEvent {freq});
+    EventBus::Instance().OnEventAsync(FrequencyRxEndEvent {freq});
     LOG("ATCRadioSimulation", "FrequencyRxEnd event: %i", freq);
     for (auto callsign: mRadioState[freq].liveTransmittingCallsigns) {
-        EventBus::Instance().OnEvent(
+        EventBus::Instance().OnEventAsync(
             StationRxEndEvent {freq, callsign, mRadioState[freq].liveTransmittingCallsigns});
         LOG("ATCRadioSimulation", "removeFrequency StationRxEnd event: %i: %s", freq,
             callsign.c_str());
