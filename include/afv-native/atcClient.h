@@ -17,10 +17,11 @@
 #include "afv-native/audio/AudioDevice.h"
 #include "afv-native/audio/ITick.h"
 #include "afv-native/event.h"
-#include "afv-native/event/EventBus.h"
 #include "afv-native/event/CallbackTimer.h"
+#include "afv-native/event/EventBus.h"
 #include "afv-native/hardwareType.h"
 #include "afv-native/http/PollingTransferManager.h"
+#include <atomic>
 #include <memory>
 
 namespace afv_native {
@@ -307,6 +308,8 @@ namespace afv_native {
         std::map<std::string, unsigned int> mPendingTransceiverUpdates;
 
         HardwareType activeHardware = HardwareType::Schmid_ED_137B;
+
+        std::atomic<bool> mDisconnecting {false};
 
       public:
     };

@@ -92,10 +92,17 @@ void ATCRadioSimulation::putAudioFrame(const audio::SampleType *bufferIn) {
     }
 
     audio::SampleType samples[audio::frameSizeSamples];
-    if (static_cast<bool>(mVoiceFilter)) {
-        mVoiceFilter->transformFrame(samples, bufferIn);
-    } else {
-        ::memcpy(samples, bufferIn, sizeof(samples));
+    {
+        std::shared_ptr<audio::SpeexPreprocessor> voiceFilter;
+        {
+            std::lock_guard<std::mutex> guard(mVoiceFilterLock);
+            voiceFilter = mVoiceFilter;
+        }
+        if (voiceFilter) {
+            voiceFilter->transformFrame(samples, bufferIn);
+        } else {
+            ::memcpy(samples, bufferIn, sizeof(samples));
+        }
     }
 
     float value = 0;
@@ -331,8 +338,8 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
             set_radio_effects(rxIter);
             mRadioState[rxIter].vhfFilter->transformFrame(state->mChannelBuffer.data(),
                                                           state->mChannelBuffer.data());
-            mRadioState[rxIter].simpleCompressorEffect.transformFrame(state->mChannelBuffer.data(),
-                                                                      state->mChannelBuffer.data());
+            mRadioState[rxIter].simpleCompressorEffect.transformFrame(
+                state->mChannelBuffer.data(), state->mChannelBuffer.data());
             if (!mix_effect(mRadioState[rxIter].Crackle,
                             crackleGain * mRadioState[rxIter].Gain, state)) {
                 mRadioState[rxIter].Crackle.reset();
@@ -394,12 +401,14 @@ bool ATCRadioSimulation::_process_radio(const std::map<void *, audio::SampleType
         if (!ignoreaudio && !mRadioState[rxIter].isOutputMuted) {
             if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Left ||
                 mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
-                mix_buffers(state->mLeftMixingBuffer.data(), state->mChannelBuffer.data());
+                mix_buffers(state->mLeftMixingBuffer.data(),
+                            state->mChannelBuffer.data());
             }
 
             if (mRadioState[rxIter].playbackChannel == PlaybackChannel::Right ||
                 mRadioState[rxIter].playbackChannel == PlaybackChannel::Both) {
-                mix_buffers(state->mRightMixingBuffer.data(), state->mChannelBuffer.data());
+                mix_buffers(state->mRightMixingBuffer.data(),
+                            state->mChannelBuffer.data());
             }
         }
 
@@ -426,14 +435,13 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
         for (auto &src: (onHeadset ? mHeadsetIncomingStreams : mSpeakerIncomingStreams)) {
             if (src.second.source && src.second.source->isActive() &&
                 (sampleCache.find(src.second.source.get()) == sampleCache.end())) {
-                const auto rv =
-                    src.second.source->getAudioFrame(sampleCache[src.second.source.get()]);
+                const auto rv = src.second.source->getAudioFrame(
+                    sampleCache[src.second.source.get()]);
                 if (rv != audio::SourceStatus::OK) {
                     sampleCache.erase(src.second.source.get());
                 } else {
-                    src.second.agc.transformFrame(
-                        sampleCache[src.second.source.get()],
-                        sampleCache[src.second.source.get()]);
+                    src.second.agc.transformFrame(sampleCache[src.second.source.get()],
+                                                  sampleCache[src.second.source.get()]);
                 }
             }
         }
@@ -454,7 +462,7 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
         // Mix in ad-hoc sounds for this output device
         {
             auto &mixer = onHeadset ? mAdHocHeadsetMixer : mAdHocSpeakerMixer;
-            auto rv = mixer.getAudioFrame(mAdHocFetchBuffer);
+            auto  rv    = mixer.getAudioFrame(mAdHocFetchBuffer);
             if (rv == audio::SourceStatus::OK) {
                 if (onHeadset) {
                     mix_buffers(state->mLeftMixingBuffer.data(), mAdHocFetchBuffer);
@@ -468,12 +476,14 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
 
     // Mix in loopback (sidetone) if enabled and target matches this output
     if (mLoopbackEnabled.load()) {
-        bool shouldMix = false;
-        if (mLoopbackTarget == AdHocOutputTarget::Both) {
+        auto loopbackTarget = mLoopbackTarget.load();
+        auto loopbackGain   = mLoopbackGain.load();
+        bool shouldMix      = false;
+        if (loopbackTarget == AdHocOutputTarget::Both) {
             shouldMix = true;
-        } else if (mLoopbackTarget == AdHocOutputTarget::Headset && onHeadset) {
+        } else if (loopbackTarget == AdHocOutputTarget::Headset && onHeadset) {
             shouldMix = true;
-        } else if (mLoopbackTarget == AdHocOutputTarget::Speaker && !onHeadset) {
+        } else if (loopbackTarget == AdHocOutputTarget::Speaker && !onHeadset) {
             shouldMix = true;
         }
 
@@ -484,10 +494,10 @@ audio::SourceStatus ATCRadioSimulation::getAudioFrame(audio::SampleType *bufferO
                 ::memcpy(loopbackCopy, mLoopbackBuffer, sizeof(audio::SampleType) * audio::frameSizeSamples);
             }
             if (onHeadset) {
-                mix_buffers(state->mLeftMixingBuffer.data(), loopbackCopy, mLoopbackGain);
-                mix_buffers(state->mRightMixingBuffer.data(), loopbackCopy, mLoopbackGain);
+                mix_buffers(state->mLeftMixingBuffer.data(), loopbackCopy, loopbackGain);
+                mix_buffers(state->mRightMixingBuffer.data(), loopbackCopy, loopbackGain);
             } else {
-                mix_buffers(state->mMixingBuffer.data(), loopbackCopy, mLoopbackGain);
+                mix_buffers(state->mMixingBuffer.data(), loopbackCopy, loopbackGain);
             }
         }
     }
@@ -530,7 +540,8 @@ bool ATCRadioSimulation::mix_effect(std::shared_ptr<audio::ISampleSource> effect
     if (effect && gain > 0.0f) {
         auto rv = effect->getAudioFrame(state->mFetchBuffer.data());
         if (rv == audio::SourceStatus::OK) {
-            ATCRadioSimulation::mix_buffers(state->mChannelBuffer.data(), state->mFetchBuffer.data(), gain);
+            ATCRadioSimulation::mix_buffers(state->mChannelBuffer.data(),
+                                            state->mFetchBuffer.data(), gain);
         } else {
             return false;
         }
@@ -588,8 +599,10 @@ void ATCRadioSimulation::rxVoicePacket(const afv::dto::AudioRxOnTransceivers &pk
     // FIXME:  Deal with the case of a single-callsign transmitting multiple different voicestreams simultaneously.
     if (_packetListening(pkt)) {
         std::lock_guard<std::mutex> streamMapLock(mStreamMapLock);
-        bool isNewHeadset = (mHeadsetIncomingStreams.find(pkt.Callsign) == mHeadsetIncomingStreams.end());
-        bool isNewSpeaker = (mSpeakerIncomingStreams.find(pkt.Callsign) == mSpeakerIncomingStreams.end());
+        bool isNewHeadset = (mHeadsetIncomingStreams.find(pkt.Callsign) ==
+                             mHeadsetIncomingStreams.end());
+        bool isNewSpeaker = (mSpeakerIncomingStreams.find(pkt.Callsign) ==
+                             mSpeakerIncomingStreams.end());
 
         mHeadsetIncomingStreams[pkt.Callsign].source->appendAudioDTO(pkt);
         mHeadsetIncomingStreams[pkt.Callsign].transceivers = pkt.Transceivers;
@@ -798,10 +811,12 @@ double ATCRadioSimulation::getPeak() const {
 }
 
 bool ATCRadioSimulation::getEnableInputFilters() const {
+    std::lock_guard<std::mutex> guard(mVoiceFilterLock);
     return static_cast<bool>(mVoiceFilter);
 }
 
 void ATCRadioSimulation::setEnableInputFilters(bool enableInputFilters) {
+    std::lock_guard<std::mutex> guard(mVoiceFilterLock);
     if (enableInputFilters) {
         if (!mVoiceFilter) {
             mVoiceFilter = std::make_shared<audio::SpeexPreprocessor>(mVoiceSink);
@@ -1083,11 +1098,20 @@ void afv_native::afv::ATCRadioSimulation::stationTransceiverUpdateCallback(const
         return;
     }
 
-    auto it = std::find_if(mRadioState.begin(), mRadioState.end(), [&stationName](const auto &t) {
-        return t.second.stationName == stationName;
-    });
-    if (it != mRadioState.end()) {
-        setTransceivers(it->second.Frequency, transceivers[stationName]);
+    unsigned int freq  = 0;
+    bool         found = false;
+    {
+        std::lock_guard<std::mutex> lock(mRadioStateLock);
+        auto it = std::find_if(mRadioState.begin(), mRadioState.end(), [&stationName](const auto &t) {
+            return t.second.stationName == stationName;
+        });
+        if (it != mRadioState.end()) {
+            freq  = it->second.Frequency;
+            found = true;
+        }
+    }
+    if (found) {
+        setTransceivers(freq, transceivers[stationName]);
     }
 }
 
@@ -1118,21 +1142,26 @@ afv_native::PlaybackChannel afv_native::afv::ATCRadioSimulation::getPlaybackChan
 }
 
 bool afv_native::afv::ATCRadioSimulation::getRxState(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(mRadioStateLock);
     return mRadioState.count(freq) != 0 ? mRadioState[freq].rx : false;
 }
 bool afv_native::afv::ATCRadioSimulation::getTxState(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(mRadioStateLock);
     return mRadioState.count(freq) != 0 ? mRadioState[freq].tx : false;
 }
 
 bool afv_native::afv::ATCRadioSimulation::getXcState(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(mRadioStateLock);
     return mRadioState.count(freq) != 0 ? mRadioState[freq].xc : false;
 }
 
 bool afv_native::afv::ATCRadioSimulation::getIsOutputMutedState(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(mRadioStateLock);
     return mRadioState.count(freq) != 0 ? mRadioState[freq].isOutputMuted : false;
 }
 
 double afv_native::afv::ATCRadioSimulation::getOutputGainState(unsigned int freq) {
+    std::lock_guard<std::mutex> lock(mRadioStateLock);
     return mRadioState.count(freq) != 0 ? mRadioState[freq].Gain : 0.0;
 }
 
@@ -1193,16 +1222,18 @@ void ATCRadioSimulation::stopAdHocSounds() {
 }
 
 void ATCRadioSimulation::setLoopback(bool enabled, AdHocOutputTarget target, float gain, HardwareType hardware) {
-    std::lock_guard<std::mutex> loopbackGuard(mLoopbackLock);
-    mLoopbackEnabled.store(enabled);
-    mLoopbackTarget = target;
-    mLoopbackGain   = gain;
-    if (enabled) {
-        // Always recreate the filter to pick up hardware type changes
-        mLoopbackVhfFilter = std::make_shared<audio::VHFFilterSource>(hardware);
-    } else {
-        mLoopbackVhfFilter.reset();
-        ::memset(mLoopbackBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+    mLoopbackTarget.store(target);
+    mLoopbackGain.store(gain);
+    {
+        std::lock_guard<std::mutex> loopbackGuard(mLoopbackLock);
+        if (enabled) {
+            // Always recreate the filter to pick up hardware type changes
+            mLoopbackVhfFilter = std::make_shared<audio::VHFFilterSource>(hardware);
+        } else {
+            mLoopbackVhfFilter.reset();
+            ::memset(mLoopbackBuffer, 0, sizeof(audio::SampleType) * audio::frameSizeSamples);
+        }
     }
+    mLoopbackEnabled.store(enabled);
     LOG("ATCRadioSimulation", "setLoopback: enabled=%i, target=%i, gain=%f, hardware=%i", enabled, static_cast<int>(target), gain, static_cast<int>(hardware));
 }

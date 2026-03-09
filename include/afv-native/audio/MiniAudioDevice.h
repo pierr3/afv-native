@@ -11,6 +11,7 @@
 
 #include "afv-native/audio/AudioDevice.h"
 #include "miniaudio.h"
+#include <atomic>
 #include <cstring>
 #include <map>
 #include <string>
@@ -47,17 +48,17 @@ namespace afv_native { namespace audio {
         void notificationCallback(const ma_device_notification *pNotification);
 
       private:
-        std::string  mUserStreamName;
-        std::string  mOutputDeviceId;
-        std::string  mInputDeviceId;
-        bool         mOutputInitialized;
-        bool         mInputInitialized;
-        ma_context   context;
-        ma_device    outputDev;
-        ma_device    inputDev;
-        bool         mStereo = false;
-        unsigned int mAudioApi;
-        bool         mHasClosedManually = false;
+        std::string       mUserStreamName;
+        std::string       mOutputDeviceId;
+        std::string       mInputDeviceId;
+        bool              mOutputInitialized;
+        bool              mInputInitialized;
+        ma_context        context;
+        ma_device         outputDev;
+        ma_device         inputDev;
+        bool              mStereo = false;
+        unsigned int      mAudioApi;
+        std::atomic<bool> mHasClosedManually {false};
     };
 }} // namespace afv_native::audio
 

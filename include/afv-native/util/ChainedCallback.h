@@ -35,7 +35,9 @@
 #define AFV_NATIVE_CHAINEDCALLBACK_H
 
 #include <functional>
+#include <mutex>
 #include <unordered_map>
+#include <vector>
 
 namespace afv_native { namespace util {
 
@@ -50,6 +52,7 @@ namespace afv_native { namespace util {
     template <class... Args>
     class ChainedCallback<void(Args...)> {
         std::unordered_map<void *, std::function<void(Args...)>> mCallbacks;
+        std::mutex                                               mMutex;
 
       public:
         ChainedCallback(): mCallbacks() {
@@ -58,16 +61,26 @@ namespace afv_native { namespace util {
         virtual ~ChainedCallback() = default;
 
         void addCallback(void *ref, std::function<void(Args...)> fp) {
+            std::lock_guard<std::mutex> lock(mMutex);
             mCallbacks[ref] = fp;
         }
 
         void removeCallback(void *ref) {
+            std::lock_guard<std::mutex> lock(mMutex);
             mCallbacks.erase(ref);
         }
 
         void invokeAll(Args... args) {
-            for (auto &f: mCallbacks) {
-                std::invoke(f.second, std::forward<Args>(args)...);
+            std::vector<std::function<void(Args...)>> snapshot;
+            {
+                std::lock_guard<std::mutex> lock(mMutex);
+                snapshot.reserve(mCallbacks.size());
+                for (auto &f: mCallbacks) {
+                    snapshot.push_back(f.second);
+                }
+            }
+            for (auto &f: snapshot) {
+                std::invoke(f, std::forward<Args>(args)...);
             }
         }
     };
