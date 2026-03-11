@@ -456,7 +456,6 @@ void afv_native::audio::MiniAudioAudioDevice::notificationCallback(const ma_devi
 
     if (pNotification->type == ma_device_notification_type_stopped) {
         if (mHasClosedManually) {
-            mHasClosedManually = false;
             return;
         }
         LOG("MiniAudioAudioDevice", "Device stopped unexpectedly: %s", mUserStreamName.c_str());
