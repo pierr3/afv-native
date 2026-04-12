@@ -303,8 +303,7 @@ bool Request::doAsync(TransferManager &transferManager) {
         return false;
     }
 
-    // HandleRequest acquires the CURLM lock and wakes the poll thread
-    transferManager.HandleRequest(this);
+    transferManager.submitRequest(this);
     mTM = &transferManager;
     return true;
 }

@@ -105,6 +105,10 @@ void TransferManager::AddToSession(Request *req) const {
 }
 
 void TransferManager::HandleRequest(Request *req) {
+    submitRequest(req);
+}
+
+void TransferManager::submitRequest(Request *req) {
     if (req) {
         std::lock_guard<std::recursive_mutex> lock(mMutex);
         auto curlHandle               = req->getCurlHandle();

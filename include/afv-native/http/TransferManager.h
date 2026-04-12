@@ -93,6 +93,10 @@ namespace afv_native { namespace http {
          */
         [[deprecated("Use the doAsync method on Request instead")]] virtual void HandleRequest(Request *req);
 
+        /** Thread-safe request submission. Acquires the CURLM lock, adds the
+         * handle, registers the callback, and wakes the poll thread. */
+        void submitRequest(Request *req);
+
         virtual ~TransferManager();
 
         /** Process any outstanding events without blocking. */
