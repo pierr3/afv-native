@@ -315,11 +315,17 @@ void ATCClient::sendTransceiverUpdate() {
         return;
     }
     auto transceiverDto = makeTransceiverDto();
-    mTxUpdatePending    = true;
+    {
+        std::lock_guard<std::mutex> lock(mPttMutex);
+        mTxUpdatePending = true;
+    }
 
     mVoiceSession.postTransceiverUpdate(transceiverDto, [this](http::Request *r, bool success) {
         if (success && r->getStatusCode() == 200) {
-            this->mTxUpdatePending = false;
+            {
+                std::lock_guard<std::mutex> lock(this->mPttMutex);
+                this->mTxUpdatePending = false;
+            }
             this->unguardPtt();
         }
     });
@@ -351,6 +357,7 @@ void ATCClient::queueTransceiverUpdate() {
 }
 
 void ATCClient::unguardPtt() {
+    std::lock_guard<std::mutex> lock(mPttMutex);
     if (mWantPtt && !mPtt) {
         LOG("ATCClient", "PTT was guarded - checking.");
         mPtt = true;
@@ -397,6 +404,7 @@ bool ATCClient::isAtisListening() {
 };
 
 void ATCClient::setPtt(bool pttState) {
+    std::lock_guard<std::mutex> lock(mPttMutex);
     if (pttState) {
         mWantPtt = true;
         // if we're setting the Ptt, we have to check a few things.

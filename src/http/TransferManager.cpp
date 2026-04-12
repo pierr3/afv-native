@@ -106,9 +106,11 @@ void TransferManager::AddToSession(Request *req) const {
 
 void TransferManager::HandleRequest(Request *req) {
     if (req) {
+        std::lock_guard<std::recursive_mutex> lock(mMutex);
         auto curlHandle               = req->getCurlHandle();
         mPendingTransfers[curlHandle] = req;
         curl_multi_add_handle(mCurlMultiHandle.get(), curlHandle);
+        curl_multi_wakeup(mCurlMultiHandle.get());
     }
 }
 
@@ -121,6 +123,7 @@ CURLSH *TransferManager::getCurlShareHandle() const {
 }
 
 void TransferManager::registerForAsyncCallback(Request &req) {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
     auto curlHandle = req.getCurlHandle();
     if (curlHandle != nullptr) {
         mPendingTransfers[curlHandle] = &req;
@@ -128,6 +131,7 @@ void TransferManager::registerForAsyncCallback(Request &req) {
 }
 
 void TransferManager::removeAsyncCallback(Request &req) {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
     auto curlHandle = req.getCurlHandle();
     if (curlHandle != nullptr) {
         mPendingTransfers.erase(curlHandle);

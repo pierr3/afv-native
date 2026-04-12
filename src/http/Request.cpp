@@ -303,9 +303,8 @@ bool Request::doAsync(TransferManager &transferManager) {
         return false;
     }
 
-    auto curlMultiHandle = transferManager.getCurlMultiHandle();
-    curl_multi_add_handle(curlMultiHandle, mCurlHandle.get());
-    transferManager.registerForAsyncCallback(*this);
+    // HandleRequest acquires the CURLM lock and wakes the poll thread
+    transferManager.HandleRequest(this);
     mTM = &transferManager;
     return true;
 }

@@ -23,6 +23,7 @@
 #include "afv-native/http/PollingTransferManager.h"
 #include <atomic>
 #include <memory>
+#include <mutex>
 
 namespace afv_native {
     /** ATCClient provides a fully functional ATC Client that can be integrated
@@ -267,6 +268,7 @@ namespace afv_native {
         void sessionStateCallback(afv::APISessionState state);
         void voiceStateCallback(afv::VoiceSessionState state);
 
+        std::mutex mPttMutex;
         bool mTxUpdatePending;
         bool mWantPtt;
         bool mPtt;

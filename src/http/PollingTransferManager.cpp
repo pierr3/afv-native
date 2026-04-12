@@ -29,9 +29,13 @@ void PollingTransferManager::pollLoop() {
             int running = 0;
             curl_multi_perform(mCurlMultiHandle.get(), &running);
             processPendingMultiEvents();
+            // curl_multi_poll must be under the same lock as perform/add/remove —
+            // concurrent access to a CURLM handle is undefined behavior.
+            // Other threads use curl_multi_wakeup() to interrupt the poll
+            // when new work is queued.
+            int numfds = 0;
+            curl_multi_poll(mCurlMultiHandle.get(), nullptr, 0, 100, &numfds);
         }
-        int numfds = 0;
-        curl_multi_poll(mCurlMultiHandle.get(), nullptr, 0, 100, &numfds);
     }
     LOG("PollingTransferManager", "Poll thread stopped");
 }
