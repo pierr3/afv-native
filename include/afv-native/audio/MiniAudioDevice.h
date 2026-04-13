@@ -1,7 +1,10 @@
 #ifndef MINIAUDIO_DEVICE_H
 #define MINIAUDIO_DEVICE_H
 
-#define MINIAUDIO_IMPLEMENTATION
+// MINIAUDIO_IMPLEMENTATION must only be defined in one translation unit —
+// miniaudio.c is that unit. Defining it here would pull the full implementation
+// into every file that includes this header, causing LNK2005 duplicate symbol
+// errors on MSVC (linux/macOS linkers are more permissive and silently merged).
 #define MA_NO_WINMM
 #define MA_NO_WEBAUDIO
 #define MA_NO_NULL
