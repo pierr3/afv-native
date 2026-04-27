@@ -97,6 +97,12 @@ namespace afv_native { namespace http {
          * handle, registers the callback, and wakes the poll thread. */
         void submitRequest(Request *req);
 
+        /** Thread-safe request cancellation. Acquires the CURLM lock, removes
+         * the easy handle from the multi handle, and deregisters the callback.
+         * Safe to call from any thread, including while the poll thread is
+         * inside curl_multi_perform / curl_multi_poll. */
+        void cancelRequest(Request *req);
+
         virtual ~TransferManager();
 
         /** Process any outstanding events without blocking. */

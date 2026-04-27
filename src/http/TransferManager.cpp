@@ -118,6 +118,18 @@ void TransferManager::submitRequest(Request *req) {
     }
 }
 
+void TransferManager::cancelRequest(Request *req) {
+    if (!req) {
+        return;
+    }
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
+    auto h = req->getCurlHandle();
+    if (h) {
+        curl_multi_remove_handle(mCurlMultiHandle.get(), h);
+        mPendingTransfers.erase(h);
+    }
+}
+
 CURLM *TransferManager::getCurlMultiHandle() const {
     return mCurlMultiHandle.get();
 }
