@@ -44,7 +44,7 @@ using namespace std;
 using json = nlohmann::json;
 
 Request::Request(const string &url, Method method):
-    mMethod(method), mURL(url), mFollowRedirect(method == Method::GET), mProgress(Progress::New), mCurlHandle(), mHeaders(), mTM(nullptr), mReq(), mReqBufOffset(0), mRespStatusCode(0), mRespContentType(), mResp(), mCurlErrorBuffer(), mCompletionCallback(), mDownloadTotal(0), mDownloadProgress(0), mUploadTotal(0), mUploadProgress(0) {
+    mMethod(method), mURL(url), mFollowRedirect(method == Method::GET), mProgress(Progress::New), mCurlHandle(), mHeaders(), mTM(nullptr), mReq(), mReqBufOffset(0), mRespStatusCode(0), mRespContentType(), mResp(), mCurlErrorBuffer(), mCompletionCallback(), mResponseInfoCaptured(false), mDownloadTotal(0), mDownloadProgress(0), mUploadTotal(0), mUploadProgress(0) {
     mCurlErrorBuffer.fill(0);
 }
 
@@ -63,12 +63,14 @@ void Request::reset() {
     mHeaders.reset();
     mResp.clear();
     mReq.clear();
-    mReqBufOffset = 0;
-    mProgress     = Progress::New;
+    mReqBufOffset         = 0;
+    mProgress             = Progress::New;
+    mResponseInfoCaptured = false;
 }
 
 bool Request::setupHandle() {
     assert(!mCurlHandle);
+    mResponseInfoCaptured = false;
     mCurlHandle.reset(curl_easy_init());
     curl_easy_setopt(mCurlHandle.get(), CURLOPT_URL, mURL.c_str());
     curl_easy_setopt(mCurlHandle.get(), CURLOPT_WRITEFUNCTION, curlWriteCallback);
@@ -243,8 +245,10 @@ void Request::transferInfoCallback(curl_off_t dltotal, curl_off_t dlnow, curl_of
     mUploadProgress   = ulnow;
 }
 
-void Request::notifyTransferCompleted() {
-    mProgress = Progress::Finished;
+void Request::captureResponseInfo() {
+    if (mResponseInfoCaptured || !mCurlHandle) {
+        return;
+    }
     long resp_code;
     if (CURLE_OK == curl_easy_getinfo(mCurlHandle.get(), CURLINFO_RESPONSE_CODE, &resp_code)) {
         // downcast on Unixen. (sizeof(long) > sizeof(int)).
@@ -259,6 +263,12 @@ void Request::notifyTransferCompleted() {
             mRespContentType = "";
         }
     }
+    mResponseInfoCaptured = true;
+}
+
+void Request::notifyTransferCompleted() {
+    mProgress = Progress::Finished;
+    captureResponseInfo();
     // As the transfer manager lets go of us after completion, disassociate from
     // the TransferManager.
     mTM = nullptr;

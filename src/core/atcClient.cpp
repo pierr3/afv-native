@@ -321,13 +321,18 @@ void ATCClient::sendTransceiverUpdate() {
     }
 
     mVoiceSession.postTransceiverUpdate(transceiverDto, [this](http::Request *r, bool success) {
-        if (success && r->getStatusCode() == 200) {
-            {
-                std::lock_guard<std::mutex> lock(this->mPttMutex);
-                this->mTxUpdatePending = false;
-            }
-            this->unguardPtt();
+        if (!success || r->getStatusCode() != 200) {
+            // Do NOT leave the PTT guarded on a failed update: the timer
+            // retries every update interval anyway, and a single failed POST
+            // must not lock the user out of transmitting until then.
+            LOG("ATCClient", "Transceiver update failed (status %d) - unguarding PTT, will retry on next update cycle",
+                r->getStatusCode());
         }
+        {
+            std::lock_guard<std::mutex> lock(this->mPttMutex);
+            this->mTxUpdatePending = false;
+        }
+        this->unguardPtt();
     });
 
     // We now also update any cross coupled transceivers

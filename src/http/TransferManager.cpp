@@ -61,41 +61,60 @@ TransferManager::~TransferManager() {
 }
 
 void TransferManager::process() {
-    std::lock_guard<std::recursive_mutex> lock(mMutex);
-    int running = 0;
+    std::vector<std::pair<Request *, bool>> completed;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mMutex);
+        int                                   running = 0;
 
-    curl_multi_perform(mCurlMultiHandle.get(), &running);
+        // Tombstones only protect the completed list collected below from
+        // requests reset after collection; older ones are stale and must not
+        // suppress a resubmitted request's completion.
+        clearCancellationTombstones();
 
-    processPendingMultiEvents();
+        curl_multi_perform(mCurlMultiHandle.get(), &running);
+
+        completed = collectCompletedTransfers();
+    }
+    for (auto &[req, ok]: completed) {
+        if (consumeCancellation(req)) {
+            continue;
+        }
+        if (ok) {
+            req->notifyTransferCompleted();
+        } else {
+            req->notifyTransferError();
+        }
+    }
 }
 
-void TransferManager::processPendingMultiEvents() {
-    struct CURLMsg *cMsg = nullptr;
-    Request        *req;
-    int             msgs_queued = 0;
+std::vector<std::pair<Request *, bool>> TransferManager::collectCompletedTransfers() {
+    std::vector<std::pair<Request *, bool>> completed;
+    struct CURLMsg                         *cMsg        = nullptr;
+    int                                     msgs_queued = 0;
 
     while (nullptr != (cMsg = curl_multi_info_read(mCurlMultiHandle.get(), &msgs_queued))) {
         // GAH.  STUPID STUPID CURL.  Never return pointers from stack or other transient memory.
         auto msgCopy = *cMsg;
 
-        req = mPendingTransfers[msgCopy.easy_handle];
-        switch (msgCopy.msg) {
-            case CURLMSG_DONE:
-                // remove the easy handle from our management
-                curl_multi_remove_handle(mCurlMultiHandle.get(), msgCopy.easy_handle);
-                // remove the shared_ptr hold we've got on the request itself.
-                mPendingTransfers.erase(msgCopy.easy_handle);
-                // and notify the request object.
-                if (msgCopy.data.result == CURLE_OK) {
-                    req->notifyTransferCompleted();
-                } else {
-                    req->notifyTransferError();
-                }
-                break;
-            default:
-                break;
+        if (msgCopy.msg != CURLMSG_DONE) {
+            continue;
         }
+        // remove the easy handle from our management
+        curl_multi_remove_handle(mCurlMultiHandle.get(), msgCopy.easy_handle);
+        auto it = mPendingTransfers.find(msgCopy.easy_handle);
+        if (it == mPendingTransfers.end()) {
+            // request was cancelled while the completion was queued
+            continue;
+        }
+        Request *req = it->second;
+        mPendingTransfers.erase(it);
+        // read the status code / content type while we still hold the lock,
+        // so the callback can run lock-free later without touching the
+        // easy handle concurrently with anyone resetting the request.
+        req->captureResponseInfo();
+        completed.emplace_back(req, msgCopy.data.result == CURLE_OK);
     }
+    return completed;
 }
 
 void TransferManager::AddToSession(Request *req) const {
@@ -128,6 +147,20 @@ void TransferManager::cancelRequest(Request *req) {
         curl_multi_remove_handle(mCurlMultiHandle.get(), h);
         mPendingTransfers.erase(h);
     }
+    // The request may already have been collected for completion dispatch and
+    // be awaiting its callback outside the lock. Tombstone it so the dispatch
+    // loop skips it instead of touching a reset (or destroyed) request.
+    mCancelledDuringDispatch.insert(req);
+}
+
+bool TransferManager::consumeCancellation(Request *req) {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
+    return mCancelledDuringDispatch.erase(req) > 0;
+}
+
+void TransferManager::clearCancellationTombstones() {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
+    mCancelledDuringDispatch.clear();
 }
 
 CURLM *TransferManager::getCurlMultiHandle() const {

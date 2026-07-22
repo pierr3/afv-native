@@ -91,6 +91,8 @@ namespace afv_native { namespace http {
 
         std::function<void(Request *, bool)> mCompletionCallback;
 
+        bool mResponseInfoCaptured;
+
         virtual bool setupHandle();
 
       public:
@@ -184,6 +186,15 @@ namespace afv_native { namespace http {
         int getUploadProgress() const;
 
         CURL *getCurlHandle() const;
+
+        /** captureResponseInfo reads the response status code and content type
+         * from the CURL easy handle into this Request.  It must be called while
+         * access to the handle is serialized with the transfer thread (i.e.
+         * under the TransferManager's lock).  Subsequent calls are no-ops until
+         * the request is reset or reused, so the completion callback can safely
+         * run after the lock has been released.
+         */
+        void captureResponseInfo();
 
         /** notifyTransferCompleted is invoked either by the synchronous method
          * or by the asynchronous scheduler to indicate that the transfer for this

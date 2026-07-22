@@ -372,9 +372,15 @@ void Client::sendTransceiverUpdate()
                     for (unsigned i = 0; i < this->mRadioState.size(); i++) {
                         this->mRadioState[i].mCurrentFreq = transceiverDto[i].Frequency;
                     }
-                    this->mTxUpdatePending = false;
-                    this->unguardPtt();
+                } else {
+                    // Do NOT leave the PTT guarded on a failed update: the
+                    // timer retries every update interval anyway. unguardPtt
+                    // re-checks sync state and requeues if still out of step.
+                    LOG("Client", "Transceiver update failed (status %d) - unguarding PTT, will retry on next update cycle",
+                        r->getStatusCode());
                 }
+                this->mTxUpdatePending = false;
+                this->unguardPtt();
             });
     mTransceiverUpdateTimer.enable(afv::afvTransceiverUpdateIntervalMs);
 }

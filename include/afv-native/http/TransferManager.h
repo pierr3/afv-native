@@ -38,6 +38,9 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace afv_native { namespace http {
 
@@ -62,13 +65,36 @@ namespace afv_native { namespace http {
 
         std::unordered_map<CURL *, Request *> mPendingTransfers;
 
+        /** Requests cancelled via cancelRequest since the start of the current
+         * dispatch cycle. A request can be reset/destroyed after it was
+         * collected for completion dispatch but before its callback ran; the
+         * dispatch loop checks this set (consumeCancellation) before invoking
+         * a callback. The set is cleared (clearCancellationTombstones) at the
+         * START of each cycle, atomically with collection, so stale tombstones
+         * cannot suppress the completion of a request that was reset and then
+         * resubmitted.
+         */
+        std::unordered_set<Request *> mCancelledDuringDispatch;
+
         std::recursive_mutex mMutex;
 
-        /** processPendingMultiEvents triggers a reconcilation of any outstanding
-         * completion notifications from curl and notifies the request objects
-         * that their transfers are finished.
+        /** Returns true (and forgets the tombstone) if the request was
+         * cancelled since the start of the current dispatch cycle. */
+        bool consumeCancellation(Request *req);
+
+        /** Drops all cancellation tombstones. Call while holding mMutex at the
+         * start of a dispatch cycle, before collecting completed transfers. */
+        void clearCancellationTombstones();
+
+        /** collectCompletedTransfers reconciles any outstanding completion
+         * notifications from curl, detaches the finished easy handles from the
+         * multi handle, and returns the affected requests with their success
+         * state.  The caller must hold mMutex.  Completion callbacks are NOT
+         * invoked here — the caller must invoke notifyTransferCompleted /
+         * notifyTransferError on the returned requests AFTER releasing mMutex,
+         * as callbacks re-enter client code and may submit or cancel requests.
          */
-        void processPendingMultiEvents();
+        std::vector<std::pair<Request *, bool>> collectCompletedTransfers();
 
       public:
         TransferManager();
