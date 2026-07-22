@@ -55,8 +55,7 @@ Request::~Request() {
 void Request::reset() {
     if (mCurlHandle) {
         if (mTM != nullptr) {
-            curl_multi_remove_handle(mTM->getCurlMultiHandle(), mCurlHandle.get());
-            mTM->removeAsyncCallback(*this);
+            mTM->cancelRequest(this);
             mTM = nullptr;
         }
         mCurlHandle.reset();
@@ -303,6 +302,7 @@ bool Request::doAsync(TransferManager &transferManager) {
         return false;
     }
 
+    shareState(transferManager);
     transferManager.submitRequest(this);
     mTM = &transferManager;
     return true;
