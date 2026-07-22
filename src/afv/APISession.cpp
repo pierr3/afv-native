@@ -396,19 +396,24 @@ void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool succe
         if (!jsReturn.is_array()) {
             LOG("APISession", "station transceivers data returned wasn't an array.  Ignoring.");
         } else {
-            mStationTransceivers[stdName].clear();
+            {
+                // this callback runs on the transfer manager's thread while
+                // clients read the map from their own threads.
+                std::lock_guard<std::mutex> mapLock(mStationTransceiversLock);
+                mStationTransceivers[stdName].clear();
 
-            for (const auto &sJson: jsReturn) {
-                dto::StationTransceiver st;
-                try {
-                    sJson.get_to(st);
-                    mStationTransceivers[stdName].emplace_back(st);
-                } catch (nlohmann::json::exception &e) {
-                    LOG("APISession", "couldn't decode station transceivers: %s", e.what());
+                for (const auto &sJson: jsReturn) {
+                    dto::StationTransceiver st;
+                    try {
+                        sJson.get_to(st);
+                        mStationTransceivers[stdName].emplace_back(st);
+                    } catch (nlohmann::json::exception &e) {
+                        LOG("APISession", "couldn't decode station transceivers: %s", e.what());
+                    }
                 }
+                LOG("APISession", "got %d station transceivers for station %s.",
+                    mStationTransceivers[stdName].size(), stdName.c_str());
             }
-            LOG("APISession", "got %d station transceivers for station %s.",
-                mStationTransceivers[stdName].size(), stdName.c_str());
             StationTransceiversUpdateCallback.invokeAll(stdName);
         }
     } else {
@@ -425,5 +430,6 @@ void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool succe
 }
 
 std::map<std::string, std::vector<dto::StationTransceiver>> APISession::getStationTransceivers() const {
+    std::lock_guard<std::mutex> mapLock(mStationTransceiversLock);
     return mStationTransceivers;
 }

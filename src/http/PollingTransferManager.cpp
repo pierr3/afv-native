@@ -4,6 +4,10 @@
 #include <chrono>
 #include <curl/curl.h>
 
+#ifdef WIN32
+    #include <windows.h>
+#endif
+
 using namespace afv_native::http;
 
 PollingTransferManager::PollingTransferManager():
@@ -63,7 +67,13 @@ void PollingTransferManager::pollLoop() {
         // The mutex is not fair: relocking immediately after release starves
         // threads blocked in submitRequest/cancelRequest and freezes the whole
         // client. Sleeping outside the lock guarantees them a window.
+#ifdef WIN32
+        // std::this_thread::sleep_for has been observed hanging on some
+        // Windows machines (same workaround as the TrackAudio mic test loop).
+        Sleep(1);
+#else
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+#endif
     }
     LOG("PollingTransferManager", "Poll thread stopped");
 }

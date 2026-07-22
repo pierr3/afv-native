@@ -404,6 +404,7 @@ int afv_native::api::atcClient::GetTransceiverCountForStation(std::string statio
 };
 
 std::map<std::string, std::vector<afv_native::afv::dto::StationTransceiver>> afv_native::api::atcClient::GetTransceivers() {
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     return client->getStationTransceivers();
 }
 
@@ -416,6 +417,7 @@ void afv_native::api::atcClient::SetRadiosGain(float gain) {
 }
 
 void afv_native::api::atcClient::FetchTransceiverInfo(std::string station) {
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->requestStationTransceivers(station);
 }
 
@@ -424,6 +426,7 @@ void afv_native::api::atcClient::FetchTransceiverInfo(char *station) {
 }
 
 void afv_native::api::atcClient::GetStation(std::string station) {
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->getStation(station);
 }
 
@@ -432,6 +435,7 @@ void afv_native::api::atcClient::GetStation(char *station) {
 }
 
 void afv_native::api::atcClient::FetchStationVccs(std::string station) {
+    std::lock_guard<std::recursive_mutex> lock(afvMutex);
     client->requestStationVccs(station);
 }
 

@@ -44,6 +44,7 @@
 #include "afv-native/util/ChainedCallback.h"
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace afv_native { namespace afv {
@@ -117,6 +118,9 @@ namespace afv_native { namespace afv {
         http::RESTRequest         mGetStationRequest;
         http::RESTRequest         mVccsRequest;
         std::vector<dto::Station> mAliasedStations;
+        /** Written by the transfer manager's callback thread, read by client
+         * threads via getStationTransceivers(). */
+        mutable std::mutex mStationTransceiversLock;
         std::map<std::string, std::vector<dto::StationTransceiver>> mStationTransceivers;
 
       private:
