@@ -11,6 +11,7 @@ typedef struct StationTransceiverFlat {
     double LonDeg;
     double HeightMslM;
     double HeightAglM;
+    bool   Rco;
 
 } StationTransceiverFlat_t;
 

@@ -1008,7 +1008,7 @@ void ATCRadioSimulation::setTransceivers(unsigned int freq, std::vector<afv::dto
         // Transceiver IDs all set to 0 here, they will be updated when
         // coalesced into the global transceiver package
         dto::Transceiver out(0, freq, inTrans.LatDeg, inTrans.LonDeg, inTrans.HeightMslM,
-                             inTrans.HeightAglM);
+                             inTrans.HeightAglM, inTrans.Rco);
         mRadioState[freq].transceivers.emplace_back(out);
     }
 }
@@ -1032,7 +1032,7 @@ std::vector<afv::dto::Transceiver> ATCRadioSimulation::makeTransceiverDto() {
         } else {
             for (auto &trans: state.second.transceivers) {
                 retSet.emplace_back(i, trans.Frequency, trans.LatDeg, trans.LonDeg,
-                                    trans.HeightMslM, trans.HeightAglM);
+                                    trans.HeightMslM, trans.HeightAglM, trans.Rco);
                 trans.ID = i;
                 i++;
             }

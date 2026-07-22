@@ -37,8 +37,8 @@
 using namespace afv_native::afv::dto;
 using json = nlohmann::json;
 
-Transceiver::Transceiver(uint16_t id, uint32_t freq, double lat, double lon, double msl, double agl):
-    ID(id), Frequency(freq), LatDeg(lat), LonDeg(lon), HeightMslM(msl), HeightAglM(agl) {
+Transceiver::Transceiver(uint16_t id, uint32_t freq, double lat, double lon, double msl, double agl, bool rco):
+    ID(id), Frequency(freq), LatDeg(lat), LonDeg(lon), HeightMslM(msl), HeightAglM(agl), Rco(rco) {
 }
 
 void afv_native::afv::dto::from_json(const json &j, Transceiver &ar) {
@@ -48,11 +48,13 @@ void afv_native::afv::dto::from_json(const json &j, Transceiver &ar) {
     j.at("LonDeg").get_to(ar.LonDeg);
     j.at("HeightMslM").get_to(ar.HeightMslM);
     j.at("HeightAglM").get_to(ar.HeightAglM);
+    ar.Rco = j.value("rco", false);
 };
 
 void afv_native::afv::dto::to_json(json &j, const Transceiver &ar) {
     j = nlohmann::json {
         {"ID", ar.ID},         {"Frequency", ar.Frequency},   {"LatDeg", ar.LatDeg},
         {"LonDeg", ar.LonDeg}, {"HeightMslM", ar.HeightMslM}, {"HeightAglM", ar.HeightAglM},
+        {"rco", ar.Rco},
     };
 }

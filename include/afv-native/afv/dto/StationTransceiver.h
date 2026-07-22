@@ -22,11 +22,12 @@ namespace afv_native { namespace afv { namespace dto {
         double      LonDeg;
         double      HeightMslM;
         double      HeightAglM;
+        bool        Rco;
 
         StationTransceiver();
-        StationTransceiver(std::string id, std::string name, double lat, double lon, double msl, double agl);
+        StationTransceiver(std::string id, std::string name, double lat, double lon, double msl, double agl, bool rco = false);
 
-        MSGPACK_DEFINE_ARRAY(ID, Name, LatDeg, LonDeg, HeightMslM, HeightAglM);
+        MSGPACK_DEFINE_ARRAY(ID, Name, LatDeg, LonDeg, HeightMslM, HeightAglM, Rco);
     };
 
     void from_json(const nlohmann::json &j, StationTransceiver &ar);

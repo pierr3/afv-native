@@ -47,10 +47,11 @@ namespace afv_native { namespace afv { namespace dto {
         double   LonDeg;
         double   HeightMslM;
         double   HeightAglM;
+        bool     Rco;
 
-        Transceiver(uint16_t id, uint32_t freq, double lat, double lon, double msl, double agl);
+        Transceiver(uint16_t id, uint32_t freq, double lat, double lon, double msl, double agl, bool rco = false);
 
-        MSGPACK_DEFINE_ARRAY(ID, Frequency, LatDeg, LonDeg, HeightMslM, HeightAglM);
+        MSGPACK_DEFINE_ARRAY(ID, Frequency, LatDeg, LonDeg, HeightMslM, HeightAglM, Rco);
     };
 
     void from_json(const nlohmann::json &j, Transceiver &ar);

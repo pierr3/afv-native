@@ -316,6 +316,7 @@ AFV_NATIVE_API void ATCClient_SetTransceivers(ATCClientHandle handle, unsigned i
         t.LonDeg     = transceivers[j].LonDeg;
         t.HeightMslM = transceivers[j].HeightMslM;
         t.HeightAglM = transceivers[j].HeightAglM;
+        t.Rco        = transceivers[j].Rco;
         trans->push_back(t);
     }
     handle->impl->SetManualTransceivers(freq, *trans);
