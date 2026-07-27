@@ -41,12 +41,34 @@ TransferManager::TransferManager():
     mCurlMultiHandle(curl_multi_init()),
     mCurlShareHandle(curl_share_init()),
     mPendingTransfers() {
+    // Must be installed before anything is shared.
+    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_LOCKFUNC, &TransferManager::curlShareLock);
+    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_UNLOCKFUNC, &TransferManager::curlShareUnlock);
+    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_USERDATA, this);
+
     // share everything.
     curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
     curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
     curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
     curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_CONNECT);
     curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_PSL);
+}
+
+void TransferManager::curlShareLock(CURL *, curl_lock_data data, curl_lock_access, void *userptr) {
+    auto *tm = static_cast<TransferManager *>(userptr);
+    if (tm == nullptr || data >= CURL_LOCK_DATA_LAST) {
+        return;
+    }
+    // Exclusive for both SHARED and SINGLE access; these are short cache lookups.
+    tm->mShareLocks[static_cast<size_t>(data)].lock();
+}
+
+void TransferManager::curlShareUnlock(CURL *, curl_lock_data data, void *userptr) {
+    auto *tm = static_cast<TransferManager *>(userptr);
+    if (tm == nullptr || data >= CURL_LOCK_DATA_LAST) {
+        return;
+    }
+    tm->mShareLocks[static_cast<size_t>(data)].unlock();
 }
 
 TransferManager::~TransferManager() {

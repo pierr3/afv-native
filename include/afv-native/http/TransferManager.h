@@ -34,6 +34,7 @@
 #ifndef AFV_NATIVE_TRANSFERMANAGER_H
 #define AFV_NATIVE_TRANSFERMANAGER_H
 
+#include <array>
 #include <curl/curl.h>
 #include <memory>
 #include <mutex>
@@ -60,6 +61,16 @@ namespace afv_native { namespace http {
      */
     class TransferManager {
       protected:
+        /** Per-datum locks for the share handle.  libcurl requires these
+         * whenever a share is used from more than one thread, which it is here:
+         * easy handles are created and destroyed on session timer threads while
+         * the poll thread is inside curl_multi_perform.
+         *
+         * Must be declared before the handles below - curl_share_cleanup calls
+         * back into these, and members die in reverse declaration order.
+         */
+        std::array<std::mutex, CURL_LOCK_DATA_LAST> mShareLocks;
+
         std::unique_ptr<CURLM, CurlMultiDeleter>  mCurlMultiHandle;
         std::unique_ptr<CURLSH, CurlShareDeleter> mCurlShareHandle;
 
@@ -77,6 +88,9 @@ namespace afv_native { namespace http {
         std::unordered_set<Request *> mCancelledDuringDispatch;
 
         std::recursive_mutex mMutex;
+
+        static void curlShareLock(CURL *handle, curl_lock_data data, curl_lock_access access, void *userptr);
+        static void curlShareUnlock(CURL *handle, curl_lock_data data, void *userptr);
 
         /** Returns true (and forgets the tombstone) if the request was
          * cancelled since the start of the current dispatch cycle. */
