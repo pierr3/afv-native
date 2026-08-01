@@ -57,9 +57,8 @@ void APISession::Connect() {
     /* start the authentication request */
     http::Request req(mBaseURL + "/api/v1/auth", http::Method::POST);
     req.setBody(json(ar));
-    // Tighter than the default: the token refresh is scheduled 60s before the
-    // live token expires, so this request has to fail well inside that window
-    // for the error to be reportable while the session is still usable.
+    // Tighter than the default: the refresh runs 60s before the live token
+    // expires, so this has to fail inside that window to be reportable.
     req.setTimeouts(5, 15);
 
     mTransferManager.submit(std::move(req), [this](const http::Response &resp) {

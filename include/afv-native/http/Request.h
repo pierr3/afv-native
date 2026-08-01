@@ -44,16 +44,14 @@ namespace afv_native { namespace http {
 
     /** A request description.  Copyable, movable, owns nothing external.
      *
-     * This deliberately holds no curl handle and no completion callback: a
-     * Request is data handed to TransferManager::submit, which moves it into a
-     * worker.  Nothing outside that worker can observe or mutate a request
-     * while it is in flight, which is what removes the whole class of
-     * cross-thread reset hazards the previous design had to defend against.
+     * Holds no curl handle and no completion callback - it is data passed to
+     * TransferManager::submit(), which moves it into a worker.  A request in
+     * flight is not reachable from the caller.
      */
     class Request {
       public:
-        /** Every request here is a small REST call, so a transfer still
-         * running after this long is wedged rather than slow.
+        /** Sized for small REST calls: a transfer still running after this
+         * long is wedged rather than slow.
          */
         static constexpr long kDefaultConnectTimeoutSeconds  = 10;
         static constexpr long kDefaultTransferTimeoutSeconds = 30;

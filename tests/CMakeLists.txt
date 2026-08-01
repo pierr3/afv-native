@@ -1,10 +1,8 @@
 find_package(Catch2 3 CONFIG REQUIRED)
 
-# The http sources are compiled directly into the test target rather than
-# linked from afv_native.  The library hides nothing behind AFV_NATIVE_API in
-# these headers, so linking the shared object would work on Unix but not under
-# MSVC's dllexport rules - compiling the translation units keeps the tests
-# portable and independent of the export macros.
+# The http sources are compiled in directly rather than linked from
+# afv_native: these types carry no AFV_NATIVE_API, so linking the shared object
+# would fail under MSVC's dllexport rules.
 add_executable(afv_native_tests
 	http/test_smoke.cpp
 	http/test_curl_perform.cpp

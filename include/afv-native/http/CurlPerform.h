@@ -42,19 +42,17 @@
 namespace afv_native { namespace http {
 
     /** Raised to abort an in-flight transfer.  Shared so a submitter can
-     * signal a worker without knowing whether the worker has started yet.
+     * signal a worker that may not have started yet.
      */
     using CancelFlag = std::shared_ptr<std::atomic<bool>>;
 
-    /** Executes req on a fresh easy handle and returns the outcome.
+    /** Executes req on a fresh easy handle and returns the outcome.  Blocking.
      *
-     * Blocking.  The CURL* is created and destroyed entirely within this call,
-     * so the handle is never visible to another thread - which is what makes
-     * it safe to call concurrently from several workers with no share handle
-     * and no locking.
+     * Safe to call concurrently: the CURL* is created and destroyed within
+     * this call and is never visible to another thread.
      *
-     * @param cancel may be null.  When non-null and raised, the transfer is
-     *      aborted and the returned Response has cancelled == true.
+     * @param cancel may be null.  When raised, the transfer is aborted and the
+     *      returned Response has cancelled == true.
      */
     Response curlPerform(const Request &req, const CancelFlag &cancel);
 

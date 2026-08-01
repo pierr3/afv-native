@@ -39,13 +39,12 @@
 
 namespace afv_native { namespace http {
 
-    /** The outcome of one HTTP request.  A plain value - it owns everything it
-     * reports and outlives whatever handle produced it, so it can be handed to
-     * a callback on another thread without any lifetime coupling.
+    /** The outcome of one HTTP request.  Owns everything it reports, so it is
+     * safe to hand to a callback on another thread.
      */
     struct Response {
-        /** True when the transfer itself completed.  Says nothing about the
-         * status code: a 500 that arrived intact is ok == true.
+        /** The transfer completed.  Says nothing about the status code - a 500
+         * that arrived intact is ok == true.
          */
         bool ok = false;
 
@@ -56,12 +55,11 @@ namespace afv_native { namespace http {
         /** Transport-level error text.  Empty when ok is true. */
         std::string error;
 
-        /** True when the request was aborted before it finished. */
+        /** The request was aborted before it finished. */
         bool cancelled = false;
 
-        /** Parses body as JSON.  Returns a null value for an empty body and a
-         * discarded value for one that does not parse - callers here already
-         * treat both as "no usable response".
+        /** Returns null for an empty body and a discarded value for one that
+         * does not parse.
          */
         nlohmann::json json() const {
             if (body.empty()) {

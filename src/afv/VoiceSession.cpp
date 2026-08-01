@@ -203,10 +203,8 @@ void VoiceSession::udpErrorCallback(bool fatal, int err, std::string message) {
 
 void VoiceSession::Disconnect(bool do_close, bool reconnect) {
     if (do_close) {
-        // We are likely to be discarded by our owner as soon as this returns.
-        // That used to need care; it no longer does, because the request is a
-        // value owned by the transfer manager and the callback below captures
-        // nothing belonging to this object.
+        // The callback must not capture anything belonging to this object: our
+        // owner may destroy us as soon as this returns.
         http::Request req(mBaseUrl, http::Method::DEL);
         mSession.setAuthenticationFor(req);
         mSession.getTransferManager().submit(std::move(req), [](const http::Response &resp) {
@@ -280,8 +278,8 @@ afv_native::cryptodto::UDPChannel &VoiceSession::getUDPChannel() {
 }
 
 void VoiceSession::updateBaseUrl() {
-    // Session setup and teardown use this URL as-is; the transceiver and
-    // cross-couple posts append their own suffix at the call site.
+    // Setup and teardown use this as-is; the transceiver and cross-couple
+    // posts append their own suffix at the call site.
     mBaseUrl = mSession.getBaseUrl() + "/api/v1/users/" + mSession.getUsername() + "/callsigns/" + mCallsign;
 }
 

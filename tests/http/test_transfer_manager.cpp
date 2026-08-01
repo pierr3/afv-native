@@ -13,8 +13,7 @@ using namespace afv_native::http;
 
 namespace {
     /** Blocks until a target number of callbacks have fired, or the deadline
-     * passes.  Sleeping on a fixed duration would make these tests flaky on a
-     * loaded machine.
+     * passes.  Avoids fixed sleeps, which go flaky on a loaded machine.
      */
     class Latch {
       public:
@@ -152,16 +151,15 @@ TEST_CASE("destroying the manager with requests in flight is clean", "[tm]") {
         for (int i = 0; i < 20; ++i) {
             tm.submit(Request(server.url("/d"), Method::GET), [](const Response &) {});
         }
-        // The destructor runs here with work outstanding.  It must not hang,
-        // crash, or invoke a callback after the manager is gone.
+        // Destructor runs with work outstanding: must not hang, crash, or
+        // invoke a callback after the manager is gone.
     }
     SUCCEED("manager destroyed without hanging");
 }
 
 TEST_CASE("back-to-back requests to the same endpoint both complete", "[tm]") {
-    // The old design gave each call site one reusable Request member, so a
-    // second call reset() the first out from under itself and that callback
-    // never fired.  Submitting is now independent per request.
+    // Regression: the old reusable-Request design lost the first callback when
+    // a second call to the same endpoint reset() it.
     auto            server = makeEchoServer();
     TransferManager tm(4);
 

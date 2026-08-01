@@ -159,8 +159,8 @@ void TransferManager::workerLoop() {
         {
             std::lock_guard<std::mutex> lock(mMutex);
             mLive.erase(job.handle);
-            // A cancelled request reports nothing, and neither does anything
-            // still outstanding when the manager is going away.
+            // Cancelled requests, and anything outstanding at shutdown, report
+            // nothing.
             const bool suppressed = resp.cancelled || !mRunning;
             if (!suppressed && job.callback) {
                 mCompleted.emplace_back(std::move(job.callback), std::move(resp));

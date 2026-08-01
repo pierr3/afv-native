@@ -57,26 +57,19 @@ namespace afv_native { namespace http {
     /** Runs HTTP requests on a pool of worker threads and reports each result
      * on a single dispatch thread.
      *
-     * Ownership rule: a Request is moved into the manager at submit() and is
-     * never visible to the caller again.  Each worker builds its own CURL*,
-     * performs it, and destroys it without the handle ever leaving that stack
-     * frame, so no curl state is shared between threads - which is why there
-     * is no multi handle, no share handle, and no lock callbacks here.
+     * A Request is moved into the manager at submit() and is never visible to
+     * the caller again.  Each worker builds its own CURL*, performs it and
+     * destroys it without the handle leaving that stack frame, so no curl
+     * state is shared between threads.
      *
-     * Completion callbacks are serialised with respect to each other.  They
-     * are NOT serialised against the application thread: a callback can run
-     * while the application is calling into the same object, exactly as
-     * before this class was rewritten.
+     * Completion callbacks are serialised against each other, but not against
+     * the application thread - a callback can run while the application is
+     * calling into the same object.
      */
     class TransferManager {
       public:
-        /** @param workerCount how many transfers may be in flight at once.
-         *      Anything beyond that queues.  Two is sized for this library's
-         *      actual load - nine low-frequency REST endpoints - and keeps the
-         *      thread count down, which matters because we get loaded into a
-         *      flight simulator's process.  Idle workers park on a condition
-         *      variable and cost no CPU, so raising it is cheap if a consumer
-         *      ever needs more concurrency.
+        /** @param workerCount transfers allowed in flight at once; the rest
+         *      queue.
          */
         explicit TransferManager(unsigned workerCount = 2);
         virtual ~TransferManager();
@@ -100,9 +93,8 @@ namespace afv_native { namespace http {
         /** Runs req on the calling thread.  Does not use the pool. */
         Response performSync(const Request &req);
 
-        /** Retained for source compatibility with the old pull-based API.
-         * Completions are delivered by the dispatch thread, so this does
-         * nothing.
+        /** No-op.  Completions are delivered by the dispatch thread; this
+         * exists only for source compatibility with the old pull-based API.
          */
         virtual void process();
 
@@ -117,13 +109,11 @@ namespace afv_native { namespace http {
         void workerLoop();
         void dispatchLoop();
 
-        /** Refcounted curl_global_init/curl_global_cleanup.
+        /** Refcounted curl_global_init/curl_global_cleanup.  Required because
+         * libcurl's lazy init inside curl_easy_init is not thread safe.
          *
-         * libcurl initialises itself lazily from curl_easy_init if this is
-         * never called, but that path is explicitly not thread safe and the
-         * workers below race straight into it.  Declared first so it runs
-         * before any worker starts and is torn down after they have all
-         * joined.
+         * Must stay the first member: it has to run before any worker starts
+         * and tear down after they have all joined.
          */
         class CurlGlobalGuard {
           public:
@@ -152,9 +142,7 @@ namespace afv_native { namespace http {
         std::thread              mDispatcher;
     };
 
-    /** There is no polling any more - the worker pool replaced it.  Kept so
-     * code that names the old type still compiles.
-     */
+    /** Compatibility alias for the old type name.  There is no polling. */
     using PollingTransferManager = TransferManager;
 
 }} // namespace afv_native::http
