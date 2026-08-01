@@ -42,7 +42,6 @@
 #include "afv-native/http/Request.h"
 #include "afv-native/http/TransferManager.h"
 #include "afv-native/util/ChainedCallback.h"
-#include <ctime>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -92,16 +91,6 @@ namespace afv_native { namespace afv {
         util::ChainedCallback<void(bool, std::pair<std::string, dto::Station>)> StationSearchCallback;
 
       protected:
-        // Backstop for an auth request that never reports completion at all.
-        // Longer than the request's own timeout so the error path wins normally.
-        static constexpr unsigned int kAuthWatchdogMs = 45 * 1000;
-
-        static constexpr unsigned int kRefreshRetryBaseMs = 5 * 1000;
-        static constexpr unsigned int kRefreshRetryMaxMs  = 30 * 1000;
-
-        // Below this much life left, stop retrying and fail the session properly.
-        static constexpr int kRefreshGiveUpMarginSeconds = 5;
-
         void _authenticationCallback(http::RESTRequest *req, bool success);
         void _stationsCallback(http::RESTRequest *req, bool success);
         void _stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName);
@@ -117,14 +106,6 @@ namespace afv_native { namespace afv {
         std::string            mClientName;
 
         std::string mBearerToken;
-
-        // Wall-clock expiry of mBearerToken, or 0 when there is none.
-        std::time_t  mTokenExpiryTime;
-        unsigned int mRefreshFailureCount;
-
-        // Set between dispatching an auth request and its callback firing. Still
-        // set on entry to Connect() means the previous one was lost outright.
-        bool mAuthRequestInFlight;
 
         http::RESTRequest mAuthenticationRequest;
 

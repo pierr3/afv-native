@@ -37,7 +37,6 @@
 #include "afv-native/afv/dto/PostCallsignResponse.h"
 #include "afv-native/afv/params.h"
 #include "afv-native/http/RESTRequest.h"
-#include <algorithm>
 #include <functional>
 #include <jwt/jwt.hpp>
 #include <memory>
@@ -49,9 +48,10 @@ using namespace ::afv_native;
 using json = nlohmann::json;
 
 APISession::APISession(http::TransferManager &tm, std::string baseUrl, std::string clientName):
-    StateCallback(), AliasUpdateCallback(), mTransferManager(tm), mBaseURL(std::move(baseUrl)), mUsername(), mPassword(), mClientName(std::move(clientName)), mBearerToken(), mTokenExpiryTime(0), mRefreshFailureCount(0), mAuthRequestInFlight(false), mAuthenticationRequest(mBaseURL + "/api/v1/auth", http::Method::POST, json()), mRefreshTokenTimer(std::bind(&APISession::Connect, this)), mLastError(APISessionError::NoError), mStationAliasRequest(mBaseURL + "/api/v1/stations/aliased", http::Method::GET, nullptr), mState(APISessionState::Disconnected), mStationTransceiversRequest(mBaseURL, http::Method::GET, nullptr), StationTransceiversUpdateCallback(), StationVccsCallback(), StationSearchCallback(), mGetStationRequest(mBaseURL, http::Method::GET, nullptr), mVccsRequest(mBaseURL, http::Method::GET, nullptr) {
-    // Tighter than the default: the refresh only has 60s of runway before the
-    // live token dies, so failing fast leaves room for retries.
+    StateCallback(), AliasUpdateCallback(), mTransferManager(tm), mBaseURL(std::move(baseUrl)), mUsername(), mPassword(), mClientName(std::move(clientName)), mBearerToken(), mAuthenticationRequest(mBaseURL + "/api/v1/auth", http::Method::POST, json()), mRefreshTokenTimer(std::bind(&APISession::Connect, this)), mLastError(APISessionError::NoError), mStationAliasRequest(mBaseURL + "/api/v1/stations/aliased", http::Method::GET, nullptr), mState(APISessionState::Disconnected), mStationTransceiversRequest(mBaseURL, http::Method::GET, nullptr), StationTransceiversUpdateCallback(), StationVccsCallback(), StationSearchCallback(), mGetStationRequest(mBaseURL, http::Method::GET, nullptr), mVccsRequest(mBaseURL, http::Method::GET, nullptr) {
+    // Tighter than the default: the token refresh is scheduled 60s before the
+    // live token expires, so this request has to fail well inside that window
+    // for the error to be reportable while the session is still usable.
     mAuthenticationRequest.setTimeouts(5, 15);
 }
 
@@ -68,14 +68,6 @@ void APISession::Connect() {
         this->_authenticationCallback(restreq, success);
     });
     mAuthenticationRequest.shareState(mTransferManager);
-    if (mAuthRequestInFlight) {
-        LOG("APISession",
-            "previous auth request never reported completion - reissuing via watchdog");
-    }
-    mAuthRequestInFlight = true;
-    // Armed before dispatch so the callback, which can only run afterwards,
-    // always overwrites it. Guarantees a timer is always pending.
-    mRefreshTokenTimer.enable(kAuthWatchdogMs);
     mAuthenticationRequest.doAsync(mTransferManager);
     /* update our internal state */
     switch (mState) {
@@ -92,10 +84,7 @@ void APISession::Connect() {
 
 void afv::APISession::Disconnect() {
     mRefreshTokenTimer.disable();
-    mBearerToken         = "";
-    mTokenExpiryTime     = 0;
-    mRefreshFailureCount = 0;
-    mAuthRequestInFlight = false;
+    mBearerToken = "";
     mAuthenticationRequest.reset();
     setState(APISessionState::Disconnected);
 }
@@ -113,10 +102,6 @@ void APISession::setPassword(const std::string &password) {
 }
 
 void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
-    mAuthRequestInFlight = false;
-    // Cancel the watchdog; every branch below either re-arms it or is terminal.
-    mRefreshTokenTimer.disable();
-
     if (success && req->getStatusCode() == 200) {
         mBearerToken = req->getResponseBody();
         if (mBearerToken.empty()) {
@@ -145,12 +130,10 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
                         raiseError(APISessionError::AuthTokenExpiryTimeInPast);
                         return;
                     }
-                    mTokenExpiryTime = expiry;
                     LOG("APISession", "API Token Expires in %d seconds", expiry - time(nullptr));
                     // refresh 1 minute before token expiry.
                     mRefreshTokenTimer.enable((timeRemaining - 60) * 1000);
                 } else {
-                    mTokenExpiryTime = ::time(nullptr) + (60 * 60);
                     LOG("APISession", "no expiry claim - assuming 1 hour.",
                         ec.message().c_str());
                     mRefreshTokenTimer.enable(59 * 60 * 1000); // refresh in 59 minutes.
@@ -163,44 +146,11 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
             raiseError(APISessionError::InvalidAuthToken);
             return;
         }
-        mRefreshFailureCount = 0;
         setState(APISessionState::Running);
     } else {
-        // A failed refresh is not a failed login: the session is live and the
-        // old token may still have time on it, so retry while it can carry us
-        // rather than dropping a controller off frequency over a transient blip.
-        if (mState == APISessionState::Reconnecting && !mBearerToken.empty()) {
-            const int remaining = static_cast<int>(mTokenExpiryTime - ::time(nullptr));
-            if (remaining > kRefreshGiveUpMarginSeconds) {
-                const std::string reason =
-                    success ? ("HTTP " + std::to_string(req->getStatusCode()))
-                            : std::string(req->getCurlError());
-
-                mRefreshFailureCount++;
-                unsigned int delayMs =
-                    kRefreshRetryBaseMs * (1u << std::min(mRefreshFailureCount - 1u, 3u));
-                delayMs = std::min(delayMs, kRefreshRetryMaxMs);
-                // Never sleep past the point where the token dies under us.
-                delayMs = std::min(delayMs,
-                                   static_cast<unsigned int>(remaining - kRefreshGiveUpMarginSeconds) * 1000u);
-                delayMs = std::max(delayMs, 1000u);
-
-                LOG("APISession",
-                    "token refresh attempt %u failed (%s) - retrying in %ums, current token valid for %ds",
-                    mRefreshFailureCount, reason.c_str(), delayMs, remaining);
-
-                mAuthenticationRequest.reset();
-                mRefreshTokenTimer.enable(delayMs);
-                return;
-            }
-            LOG("APISession",
-                "token refresh failed and the current token has expired - failing the session");
-        }
-
         // This is a failure during auth, which is grounds to handle it as
         // if it were an immediate disconnect.
-        mBearerToken     = "";
-        mTokenExpiryTime = 0;
+        mBearerToken = "";
         if (!success) {
             LOG("APISession", "curl internal error during login: %s",
                 req->getCurlError().c_str());
