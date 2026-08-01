@@ -23,8 +23,7 @@
 #include "afv-native/audio/WavSampleStorage.h"
 #include "afv-native/event.h"
 #include "afv-native/event/CallbackTimer.h"
-#include "afv-native/http/PollingTransferManager.h"
-#include "afv-native/http/RESTRequest.h"
+#include "afv-native/http/TransferManager.h"
 #include <memory>
 
 namespace afv_native {
@@ -143,7 +142,7 @@ namespace afv_native {
         void putAudioFrame(const audio::SampleType *bufferIn);
 
       protected:
-        http::PollingTransferManager mTransferManager;
+        http::TransferManager        mTransferManager;
         afv::APISession            mAPISession;
         afv::VoiceSession          mVoiceSession;
 

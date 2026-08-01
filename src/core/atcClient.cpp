@@ -320,13 +320,13 @@ void ATCClient::sendTransceiverUpdate() {
         mTxUpdatePending = true;
     }
 
-    mVoiceSession.postTransceiverUpdate(transceiverDto, [this](http::Request *r, bool success) {
-        if (!success || r->getStatusCode() != 200) {
+    mVoiceSession.postTransceiverUpdate(transceiverDto, [this](const http::Response &resp) {
+        if (!resp.ok || resp.statusCode != 200) {
             // Do NOT leave the PTT guarded on a failed update: the timer
             // retries every update interval anyway, and a single failed POST
             // must not lock the user out of transmitting until then.
-            LOG("ATCClient", "Transceiver update failed (status %d) - unguarding PTT, will retry on next update cycle",
-                r->getStatusCode());
+            LOG("ATCClient", "Transceiver update failed (status %ld) - unguarding PTT, will retry on next update cycle",
+                resp.statusCode);
         }
         {
             std::lock_guard<std::mutex> lock(this->mPttMutex);
@@ -336,10 +336,10 @@ void ATCClient::sendTransceiverUpdate() {
     });
 
     // We now also update any cross coupled transceivers
-    mVoiceSession.postCrossCoupleGroupUpdate(mATCRadioStack->makeCrossCoupleGroupDto(), [](http::Request *r, bool success) {
-        if (!success) {
+    mVoiceSession.postCrossCoupleGroupUpdate(mATCRadioStack->makeCrossCoupleGroupDto(), [](const http::Response &resp) {
+        if (!resp.ok) {
             LOG("ATCClient", "Failed to post cross couple transceivers update with code %s",
-                std::to_string(r->getStatusCode()).c_str());
+                std::to_string(resp.statusCode).c_str());
         }
     });
 

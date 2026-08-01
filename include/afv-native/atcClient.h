@@ -20,7 +20,7 @@
 #include "afv-native/event/CallbackTimer.h"
 #include "afv-native/event/EventBus.h"
 #include "afv-native/hardwareType.h"
-#include "afv-native/http/PollingTransferManager.h"
+#include "afv-native/http/TransferManager.h"
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -257,7 +257,7 @@ namespace afv_native {
       protected:
         std::shared_ptr<afv::EffectResources> mFxRes;
 
-        http::PollingTransferManager             mTransferManager;
+        http::TransferManager                    mTransferManager;
         afv::APISession                          mAPISession;
         afv::VoiceSession                        mVoiceSession;
         std::shared_ptr<afv::ATCRadioSimulation> mATCRadioStack;

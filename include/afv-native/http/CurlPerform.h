@@ -1,8 +1,8 @@
-/* http/RESTRequest.cpp
+/* http/CurlPerform.h
  *
  * This file is part of AFV-Native.
  *
- * Copyright (c) 2019 Christopher Collins
+ * Copyright (c) 2015,2019-2020 Christopher Collins
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,29 +31,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "afv-native/http/RESTRequest.h"
-#include "afv-native/http/http.h"
-#include <nlohmann/json.hpp>
-#include <string>
+#ifndef AFV_NATIVE_HTTP_CURLPERFORM_H
+#define AFV_NATIVE_HTTP_CURLPERFORM_H
 
-using namespace std;
-using namespace afv_native::http;
-using json = nlohmann::json;
+#include "afv-native/http/Request.h"
+#include "afv-native/http/Response.h"
+#include <atomic>
+#include <memory>
 
-RESTRequest::RESTRequest(string path, Method method, const nlohmann::json &request):
-    Request(path, method) {
-    setRequestBody(request);
-}
+namespace afv_native { namespace http {
 
-nlohmann::json RESTRequest::getResponse() const {
-    if (mProgress == Progress::Finished && mResp.size() > 0) {
-        return json::parse(getResponseBody());
-    } else {
-        return nlohmann::json();
-    }
-}
+    /** Raised to abort an in-flight transfer.  Shared so a submitter can
+     * signal a worker without knowing whether the worker has started yet.
+     */
+    using CancelFlag = std::shared_ptr<std::atomic<bool>>;
 
-bool RESTRequest::setupHandle() {
-    setHeader("Content-Type", "application/json; charset=UTF-8");
-    return Request::setupHandle();
-}
+    /** Executes req on a fresh easy handle and returns the outcome.
+     *
+     * Blocking.  The CURL* is created and destroyed entirely within this call,
+     * so the handle is never visible to another thread - which is what makes
+     * it safe to call concurrently from several workers with no share handle
+     * and no locking.
+     *
+     * @param cancel may be null.  When non-null and raised, the transfer is
+     *      aborted and the returned Response has cancelled == true.
+     */
+    Response curlPerform(const Request &req, const CancelFlag &cancel);
+
+}} // namespace afv_native::http
+
+#endif // AFV_NATIVE_HTTP_CURLPERFORM_H

@@ -38,8 +38,8 @@
 #include "afv-native/afv/dto/StationTransceiver.h"
 #include "afv-native/event.h"
 #include "afv-native/event/CallbackTimer.h"
-#include "afv-native/http/RESTRequest.h"
 #include "afv-native/http/Request.h"
+#include "afv-native/http/Response.h"
 #include "afv-native/http/TransferManager.h"
 #include "afv-native/util/ChainedCallback.h"
 #include <map>
@@ -91,11 +91,11 @@ namespace afv_native { namespace afv {
         util::ChainedCallback<void(bool, std::pair<std::string, dto::Station>)> StationSearchCallback;
 
       protected:
-        void _authenticationCallback(http::RESTRequest *req, bool success);
-        void _stationsCallback(http::RESTRequest *req, bool success);
-        void _stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stationName);
-        void _stationVccsCallback(http::RESTRequest *req, bool success, std::string stationName);
-        void _getStationCallback(http::RESTRequest *req, bool success, std::string stationName);
+        void _authenticationCallback(const http::Response &resp);
+        void _stationsCallback(const http::Response &resp);
+        void _stationTransceiversCallback(const http::Response &resp, std::string stationName);
+        void _stationVccsCallback(const http::Response &resp, std::string stationName);
+        void _getStationCallback(const http::Response &resp, std::string stationName);
         void setState(APISessionState newState);
         void raiseError(APISessionError error);
 
@@ -107,16 +107,10 @@ namespace afv_native { namespace afv {
 
         std::string mBearerToken;
 
-        http::RESTRequest mAuthenticationRequest;
-
         event::CallbackTimer mRefreshTokenTimer;
 
         APISessionError mLastError;
 
-        http::RESTRequest         mStationAliasRequest;
-        http::RESTRequest         mStationTransceiversRequest;
-        http::RESTRequest         mGetStationRequest;
-        http::RESTRequest         mVccsRequest;
         std::vector<dto::Station> mAliasedStations;
         /** Written by the transfer manager's callback thread, read by client
          * threads via getStationTransceivers(). */

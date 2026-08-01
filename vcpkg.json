@@ -24,5 +24,13 @@
                 "util"
             ]
         }
-    ]
+    ],
+    "features": {
+        "tests": {
+            "description": "Build the unit test target",
+            "dependencies": [
+                "catch2"
+            ]
+        }
+    }
 }

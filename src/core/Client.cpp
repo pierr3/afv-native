@@ -367,8 +367,8 @@ void Client::sendTransceiverUpdate()
     */
     mVoiceSession.postTransceiverUpdate(
             transceiverDto,
-            [this, transceiverDto](http::Request *r, bool success) {
-                if (success && r->getStatusCode() == 200) {
+            [this, transceiverDto](const http::Response &resp) {
+                if (resp.ok && resp.statusCode == 200) {
                     for (unsigned i = 0; i < this->mRadioState.size(); i++) {
                         this->mRadioState[i].mCurrentFreq = transceiverDto[i].Frequency;
                     }
@@ -376,8 +376,8 @@ void Client::sendTransceiverUpdate()
                     // Do NOT leave the PTT guarded on a failed update: the
                     // timer retries every update interval anyway. unguardPtt
                     // re-checks sync state and requeues if still out of step.
-                    LOG("Client", "Transceiver update failed (status %d) - unguarding PTT, will retry on next update cycle",
-                        r->getStatusCode());
+                    LOG("Client", "Transceiver update failed (status %ld) - unguarding PTT, will retry on next update cycle",
+                        resp.statusCode);
                 }
                 this->mTxUpdatePending = false;
                 this->unguardPtt();

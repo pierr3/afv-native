@@ -32,9 +32,8 @@
  */
 
 #include "afv-native/http/TransferManager.h"
-#include "afv-native/http/Request.h"
 #include <curl/curl.h>
-#include <mutex>
+#include <utility>
 
 using namespace afv_native::http;
 
@@ -57,174 +56,139 @@ TransferManager::CurlGlobalGuard::~CurlGlobalGuard() {
     }
 }
 
-TransferManager::TransferManager():
-    mCurlMultiHandle(curl_multi_init()),
-    mCurlShareHandle(curl_share_init()),
-    mPendingTransfers() {
-    // Must be installed before anything is shared.
-    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_LOCKFUNC, &TransferManager::curlShareLock);
-    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_UNLOCKFUNC, &TransferManager::curlShareUnlock);
-    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_USERDATA, this);
-
-    // share everything.
-    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
-    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
-    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
-    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_CONNECT);
-    curl_share_setopt(mCurlShareHandle.get(), CURLSHOPT_SHARE, CURL_LOCK_DATA_PSL);
-}
-
-void TransferManager::curlShareLock(CURL *, curl_lock_data data, curl_lock_access, void *userptr) {
-    auto *tm = static_cast<TransferManager *>(userptr);
-    if (tm == nullptr || data >= CURL_LOCK_DATA_LAST) {
-        return;
+TransferManager::TransferManager(unsigned workerCount) {
+    if (workerCount == 0) {
+        workerCount = 1;
     }
-    // Exclusive for both SHARED and SINGLE access; these are short cache lookups.
-    tm->mShareLocks[static_cast<size_t>(data)].lock();
-}
-
-void TransferManager::curlShareUnlock(CURL *, curl_lock_data data, void *userptr) {
-    auto *tm = static_cast<TransferManager *>(userptr);
-    if (tm == nullptr || data >= CURL_LOCK_DATA_LAST) {
-        return;
+    mWorkers.reserve(workerCount);
+    for (unsigned i = 0; i < workerCount; ++i) {
+        mWorkers.emplace_back(&TransferManager::workerLoop, this);
     }
-    tm->mShareLocks[static_cast<size_t>(data)].unlock();
+    mDispatcher = std::thread(&TransferManager::dispatchLoop, this);
 }
 
 TransferManager::~TransferManager() {
-    // First, remove all easy handles from the multi handle
-    std::lock_guard<std::recursive_mutex> lock(mMutex);
-    for (auto const &pair: mPendingTransfers) {
-        curl_multi_remove_handle(mCurlMultiHandle.get(), pair.first);
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mRunning = false;
+        // Abort anything already handed to a worker so shutdown does not have
+        // to wait out a full transfer timeout.
+        for (auto &entry: mLive) {
+            if (entry.second) {
+                entry.second->store(true);
+            }
+        }
+        mQueue.clear();
+        mCompleted.clear();
+    }
+    mWorkCv.notify_all();
+    mDoneCv.notify_all();
+
+    for (auto &worker: mWorkers) {
+        if (worker.joinable()) {
+            worker.join();
+        }
+    }
+    if (mDispatcher.joinable()) {
+        mDispatcher.join();
+    }
+}
+
+RequestHandle TransferManager::submit(Request req, CompletionCallback cb) {
+    Job job;
+    job.request  = std::move(req);
+    job.callback = std::move(cb);
+    job.cancel   = std::make_shared<std::atomic<bool>>(false);
+
+    RequestHandle handle = 0;
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        if (!mRunning) {
+            return 0;
+        }
+        handle        = mNextHandle++;
+        job.handle    = handle;
+        mLive[handle] = job.cancel;
+        mQueue.push_back(std::move(job));
+    }
+    mWorkCv.notify_one();
+    return handle;
+}
+
+void TransferManager::cancel(RequestHandle handle) {
+    std::lock_guard<std::mutex> lock(mMutex);
+
+    auto it = mLive.find(handle);
+    if (it != mLive.end() && it->second) {
+        it->second->store(true);
     }
 
-    // Clear pending transfers before unique_ptrs clean up the handles
-    mPendingTransfers.clear();
+    // Drop it outright if no worker has picked it up yet.
+    for (auto queued = mQueue.begin(); queued != mQueue.end(); ++queued) {
+        if (queued->handle == handle) {
+            mQueue.erase(queued);
+            mLive.erase(handle);
+            return;
+        }
+    }
+}
+
+Response TransferManager::performSync(const Request &req) {
+    return curlPerform(req, nullptr);
 }
 
 void TransferManager::process() {
-    std::vector<std::pair<Request *, bool>> completed;
-    {
-        std::lock_guard<std::recursive_mutex> lock(mMutex);
-        int                                   running = 0;
+    // Completions are delivered by the dispatch thread; nothing to pump.
+}
 
-        // Tombstones only protect the completed list collected below from
-        // requests reset after collection; older ones are stale and must not
-        // suppress a resubmitted request's completion.
-        clearCancellationTombstones();
-
-        curl_multi_perform(mCurlMultiHandle.get(), &running);
-
-        completed = collectCompletedTransfers();
-    }
-    for (auto &[req, ok]: completed) {
-        if (consumeCancellation(req)) {
-            continue;
+void TransferManager::workerLoop() {
+    for (;;) {
+        Job job;
+        {
+            std::unique_lock<std::mutex> lock(mMutex);
+            mWorkCv.wait(lock, [this] { return !mRunning || !mQueue.empty(); });
+            if (!mRunning) {
+                return;
+            }
+            job = std::move(mQueue.front());
+            mQueue.pop_front();
         }
-        if (ok) {
-            req->notifyTransferCompleted();
-        } else {
-            req->notifyTransferError();
+
+        Response resp = curlPerform(job.request, job.cancel);
+
+        {
+            std::lock_guard<std::mutex> lock(mMutex);
+            mLive.erase(job.handle);
+            // A cancelled request reports nothing, and neither does anything
+            // still outstanding when the manager is going away.
+            const bool suppressed = resp.cancelled || !mRunning;
+            if (!suppressed && job.callback) {
+                mCompleted.emplace_back(std::move(job.callback), std::move(resp));
+            }
         }
+        mDoneCv.notify_one();
     }
 }
 
-std::vector<std::pair<Request *, bool>> TransferManager::collectCompletedTransfers() {
-    std::vector<std::pair<Request *, bool>> completed;
-    struct CURLMsg                         *cMsg        = nullptr;
-    int                                     msgs_queued = 0;
-
-    while (nullptr != (cMsg = curl_multi_info_read(mCurlMultiHandle.get(), &msgs_queued))) {
-        // GAH.  STUPID STUPID CURL.  Never return pointers from stack or other transient memory.
-        auto msgCopy = *cMsg;
-
-        if (msgCopy.msg != CURLMSG_DONE) {
-            continue;
+void TransferManager::dispatchLoop() {
+    for (;;) {
+        std::pair<CompletionCallback, Response> item;
+        {
+            std::unique_lock<std::mutex> lock(mMutex);
+            mDoneCv.wait(lock, [this] { return !mRunning || !mCompleted.empty(); });
+            if (!mRunning && mCompleted.empty()) {
+                return;
+            }
+            if (mCompleted.empty()) {
+                continue;
+            }
+            item = std::move(mCompleted.front());
+            mCompleted.pop_front();
         }
-        // remove the easy handle from our management
-        curl_multi_remove_handle(mCurlMultiHandle.get(), msgCopy.easy_handle);
-        auto it = mPendingTransfers.find(msgCopy.easy_handle);
-        if (it == mPendingTransfers.end()) {
-            // request was cancelled while the completion was queued
-            continue;
+        // Invoked outside the lock: callbacks re-enter client code and may
+        // submit or cancel further requests.
+        if (item.first) {
+            item.first(item.second);
         }
-        Request *req = it->second;
-        mPendingTransfers.erase(it);
-        // read the status code / content type while we still hold the lock,
-        // so the callback can run lock-free later without touching the
-        // easy handle concurrently with anyone resetting the request.
-        req->captureResponseInfo();
-        completed.emplace_back(req, msgCopy.data.result == CURLE_OK);
-    }
-    return completed;
-}
-
-void TransferManager::AddToSession(Request *req) const {
-    if (req) {
-        curl_easy_setopt(req->getCurlHandle(), CURLOPT_SHARE, mCurlShareHandle.get());
-    }
-}
-
-void TransferManager::HandleRequest(Request *req) {
-    submitRequest(req);
-}
-
-void TransferManager::submitRequest(Request *req) {
-    if (req) {
-        std::lock_guard<std::recursive_mutex> lock(mMutex);
-        auto curlHandle               = req->getCurlHandle();
-        mPendingTransfers[curlHandle] = req;
-        curl_multi_add_handle(mCurlMultiHandle.get(), curlHandle);
-        curl_multi_wakeup(mCurlMultiHandle.get());
-    }
-}
-
-void TransferManager::cancelRequest(Request *req) {
-    if (!req) {
-        return;
-    }
-    std::lock_guard<std::recursive_mutex> lock(mMutex);
-    auto h = req->getCurlHandle();
-    if (h) {
-        curl_multi_remove_handle(mCurlMultiHandle.get(), h);
-        mPendingTransfers.erase(h);
-    }
-    // The request may already have been collected for completion dispatch and
-    // be awaiting its callback outside the lock. Tombstone it so the dispatch
-    // loop skips it instead of touching a reset (or destroyed) request.
-    mCancelledDuringDispatch.insert(req);
-}
-
-bool TransferManager::consumeCancellation(Request *req) {
-    std::lock_guard<std::recursive_mutex> lock(mMutex);
-    return mCancelledDuringDispatch.erase(req) > 0;
-}
-
-void TransferManager::clearCancellationTombstones() {
-    std::lock_guard<std::recursive_mutex> lock(mMutex);
-    mCancelledDuringDispatch.clear();
-}
-
-CURLM *TransferManager::getCurlMultiHandle() const {
-    return mCurlMultiHandle.get();
-}
-
-CURLSH *TransferManager::getCurlShareHandle() const {
-    return mCurlShareHandle.get();
-}
-
-void TransferManager::registerForAsyncCallback(Request &req) {
-    std::lock_guard<std::recursive_mutex> lock(mMutex);
-    auto curlHandle = req.getCurlHandle();
-    if (curlHandle != nullptr) {
-        mPendingTransfers[curlHandle] = &req;
-    }
-}
-
-void TransferManager::removeAsyncCallback(Request &req) {
-    std::lock_guard<std::recursive_mutex> lock(mMutex);
-    auto curlHandle = req.getCurlHandle();
-    if (curlHandle != nullptr) {
-        mPendingTransfers.erase(curlHandle);
     }
 }

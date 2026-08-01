@@ -45,7 +45,7 @@
 #include "afv-native/afv/dto/Transceiver.h"
 #include "afv-native/audio/AudioDevice.h"
 #include "afv-native/event/CallbackTimer.h"
-#include "afv-native/http/PollingTransferManager.h"
+#include "afv-native/http/TransferManager.h"
 
 namespace afv_native {
     /** Client provides a fully functional PilotClient that can be integrated into
@@ -242,7 +242,7 @@ namespace afv_native {
 
         std::shared_ptr<afv::EffectResources> mFxRes;
 
-        http::PollingTransferManager mTransferManager;
+        http::TransferManager        mTransferManager;
         afv::APISession mAPISession;
         afv::VoiceSession mVoiceSession;
         std::shared_ptr<afv::RadioSimulation> mRadioSim;
