@@ -34,8 +34,28 @@
 #include "afv-native/http/TransferManager.h"
 #include "afv-native/http/Request.h"
 #include <curl/curl.h>
+#include <mutex>
 
 using namespace afv_native::http;
+
+namespace {
+    std::mutex gCurlGlobalMutex;
+    unsigned   gCurlGlobalRefCount = 0;
+} // namespace
+
+TransferManager::CurlGlobalGuard::CurlGlobalGuard() {
+    std::lock_guard<std::mutex> lock(gCurlGlobalMutex);
+    if (gCurlGlobalRefCount++ == 0) {
+        curl_global_init(CURL_GLOBAL_DEFAULT);
+    }
+}
+
+TransferManager::CurlGlobalGuard::~CurlGlobalGuard() {
+    std::lock_guard<std::mutex> lock(gCurlGlobalMutex);
+    if (--gCurlGlobalRefCount == 0) {
+        curl_global_cleanup();
+    }
+}
 
 TransferManager::TransferManager():
     mCurlMultiHandle(curl_multi_init()),

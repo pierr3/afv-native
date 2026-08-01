@@ -61,6 +61,26 @@ namespace afv_native { namespace http {
      */
     class TransferManager {
       protected:
+        /** Refcounted curl_global_init/curl_global_cleanup.
+         *
+         * libcurl will initialise itself lazily from curl_easy_init if this is
+         * never called, but that path is explicitly not thread safe, and we
+         * create requests from the poll thread, the session timer threads and
+         * the caller's thread.  Doing it here covers every entry point without
+         * adding an init call to the public API - and doing it from a member
+         * declared first means it runs before curl_multi_init below and is
+         * torn down after both handles are gone.
+         */
+        class CurlGlobalGuard {
+          public:
+            CurlGlobalGuard();
+            ~CurlGlobalGuard();
+            CurlGlobalGuard(const CurlGlobalGuard &)            = delete;
+            CurlGlobalGuard &operator=(const CurlGlobalGuard &) = delete;
+        };
+
+        CurlGlobalGuard mCurlGlobalGuard;
+
         /** Per-datum locks for the share handle.  libcurl requires these
          * whenever a share is used from more than one thread, which it is here:
          * easy handles are created and destroyed on session timer threads while
