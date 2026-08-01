@@ -88,10 +88,9 @@ target_sources(afv_native PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/dto/ChannelConfig.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/cryptodto/dto/Header.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/event/CallbackTimer.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/src/http/PollingTransferManager.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/http/TransferManager.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/http/Request.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/src/http/RESTRequest.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/src/http/CurlPerform.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/util/base64.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/util/monotime.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/src/audio/VHFFilterSource.cpp
@@ -231,6 +230,14 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT DEFINED AFV_STATIC)
 		python3 ${CMAKE_CURRENT_SOURCE_DIR}/compile_licenses.py
 		COMMENT "Running compile_licenses.py"
 	)
+endif()
+
+# Unit tests are opt-in: they need the "tests" vcpkg manifest feature for Catch2.
+#   cmake -S . -B build -DAFV_BUILD_TESTS=ON -DVCPKG_MANIFEST_FEATURES=tests
+option(AFV_BUILD_TESTS "Build unit tests (requires -DVCPKG_MANIFEST_FEATURES=tests)" OFF)
+if(AFV_BUILD_TESTS)
+	enable_testing()
+	add_subdirectory(tests)
 endif()
 
 

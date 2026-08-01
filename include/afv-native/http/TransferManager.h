@@ -34,42 +34,86 @@
 #ifndef AFV_NATIVE_TRANSFERMANAGER_H
 #define AFV_NATIVE_TRANSFERMANAGER_H
 
-#include <array>
-#include <curl/curl.h>
-#include <memory>
+#include "afv-native/http/CurlPerform.h"
+#include "afv-native/http/Request.h"
+#include "afv-native/http/Response.h"
+#include <condition_variable>
+#include <cstdint>
+#include <deque>
+#include <functional>
 #include <mutex>
+#include <thread>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 namespace afv_native { namespace http {
 
-    struct CurlMultiDeleter {
-        void operator()(CURLM *p) const { curl_multi_cleanup(p); }
-    };
-    struct CurlShareDeleter {
-        void operator()(CURLSH *p) const { curl_share_cleanup(p); }
-    };
+    /** Identifies a submitted request for cancellation.  0 is never valid. */
+    using RequestHandle = std::uint64_t;
 
-    class Request;
+    using CompletionCallback = std::function<void(const Response &)>;
 
-    /** TransferManager manages all of the running HTTP/HTTPS transfers, making sure
-     * completion notifications get fired, etc - and generally keeping things
-     * running without blocking the thread.  It also keeps SSL session and
-     * cookie data to share between requests.
+    /** Runs HTTP requests on a pool of worker threads and reports each result
+     * on a single dispatch thread.
+     *
+     * A Request is moved into the manager at submit() and is never visible to
+     * the caller again.  Each worker builds its own CURL*, performs it and
+     * destroys it without the handle leaving that stack frame, so no curl
+     * state is shared between threads.
+     *
+     * Completion callbacks are serialised against each other, but not against
+     * the application thread - a callback can run while the application is
+     * calling into the same object.
      */
     class TransferManager {
-      protected:
-        /** Refcounted curl_global_init/curl_global_cleanup.
+      public:
+        /** @param workerCount transfers allowed in flight at once; the rest
+         *      queue.
+         */
+        explicit TransferManager(unsigned workerCount = 2);
+        virtual ~TransferManager();
+
+        TransferManager(const TransferManager &)            = delete;
+        TransferManager &operator=(const TransferManager &) = delete;
+
+        /** Queues req.  cb runs on the dispatch thread once it finishes.
          *
-         * libcurl will initialise itself lazily from curl_easy_init if this is
-         * never called, but that path is explicitly not thread safe, and we
-         * create requests from the poll thread, the session timer threads and
-         * the caller's thread.  Doing it here covers every entry point without
-         * adding an init call to the public API - and doing it from a member
-         * declared first means it runs before curl_multi_init below and is
-         * torn down after both handles are gone.
+         * @return a handle usable with cancel(), or 0 if the manager is
+         *      shutting down and the request was not accepted.
+         */
+        RequestHandle submit(Request req, CompletionCallback cb);
+
+        /** Aborts the request if it is still queued or in flight, and
+         * suppresses its callback.  Safe to call with an unknown or already
+         * completed handle.
+         */
+        void cancel(RequestHandle handle);
+
+        /** Runs req on the calling thread.  Does not use the pool. */
+        Response performSync(const Request &req);
+
+        /** No-op.  Completions are delivered by the dispatch thread; this
+         * exists only for source compatibility with the old pull-based API.
+         */
+        virtual void process();
+
+      protected:
+        struct Job {
+            RequestHandle      handle = 0;
+            Request            request;
+            CompletionCallback callback;
+            CancelFlag         cancel;
+        };
+
+        void workerLoop();
+        void dispatchLoop();
+
+        /** Refcounted curl_global_init/curl_global_cleanup.  Required because
+         * libcurl's lazy init inside curl_easy_init is not thread safe.
+         *
+         * Must stay the first member: it has to run before any worker starts
+         * and tear down after they have all joined.
          */
         class CurlGlobalGuard {
           public:
@@ -81,101 +125,26 @@ namespace afv_native { namespace http {
 
         CurlGlobalGuard mCurlGlobalGuard;
 
-        /** Per-datum locks for the share handle.  libcurl requires these
-         * whenever a share is used from more than one thread, which it is here:
-         * easy handles are created and destroyed on session timer threads while
-         * the poll thread is inside curl_multi_perform.
-         *
-         * Must be declared before the handles below - curl_share_cleanup calls
-         * back into these, and members die in reverse declaration order.
-         */
-        std::array<std::mutex, CURL_LOCK_DATA_LAST> mShareLocks;
+        std::mutex              mMutex;
+        std::condition_variable mWorkCv;
+        std::condition_variable mDoneCv;
+        bool                    mRunning = true;
 
-        std::unique_ptr<CURLM, CurlMultiDeleter>  mCurlMultiHandle;
-        std::unique_ptr<CURLSH, CurlShareDeleter> mCurlShareHandle;
+        RequestHandle   mNextHandle = 1;
+        std::deque<Job> mQueue;
 
-        std::unordered_map<CURL *, Request *> mPendingTransfers;
+        std::deque<std::pair<CompletionCallback, Response>> mCompleted;
 
-        /** Requests cancelled via cancelRequest since the start of the current
-         * dispatch cycle. A request can be reset/destroyed after it was
-         * collected for completion dispatch but before its callback ran; the
-         * dispatch loop checks this set (consumeCancellation) before invoking
-         * a callback. The set is cleared (clearCancellationTombstones) at the
-         * START of each cycle, atomically with collection, so stale tombstones
-         * cannot suppress the completion of a request that was reset and then
-         * resubmitted.
-         */
-        std::unordered_set<Request *> mCancelledDuringDispatch;
+        /** Cancel flags for queued and in-flight jobs, keyed by handle. */
+        std::unordered_map<RequestHandle, CancelFlag> mLive;
 
-        std::recursive_mutex mMutex;
-
-        static void curlShareLock(CURL *handle, curl_lock_data data, curl_lock_access access, void *userptr);
-        static void curlShareUnlock(CURL *handle, curl_lock_data data, void *userptr);
-
-        /** Returns true (and forgets the tombstone) if the request was
-         * cancelled since the start of the current dispatch cycle. */
-        bool consumeCancellation(Request *req);
-
-        /** Drops all cancellation tombstones. Call while holding mMutex at the
-         * start of a dispatch cycle, before collecting completed transfers. */
-        void clearCancellationTombstones();
-
-        /** collectCompletedTransfers reconciles any outstanding completion
-         * notifications from curl, detaches the finished easy handles from the
-         * multi handle, and returns the affected requests with their success
-         * state.  The caller must hold mMutex.  Completion callbacks are NOT
-         * invoked here — the caller must invoke notifyTransferCompleted /
-         * notifyTransferError on the returned requests AFTER releasing mMutex,
-         * as callbacks re-enter client code and may submit or cancel requests.
-         */
-        std::vector<std::pair<Request *, bool>> collectCompletedTransfers();
-
-      public:
-        TransferManager();
-
-        /* no copy constructor - TransferManger must not be copied as it would break the internal states. */
-        TransferManager(const TransferManager &cpysrc) = delete;
-
-        /** Joins a Request to the shared state carried by this TransferManager.
-         *
-         * @param req the Request object to join to the shared state.
-         */
-        [[deprecated("Use the shareState method on Request instead")]] void AddToSession(Request *req) const;
-
-        void registerForAsyncCallback(Request &req);
-        void removeAsyncCallback(Request &req);
-
-        /** Schedules a Request to be processed asynchronously by this
-         * TransferManager.  Once you call this method on a Request object,
-         * you must not invoke it's local doSync() method.
-         *
-         * @param req The Request object to process
-         */
-        [[deprecated("Use the doAsync method on Request instead")]] virtual void HandleRequest(Request *req);
-
-        /** Thread-safe request submission. Acquires the CURLM lock, adds the
-         * handle, registers the callback, and wakes the poll thread. */
-        void submitRequest(Request *req);
-
-        /** Thread-safe request cancellation. Acquires the CURLM lock, removes
-         * the easy handle from the multi handle, and deregisters the callback.
-         * Safe to call from any thread, including while the poll thread is
-         * inside curl_multi_perform / curl_multi_poll. */
-        void cancelRequest(Request *req);
-
-        virtual ~TransferManager();
-
-        /** Process any outstanding events without blocking. */
-        virtual void process();
-
-        /** Return the internal CURLM handle
-         *
-         * @note This is not guaranteed to be available in the future.
-         *
-         * @return the internal CURLM handle
-         */
-        CURLM *getCurlMultiHandle() const;
-        CURLSH *getCurlShareHandle() const;
+        std::vector<std::thread> mWorkers;
+        std::thread              mDispatcher;
     };
-}}     // namespace afv_native::http
+
+    /** Compatibility alias for the old type name.  There is no polling. */
+    using PollingTransferManager = TransferManager;
+
+}} // namespace afv_native::http
+
 #endif // AFV_NATIVE_TRANSFERMANAGER_H

@@ -1,8 +1,8 @@
-/* http/RESTRequest.h
+/* http/Response.h
  *
  * This file is part of AFV-Native.
  *
- * Copyright (c) 2019 Christopher Collins
+ * Copyright (c) 2015,2019-2020 Christopher Collins
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,25 +31,44 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AFV_NATIVE_RESTREQUEST_H
-#define AFV_NATIVE_RESTREQUEST_H
+#ifndef AFV_NATIVE_HTTP_RESPONSE_H
+#define AFV_NATIVE_HTTP_RESPONSE_H
 
-#include "afv-native/http/Request.h"
 #include <nlohmann/json.hpp>
+#include <string>
 
 namespace afv_native { namespace http {
-    class RESTRequest: public virtual Request {
-      public:
-        RESTRequest(std::string path, Method method, const nlohmann::json &request);
-        /* no copy constructor - RESTRequest must not be copied as it would break the internal states. */
-        RESTRequest(const RESTRequest &cpysrc) = delete;
 
-      protected:
-        bool setupHandle() override;
+    /** The outcome of one HTTP request.  Owns everything it reports, so it is
+     * safe to hand to a callback on another thread.
+     */
+    struct Response {
+        /** The transfer completed.  Says nothing about the status code - a 500
+         * that arrived intact is ok == true.
+         */
+        bool ok = false;
 
-      public:
-        nlohmann::json getResponse() const;
+        long        statusCode = 0;
+        std::string contentType;
+        std::string body;
+
+        /** Transport-level error text.  Empty when ok is true. */
+        std::string error;
+
+        /** The request was aborted before it finished. */
+        bool cancelled = false;
+
+        /** Returns null for an empty body and a discarded value for one that
+         * does not parse.
+         */
+        nlohmann::json json() const {
+            if (body.empty()) {
+                return nlohmann::json();
+            }
+            return nlohmann::json::parse(body, nullptr, false);
+        }
     };
+
 }} // namespace afv_native::http
 
-#endif // AFV_NATIVE_RESTREQUEST_H
+#endif // AFV_NATIVE_HTTP_RESPONSE_H

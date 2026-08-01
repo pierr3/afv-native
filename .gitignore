@@ -12,4 +12,6 @@ test/
 afv-native-testclient/
 afv_native.h
 atcClientWrapper_edit.h
-.idea
+.ideabuild-test/
+build-tsan/
+build-*/

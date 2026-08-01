@@ -36,7 +36,7 @@
 #include "afv-native/afv/dto/AuthRequest.h"
 #include "afv-native/afv/dto/PostCallsignResponse.h"
 #include "afv-native/afv/params.h"
-#include "afv-native/http/RESTRequest.h"
+#include <cassert>
 #include <functional>
 #include <jwt/jwt.hpp>
 #include <memory>
@@ -48,27 +48,23 @@ using namespace ::afv_native;
 using json = nlohmann::json;
 
 APISession::APISession(http::TransferManager &tm, std::string baseUrl, std::string clientName):
-    StateCallback(), AliasUpdateCallback(), mTransferManager(tm), mBaseURL(std::move(baseUrl)), mUsername(), mPassword(), mClientName(std::move(clientName)), mBearerToken(), mAuthenticationRequest(mBaseURL + "/api/v1/auth", http::Method::POST, json()), mRefreshTokenTimer(std::bind(&APISession::Connect, this)), mLastError(APISessionError::NoError), mStationAliasRequest(mBaseURL + "/api/v1/stations/aliased", http::Method::GET, nullptr), mState(APISessionState::Disconnected), mStationTransceiversRequest(mBaseURL, http::Method::GET, nullptr), StationTransceiversUpdateCallback(), StationVccsCallback(), StationSearchCallback(), mGetStationRequest(mBaseURL, http::Method::GET, nullptr), mVccsRequest(mBaseURL, http::Method::GET, nullptr) {
-    // Tighter than the default: the token refresh is scheduled 60s before the
-    // live token expires, so this request has to fail well inside that window
-    // for the error to be reportable while the session is still usable.
-    mAuthenticationRequest.setTimeouts(5, 15);
+    StateCallback(), AliasUpdateCallback(), mTransferManager(tm), mBaseURL(std::move(baseUrl)), mUsername(), mPassword(), mClientName(std::move(clientName)), mBearerToken(), mRefreshTokenTimer(std::bind(&APISession::Connect, this)), mLastError(APISessionError::NoError), mState(APISessionState::Disconnected), StationTransceiversUpdateCallback(), StationVccsCallback(), StationSearchCallback() {
 }
 
 void APISession::Connect() {
     dto::AuthRequest ar(mUsername, mPassword, mClientName);
 
     /* start the authentication request */
-    mAuthenticationRequest.reset();
-    mAuthenticationRequest.setUrl(mBaseURL + "/api/v1/auth");
-    mAuthenticationRequest.setRequestBody(ar);
-    mAuthenticationRequest.setCompletionCallback([this](http::Request *req, bool success) {
-        auto restreq = dynamic_cast<http::RESTRequest *>(req);
-        assert(restreq != nullptr); // shouldn't be possible
-        this->_authenticationCallback(restreq, success);
+    http::Request req(mBaseURL + "/api/v1/auth", http::Method::POST);
+    req.setBody(json(ar));
+    // Tighter than the default: the refresh runs 60s before the live token
+    // expires, so this has to fail inside that window to be reportable.
+    req.setTimeouts(5, 15);
+
+    mTransferManager.submit(std::move(req), [this](const http::Response &resp) {
+        this->_authenticationCallback(resp);
     });
-    mAuthenticationRequest.shareState(mTransferManager);
-    mAuthenticationRequest.doAsync(mTransferManager);
+
     /* update our internal state */
     switch (mState) {
         case APISessionState::Disconnected:
@@ -85,7 +81,6 @@ void APISession::Connect() {
 void afv::APISession::Disconnect() {
     mRefreshTokenTimer.disable();
     mBearerToken = "";
-    mAuthenticationRequest.reset();
     setState(APISessionState::Disconnected);
 }
 
@@ -101,9 +96,9 @@ void APISession::setPassword(const std::string &password) {
     mPassword = password;
 }
 
-void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
-    if (success && req->getStatusCode() == 200) {
-        mBearerToken = req->getResponseBody();
+void APISession::_authenticationCallback(const http::Response &resp) {
+    if (resp.ok && resp.statusCode == 200) {
+        mBearerToken = resp.body;
         if (mBearerToken.empty()) {
             LOG("APISession", "No Token Received");
             mBearerToken = "";
@@ -151,13 +146,12 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
         // This is a failure during auth, which is grounds to handle it as
         // if it were an immediate disconnect.
         mBearerToken = "";
-        if (!success) {
-            LOG("APISession", "curl internal error during login: %s",
-                req->getCurlError().c_str());
+        if (!resp.ok) {
+            LOG("APISession", "http error during login: %s", resp.error.c_str());
             raiseError(APISessionError::ConnectionError);
         } else {
-            LOG("APISession", "got error from API server: Response Code %d", req->getStatusCode());
-            switch (req->getStatusCode()) {
+            LOG("APISession", "got error from API server: Response Code %ld", resp.statusCode);
+            switch (resp.statusCode) {
                 case 400:
                     raiseError(APISessionError::BadRequestOrClientIncompatible);
                     break;
@@ -174,8 +168,6 @@ void APISession::_authenticationCallback(http::RESTRequest *req, bool success) {
         }
         setState(APISessionState::Disconnected);
     }
-    // cleanup and remove
-    mAuthenticationRequest.reset();
 }
 
 void APISession::setAuthenticationFor(http::Request &r) {
@@ -221,38 +213,26 @@ void APISession::getStation(std::string stdName) {
         return;
     }
 
-    /* start the authentication request */
-    mGetStationRequest.reset();
-    mGetStationRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stdName);
-    setAuthenticationFor(mGetStationRequest);
-    mGetStationRequest.setCompletionCallback([this, stdName](http::Request *req, bool success) {
-        auto restreq = dynamic_cast<http::RESTRequest *>(req);
-        assert(restreq != nullptr); // shouldn't be possible
-        this->_getStationCallback(restreq, success, stdName);
+    http::Request req(mBaseURL + "/api/v1/stations/byName/" + stdName, http::Method::GET);
+    setAuthenticationFor(req);
+    mTransferManager.submit(std::move(req), [this, stdName](const http::Response &resp) {
+        this->_getStationCallback(resp, stdName);
     });
-    mGetStationRequest.shareState(mTransferManager);
-    mGetStationRequest.doAsync(mTransferManager);
 }
 
 void APISession::updateStationAliases() {
-    /* start the authentication request */
-    mStationAliasRequest.reset();
-    mStationAliasRequest.setUrl(mBaseURL + "/api/v1/stations/aliased");
-    setAuthenticationFor(mStationAliasRequest);
-    mStationAliasRequest.setCompletionCallback([this](http::Request *req, bool success) {
-        auto restreq = dynamic_cast<http::RESTRequest *>(req);
-        assert(restreq != nullptr); // shouldn't be possible
-        this->_stationsCallback(restreq, success);
+    http::Request req(mBaseURL + "/api/v1/stations/aliased", http::Method::GET);
+    setAuthenticationFor(req);
+    mTransferManager.submit(std::move(req), [this](const http::Response &resp) {
+        this->_stationsCallback(resp);
     });
-    mStationAliasRequest.shareState(mTransferManager);
-    mStationAliasRequest.doAsync(mTransferManager);
 }
 
-void APISession::_getStationCallback(http::RESTRequest *req, bool success, std::string stationName) {
+void APISession::_getStationCallback(const http::Response &resp, std::string stationName) {
     std::pair<std::string, dto::Station> ret;
 
-    if (success && req->getStatusCode() == 200) {
-        auto jsReturn = req->getResponse();
+    if (resp.ok && resp.statusCode == 200) {
+        auto jsReturn = resp.json();
 
         bool                                 found = false;
 
@@ -274,23 +254,22 @@ void APISession::_getStationCallback(http::RESTRequest *req, bool success, std::
 
         StationSearchCallback.invokeAll(found, ret);
     } else {
-        if (!success) {
-            LOG("APISession", "curl internal error during get station retrieval: %s",
-                req->getCurlError().c_str());
+        if (!resp.ok) {
+            LOG("APISession", "http error during get station retrieval: %s", resp.error.c_str());
         } else {
             // We log the error but also return that we did not find the station if 404
-            if (req->getStatusCode() == 404) {
+            if (resp.statusCode == 404) {
                 ret = {stationName, dto::Station()};
                 StationSearchCallback.invokeAll(false, ret);
             }
-            LOG("APISession", "got error from API server get station: Response Code %d", req->getStatusCode());
+            LOG("APISession", "got error from API server get station: Response Code %ld", resp.statusCode);
         }
     }
 }
 
-void APISession::_stationsCallback(http::RESTRequest *req, bool success) {
-    if (success && req->getStatusCode() == 200) {
-        auto jsReturn = req->getResponse();
+void APISession::_stationsCallback(const http::Response &resp) {
+    if (resp.ok && resp.statusCode == 200) {
+        auto jsReturn = resp.json();
 
         if (!jsReturn.is_array()) {
             LOG("APISession", "station data returned wasn't an array.  Ignoring.");
@@ -309,16 +288,13 @@ void APISession::_stationsCallback(http::RESTRequest *req, bool success) {
             AliasUpdateCallback.invokeAll();
         }
     } else {
-        if (!success) {
-            LOG("APISession", "curl internal error during alias retrieval: %s",
-                req->getCurlError().c_str());
+        if (!resp.ok) {
+            LOG("APISession", "http error during alias retrieval: %s", resp.error.c_str());
             // raiseError(APISessionError::ConnectionError);
         } else {
-            LOG("APISession", "got error from API server getting aliases: Response Code %d", req->getStatusCode());
+            LOG("APISession", "got error from API server getting aliases: Response Code %ld", resp.statusCode);
         }
     }
-    // cleanup and remove
-    mStationAliasRequest.reset();
 }
 
 std::vector<dto::Station> APISession::getStationAliases() const {
@@ -330,17 +306,12 @@ void APISession::requestStationTransceivers(std::string stdName) {
         return;
     }
 
-    /* start the authentication request */
-    mStationTransceiversRequest.reset();
-    mStationTransceiversRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stdName + "/transceivers/allDistinctObeyExclusions");
-    setAuthenticationFor(mStationTransceiversRequest);
-    mStationTransceiversRequest.setCompletionCallback([this, stdName](http::Request *req, bool success) {
-        auto restreq = dynamic_cast<http::RESTRequest *>(req);
-        assert(restreq != nullptr); // shouldn't be possible
-        this->_stationTransceiversCallback(restreq, success, stdName);
+    http::Request req(mBaseURL + "/api/v1/stations/byName/" + stdName + "/transceivers/allDistinctObeyExclusions",
+                      http::Method::GET);
+    setAuthenticationFor(req);
+    mTransferManager.submit(std::move(req), [this, stdName](const http::Response &resp) {
+        this->_stationTransceiversCallback(resp, stdName);
     });
-    mStationTransceiversRequest.shareState(mTransferManager);
-    mStationTransceiversRequest.doAsync(mTransferManager);
 }
 
 void APISession::requestStationVccs(std::string stdName) {
@@ -348,22 +319,16 @@ void APISession::requestStationVccs(std::string stdName) {
         return;
     }
 
-    /* start the authentication request */
-    mVccsRequest.reset();
-    mVccsRequest.setUrl(mBaseURL + "/api/v1/stations/byName/" + stdName + "/vccsStations");
-    setAuthenticationFor(mVccsRequest);
-    mVccsRequest.setCompletionCallback([this, stdName](http::Request *req, bool success) {
-        auto restreq = dynamic_cast<http::RESTRequest *>(req);
-        assert(restreq != nullptr); // shouldn't be possible
-        this->_stationVccsCallback(restreq, success, stdName);
+    http::Request req(mBaseURL + "/api/v1/stations/byName/" + stdName + "/vccsStations", http::Method::GET);
+    setAuthenticationFor(req);
+    mTransferManager.submit(std::move(req), [this, stdName](const http::Response &resp) {
+        this->_stationVccsCallback(resp, stdName);
     });
-    mVccsRequest.shareState(mTransferManager);
-    mVccsRequest.doAsync(mTransferManager);
 }
 
-void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std::string stdName) {
-    if (success && req->getStatusCode() == 200) {
-        auto jsReturn = req->getResponse();
+void APISession::_stationVccsCallback(const http::Response &resp, std::string stdName) {
+    if (resp.ok && resp.statusCode == 200) {
+        auto jsReturn = resp.json();
 
         std::map<std::string, dto::Station> ret;
 
@@ -383,19 +348,17 @@ void APISession::_stationVccsCallback(http::RESTRequest *req, bool success, std:
 
         StationVccsCallback.invokeAll(stdName, ret);
     } else {
-        if (!success) {
-            LOG("APISession", "curl internal error during station vccs retrieval: %s",
-                req->getCurlError().c_str());
+        if (!resp.ok) {
+            LOG("APISession", "http error during station vccs retrieval: %s", resp.error.c_str());
         } else {
-            LOG("APISession", "got error from API server getting vccs: Response Code %d", req->getStatusCode());
+            LOG("APISession", "got error from API server getting vccs: Response Code %ld", resp.statusCode);
         }
     }
-    mVccsRequest.reset();
 }
 
-void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool success, std::string stdName) {
-    if (success && req->getStatusCode() == 200) {
-        auto jsReturn = req->getResponse();
+void APISession::_stationTransceiversCallback(const http::Response &resp, std::string stdName) {
+    if (resp.ok && resp.statusCode == 200) {
+        auto jsReturn = resp.json();
 
         if (!jsReturn.is_array()) {
             LOG("APISession", "station transceivers data returned wasn't an array.  Ignoring.");
@@ -421,16 +384,13 @@ void APISession::_stationTransceiversCallback(http::RESTRequest *req, bool succe
             StationTransceiversUpdateCallback.invokeAll(stdName);
         }
     } else {
-        if (!success) {
-            LOG("APISession", "curl internal error during station receivers retrieval: %s",
-                req->getCurlError().c_str());
+        if (!resp.ok) {
+            LOG("APISession", "http error during station receivers retrieval: %s", resp.error.c_str());
             // raiseError(APISessionError::ConnectionError);
         } else {
-            LOG("APISession", "got error from API server getting station transceivers: Response Code %d", req->getStatusCode());
+            LOG("APISession", "got error from API server getting station transceivers: Response Code %ld", resp.statusCode);
         }
     }
-    // cleanup and remove
-    mStationTransceiversRequest.reset();
 }
 
 std::map<std::string, std::vector<dto::StationTransceiver>> APISession::getStationTransceivers() const {

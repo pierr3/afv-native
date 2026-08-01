@@ -41,7 +41,7 @@
 #include "afv-native/afv/dto/VoiceServerConnectionData.h"
 #include "afv-native/cryptodto/UDPChannel.h"
 #include "afv-native/event/CallbackTimer.h"
-#include "afv-native/http/RESTRequest.h"
+#include "afv-native/http/Response.h"
 #include "afv-native/http/Request.h"
 #include "afv-native/util/ChainedCallback.h"
 #include "afv-native/util/monotime.h"
@@ -83,8 +83,10 @@ namespace afv_native { namespace afv {
 
         bool Connect();
         void Disconnect(bool do_close = true, bool reconnect = false);
-        void postTransceiverUpdate(const std::vector<dto::Transceiver> &txDto, std::function<void(http::Request *, bool)> callback);
-        void postCrossCoupleGroupUpdate(const std::vector<dto::CrossCoupleGroup> &ccDto, std::function<void(http::Request *, bool)> callback);
+        void postTransceiverUpdate(const std::vector<dto::Transceiver> &txDto,
+                                   std::function<void(const http::Response &)> callback);
+        void postCrossCoupleGroupUpdate(const std::vector<dto::CrossCoupleGroup> &ccDto,
+                                        std::function<void(const http::Response &)> callback);
         cryptodto::UDPChannel &getUDPChannel();
 
         VoiceSessionError getLastError() const;
@@ -134,12 +136,7 @@ namespace afv_native { namespace afv {
         void udpErrorCallback(bool fatal, int err, std::string message);
 
         void sessionStateCallback(APISessionState state);
-        void voiceSessionSetupRequestCallback(http::Request *req, bool success);
-
-        http::RESTRequest mVoiceSessionSetupRequest;
-        http::RESTRequest mVoiceSessionTeardownRequest;
-        http::RESTRequest mTransceiverUpdateRequest;
-        http::RESTRequest mCrossCoupleGroupUpdateRequest;
+        void voiceSessionSetupRequestCallback(const http::Response &resp);
     };
 }} // namespace afv_native::afv
 

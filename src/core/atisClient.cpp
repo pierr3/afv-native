@@ -213,8 +213,8 @@ void ATISClient::sendTransceiverUpdate() {
      * when the callback fires, we copy capture the update message itself (which
      * is all value copies) and use that to do the internal state update.
      */
-    mVoiceSession.postTransceiverUpdate(transceiverDto, [this, transceiverDto](http::Request *r, bool success) {
-        if (success && r->getStatusCode() == 200) {
+    mVoiceSession.postTransceiverUpdate(transceiverDto, [](const http::Response &resp) {
+        if (resp.ok && resp.statusCode == 200) {
         }
     });
     mTransceiverUpdateTimer.enable(afv::afvATCTransceiverUpdateIntervalMs);

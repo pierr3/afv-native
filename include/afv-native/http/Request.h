@@ -1,8 +1,8 @@
-/* Request.h
+/* http/Request.h
  *
  * This file is part of AFV-Native.
  *
- * Copyright (c) 2015,2019 Christopher Collins
+ * Copyright (c) 2015,2019-2020 Christopher Collins
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,205 +31,77 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AFV_NATIVE_REQUEST_H
-#define AFV_NATIVE_REQUEST_H
+#ifndef AFV_NATIVE_HTTP_REQUEST_H
+#define AFV_NATIVE_HTTP_REQUEST_H
 
 #include "afv-native/http/http.h"
-#include <array>
-#include <curl/curl.h>
-#include <functional>
-#include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace afv_native { namespace http {
-    class TransferManager;
 
-    struct CurlEasyDeleter {
-        void operator()(CURL *p) const { curl_easy_cleanup(p); }
-    };
-    struct CurlSlistDeleter {
-        void operator()(curl_slist *p) const { curl_slist_free_all(p); }
-    };
-
+    /** A request description.  Copyable, movable, owns nothing external.
+     *
+     * Holds no curl handle and no completion callback - it is data passed to
+     * TransferManager::submit(), which moves it into a worker.  A request in
+     * flight is not reachable from the caller.
+     */
     class Request {
-      private:
-        static size_t curlWriteCallback(char *buffer, size_t size, size_t nitems, void *userdata);
-        static size_t curlReadCallback(char *buffer, size_t size, size_t nitems, void *userdata);
-        static int curlTransferInfoCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
-
-        void transferInfoCallback(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
-        size_t writeCallback(char *buffer, size_t size, size_t nitems);
-        size_t readCallback(char *buffer, size_t size, size_t nitems);
-
-      protected:
-        Method      mMethod;
-        std::string mURL;
-        bool        mFollowRedirect;
-
-        Progress mProgress;
-
-        std::unique_ptr<CURL, CurlEasyDeleter>      mCurlHandle;
-        std::unique_ptr<curl_slist, CurlSlistDeleter> mHeaders;
-        TransferManager   *mTM;
-
-        std::vector<unsigned char> mReq;
-        size_t                     mReqBufOffset;
-
-        int         mRespStatusCode;
-        std::string mRespContentType;
-
-        std::vector<unsigned char> mResp;
-
-        std::array<char, CURL_ERROR_SIZE> mCurlErrorBuffer;
-
-        int mDownloadTotal;
-        int mDownloadProgress;
-
-        int mUploadTotal;
-        int mUploadProgress;
-
-        std::function<void(Request *, bool)> mCompletionCallback;
-
-        bool mResponseInfoCaptured;
-
-        long mConnectTimeoutSeconds;
-        long mTransferTimeoutSeconds;
-
-        virtual bool setupHandle();
-
       public:
-        // Every request here is a small REST call, so a transfer still running
-        // after this long is wedged rather than slow.
+        /** Sized for small REST calls: a transfer still running after this
+         * long is wedged rather than slow.
+         */
         static constexpr long kDefaultConnectTimeoutSeconds  = 10;
         static constexpr long kDefaultTransferTimeoutSeconds = 30;
 
-        Request(const std::string &url, Method method);
-        /* no copy constructor - Request must not be copied as it would break the internal states. */
-        Request(const Request &cpysrc) = delete;
+        Request() = default;
+        Request(std::string url, Method method);
 
-        virtual ~Request();
+        Request &setUrl(std::string url);
 
-        /** resets the Request state back to that
-         * before a request has been performed.
+        /** Sets or replaces a header.  An empty value sends the header with no
+         * value, matching curl's "Header;" form.
          */
-        virtual void reset();
+        Request &setHeader(std::string name, std::string value);
 
-        void setHeader(const std::string &header, const std::string &value);
+        Request &setBody(std::string body);
 
-        /** sets the Request Body to the data provided at buf of size len.
+        /** Serialises j and sets Content-Type: application/json.
          *
-         * @param buf pointer to the data
-         * @param len length of the data in octets.
+         * @throws nlohmann::json::exception if j cannot be serialised.
          */
-        void setRequestBody(const unsigned char *buf, size_t len);
+        Request &setBody(const nlohmann::json &j);
 
-        /** sets the Request body to the provided string
-         *
-         * @param body string containing the body to send.
+        Request &setFollowRedirect(bool follow);
+
+        /** Overrides the default timeouts.  A value of 0 disables that
+         * timeout.
          */
-        void setRequestBody(const std::string &body);
+        Request &setTimeouts(long connectSeconds, long transferSeconds);
 
-        /** sets the Request body to the provided serialised json value
-         *
-         * @param j the json value to send
-         * @throws nlohmann::json_exception if a casting/typing error occured whilst
-         *  serialising the json object.
-         */
-        void setRequestBody(const nlohmann::json &j);
+        Method             method() const { return mMethod; }
+        const std::string &url() const { return mUrl; }
+        const std::string &body() const { return mBody; }
+        bool               followRedirect() const { return mFollowRedirect; }
+        long               connectTimeoutSeconds() const { return mConnectTimeoutSeconds; }
+        long               transferTimeoutSeconds() const { return mTransferTimeoutSeconds; }
 
-        void setCompletionCallback(std::function<void(Request *, bool)> cb);
+        const std::vector<std::pair<std::string, std::string>> &headers() const { return mHeaders; }
 
-        void setFollowRedirect(bool follow);
+      private:
+        Method      mMethod = Method::GET;
+        std::string mUrl;
+        std::string mBody;
 
-        /** Overrides the default timeouts.  Applied on the next doSync/doAsync.
-         * A value of 0 disables that timeout.
-         */
-        void setTimeouts(long connectTimeoutSeconds, long transferTimeoutSeconds);
+        std::vector<std::pair<std::string, std::string>> mHeaders;
 
-        void shareState(TransferManager &transferManager);
-
-        /** doSync() performs the request synchronously.
-         *
-         * @return true if the request completed successfully, false otherwise.
-         *
-         * @note if an error occured (false return), you can check the error
-         *      reported via getError()
-         */
-        virtual bool doSync();
-
-        /** doAsync() schedules the request to be performed asynchronously.
-         *
-         * @param transferManager the TransferManager instance to use to
-         *      execute the request.
-         * @return true if the request was successfully scheduled for execution.
-         *    false if a configuration or other issue prevented it from being
-         *    scheduled.
-         */
-        virtual bool doAsync(TransferManager &transferManager);
-
-        /** returns the last CURL error reported.
-         */
-        std::string getCurlError() const;
-
-        Progress getProgress() const;
-
-        /** returns the HTTP status code received
-         *
-         * @return the HTTP status code.
-         */
-        int getStatusCode() const;
-
-        /** returns the Content-Type for the response received
-         *
-         * @return the Content Type header value.
-         */
-        std::string getContentType() const;
-
-        std::string getResponseBody() const;
-
-        void clearRequestBody();
-
-        int getDownloadTotal() const;
-
-        int getDownloadProgress() const;
-
-        int getUploadTotal() const;
-
-        int getUploadProgress() const;
-
-        CURL *getCurlHandle() const;
-
-        /** captureResponseInfo reads the response status code and content type
-         * from the CURL easy handle into this Request.  It must be called while
-         * access to the handle is serialized with the transfer thread (i.e.
-         * under the TransferManager's lock).  Subsequent calls are no-ops until
-         * the request is reset or reused, so the completion callback can safely
-         * run after the lock has been released.
-         */
-        void captureResponseInfo();
-
-        /** notifyTransferCompleted is invoked either by the synchronous method
-         * or by the asynchronous scheduler to indicate that the transfer for this
-         * request completed.
-         *
-         * Subclasses can extend this to generate notifications or to drive
-         * state machines as necessary.
-         */
-        virtual void notifyTransferCompleted();
-
-        /** notifyTransferError is invoked either by the synchronous method
-         * or by the asynchronous scheduler to indicate that the transfer for this
-         * request failed.
-         *
-         * Subclasses can extend this to generate notifications or to drive
-         * state machines as necessary.
-         */
-        virtual void notifyTransferError();
-
-        const std::string &getUrl() const;
-        void setUrl(const std::string &mUrl);
+        bool mFollowRedirect         = true;
+        long mConnectTimeoutSeconds  = kDefaultConnectTimeoutSeconds;
+        long mTransferTimeoutSeconds = kDefaultTransferTimeoutSeconds;
     };
+
 }} // namespace afv_native::http
 
-#endif // AFV_NATIVE_REQUEST_H
+#endif // AFV_NATIVE_HTTP_REQUEST_H
