@@ -70,7 +70,15 @@ namespace afv_native { namespace http {
      */
     class TransferManager {
       public:
-        explicit TransferManager(unsigned workerCount = 4);
+        /** @param workerCount how many transfers may be in flight at once.
+         *      Anything beyond that queues.  Two is sized for this library's
+         *      actual load - nine low-frequency REST endpoints - and keeps the
+         *      thread count down, which matters because we get loaded into a
+         *      flight simulator's process.  Idle workers park on a condition
+         *      variable and cost no CPU, so raising it is cheap if a consumer
+         *      ever needs more concurrency.
+         */
+        explicit TransferManager(unsigned workerCount = 2);
         virtual ~TransferManager();
 
         TransferManager(const TransferManager &)            = delete;
