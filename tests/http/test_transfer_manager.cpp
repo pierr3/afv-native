@@ -158,6 +158,51 @@ TEST_CASE("destroying the manager with requests in flight is clean", "[tm]") {
     SUCCEED("manager destroyed without hanging");
 }
 
+TEST_CASE("back-to-back requests to the same endpoint both complete", "[tm]") {
+    // The old design gave each call site one reusable Request member, so a
+    // second call reset() the first out from under itself and that callback
+    // never fired.  Submitting is now independent per request.
+    auto            server = makeEchoServer();
+    TransferManager tm(4);
+
+    Latch                 latch;
+    std::mutex            mutex;
+    std::set<std::string> bodies;
+
+    for (const auto *station: {"/EGLL", "/EGKK", "/EGSS"}) {
+        tm.submit(Request(server->url(station), Method::GET), [&](const Response &r) {
+            {
+                std::lock_guard<std::mutex> lock(mutex);
+                bodies.insert(r.body);
+            }
+            latch.signal();
+        });
+    }
+
+    REQUIRE(latch.wait(3, std::chrono::seconds(30)));
+    REQUIRE(bodies == std::set<std::string> {"/EGLL", "/EGKK", "/EGSS"});
+}
+
+TEST_CASE("more requests than workers all complete", "[tm]") {
+    // Excess submissions queue rather than being dropped or overriding.
+    auto            server = makeEchoServer();
+    TransferManager tm(2);
+
+    constexpr int kCount = 12;
+    Latch         latch;
+
+    for (int i = 0; i < kCount; ++i) {
+        tm.submit(Request(server->url("/q" + std::to_string(i)), Method::GET),
+                  [&](const Response &r) {
+                      REQUIRE(r.ok);
+                      latch.signal();
+                  });
+    }
+
+    REQUIRE(latch.wait(kCount, std::chrono::seconds(60)));
+    REQUIRE(latch.count() == kCount);
+}
+
 TEST_CASE("performSync returns inline without touching the pool", "[tm]") {
     auto            server = makeEchoServer();
     TransferManager tm(1);
