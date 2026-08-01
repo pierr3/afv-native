@@ -44,7 +44,7 @@ using namespace std;
 using json = nlohmann::json;
 
 Request::Request(const string &url, Method method):
-    mMethod(method), mURL(url), mFollowRedirect(method == Method::GET), mProgress(Progress::New), mCurlHandle(), mHeaders(), mTM(nullptr), mReq(), mReqBufOffset(0), mRespStatusCode(0), mRespContentType(), mResp(), mCurlErrorBuffer(), mCompletionCallback(), mResponseInfoCaptured(false), mDownloadTotal(0), mDownloadProgress(0), mUploadTotal(0), mUploadProgress(0) {
+    mMethod(method), mURL(url), mFollowRedirect(method == Method::GET), mProgress(Progress::New), mCurlHandle(), mHeaders(), mTM(nullptr), mReq(), mReqBufOffset(0), mRespStatusCode(0), mRespContentType(), mResp(), mCurlErrorBuffer(), mCompletionCallback(), mResponseInfoCaptured(false), mConnectTimeoutSeconds(kDefaultConnectTimeoutSeconds), mTransferTimeoutSeconds(kDefaultTransferTimeoutSeconds), mDownloadTotal(0), mDownloadProgress(0), mUploadTotal(0), mUploadProgress(0) {
     mCurlErrorBuffer.fill(0);
 }
 
@@ -87,6 +87,11 @@ bool Request::setupHandle() {
         curl_easy_setopt(mCurlHandle.get(), CURLOPT_HTTPHEADER, mHeaders.get());
     }
 
+    /* Without these a stalled transfer never completes, so curl never queues a
+     * CURLMSG_DONE and the completion callback never runs. */
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_CONNECTTIMEOUT, mConnectTimeoutSeconds);
+    curl_easy_setopt(mCurlHandle.get(), CURLOPT_TIMEOUT, mTransferTimeoutSeconds);
+
     /* Disable Nagle because Mac says so.... */
     curl_easy_setopt(mCurlHandle.get(), CURLOPT_TCP_NODELAY, 1);
 
@@ -119,6 +124,11 @@ bool Request::setupHandle() {
 
 void Request::setFollowRedirect(bool follow) {
     mFollowRedirect = follow;
+}
+
+void Request::setTimeouts(long connectTimeoutSeconds, long transferTimeoutSeconds) {
+    mConnectTimeoutSeconds  = connectTimeoutSeconds;
+    mTransferTimeoutSeconds = transferTimeoutSeconds;
 }
 
 void Request::setHeader(const std::string &header, const std::string &value) {

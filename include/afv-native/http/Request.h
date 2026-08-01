@@ -93,9 +93,17 @@ namespace afv_native { namespace http {
 
         bool mResponseInfoCaptured;
 
+        long mConnectTimeoutSeconds;
+        long mTransferTimeoutSeconds;
+
         virtual bool setupHandle();
 
       public:
+        // Every request here is a small REST call, so a transfer still running
+        // after this long is wedged rather than slow.
+        static constexpr long kDefaultConnectTimeoutSeconds  = 10;
+        static constexpr long kDefaultTransferTimeoutSeconds = 30;
+
         Request(const std::string &url, Method method);
         /* no copy constructor - Request must not be copied as it would break the internal states. */
         Request(const Request &cpysrc) = delete;
@@ -133,6 +141,11 @@ namespace afv_native { namespace http {
         void setCompletionCallback(std::function<void(Request *, bool)> cb);
 
         void setFollowRedirect(bool follow);
+
+        /** Overrides the default timeouts.  Applied on the next doSync/doAsync.
+         * A value of 0 disables that timeout.
+         */
+        void setTimeouts(long connectTimeoutSeconds, long transferTimeoutSeconds);
 
         void shareState(TransferManager &transferManager);
 

@@ -49,6 +49,10 @@ using json = nlohmann::json;
 
 APISession::APISession(http::TransferManager &tm, std::string baseUrl, std::string clientName):
     StateCallback(), AliasUpdateCallback(), mTransferManager(tm), mBaseURL(std::move(baseUrl)), mUsername(), mPassword(), mClientName(std::move(clientName)), mBearerToken(), mAuthenticationRequest(mBaseURL + "/api/v1/auth", http::Method::POST, json()), mRefreshTokenTimer(std::bind(&APISession::Connect, this)), mLastError(APISessionError::NoError), mStationAliasRequest(mBaseURL + "/api/v1/stations/aliased", http::Method::GET, nullptr), mState(APISessionState::Disconnected), mStationTransceiversRequest(mBaseURL, http::Method::GET, nullptr), StationTransceiversUpdateCallback(), StationVccsCallback(), StationSearchCallback(), mGetStationRequest(mBaseURL, http::Method::GET, nullptr), mVccsRequest(mBaseURL, http::Method::GET, nullptr) {
+    // Tighter than the default: the token refresh is scheduled 60s before the
+    // live token expires, so this request has to fail well inside that window
+    // for the error to be reportable while the session is still usable.
+    mAuthenticationRequest.setTimeouts(5, 15);
 }
 
 void APISession::Connect() {
