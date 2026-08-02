@@ -66,7 +66,7 @@ void APISession::Connect() {
     });
 
     /* update our internal state */
-    switch (mState) {
+    switch (mState.load()) {
         case APISessionState::Disconnected:
             setState(APISessionState::Connecting);
             break;
@@ -180,7 +180,7 @@ http::TransferManager &APISession::getTransferManager() const {
 }
 
 APISessionState APISession::getState() const {
-    return mState;
+    return mState.load();
 }
 
 const std::string &APISession::getBaseUrl() const {
@@ -192,24 +192,24 @@ void APISession::setBaseUrl(std::string newUrl) {
 }
 
 void APISession::setState(APISessionState newState) {
-    if (newState != mState) {
-        mState = newState;
-        StateCallback.invokeAll(mState);
+    if (newState != mState.load()) {
+        mState.store(newState);
+        StateCallback.invokeAll(newState);
     }
 }
 
 void APISession::raiseError(APISessionError error) {
-    mState     = APISessionState::Disconnected;
-    mLastError = error;
+    mState.store(APISessionState::Disconnected);
+    mLastError.store(error);
     StateCallback.invokeAll(APISessionState::Error);
 }
 
 APISessionError APISession::getLastError() const {
-    return mLastError;
+    return mLastError.load();
 }
 
 void APISession::getStation(std::string stdName) {
-    if (mState != APISessionState::Running) {
+    if (mState.load() != APISessionState::Running) {
         return;
     }
 
@@ -302,7 +302,7 @@ std::vector<dto::Station> APISession::getStationAliases() const {
 }
 
 void APISession::requestStationTransceivers(std::string stdName) {
-    if (mState != APISessionState::Running) {
+    if (mState.load() != APISessionState::Running) {
         return;
     }
 
@@ -315,7 +315,7 @@ void APISession::requestStationTransceivers(std::string stdName) {
 }
 
 void APISession::requestStationVccs(std::string stdName) {
-    if (mState != APISessionState::Running) {
+    if (mState.load() != APISessionState::Running) {
         return;
     }
 

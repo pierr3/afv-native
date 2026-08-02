@@ -1,23 +1,23 @@
 find_package(Catch2 3 CONFIG REQUIRED)
 
-# The http sources are compiled in directly rather than linked from
-# afv_native: these types carry no AFV_NATIVE_API, so linking the shared object
-# would fail under MSVC's dllexport rules.
+# Links afv_native rather than compiling its sources in, because the APISession
+# test needs the afv layer and its dto/event dependencies.  These types carry
+# no AFV_NATIVE_API, so this will not link under MSVC's dllexport rules - the
+# test target is Unix-only until they are exported.
 add_executable(afv_native_tests
 	http/test_smoke.cpp
 	http/test_curl_perform.cpp
 	http/test_transfer_manager.cpp
-
-	${CMAKE_SOURCE_DIR}/src/http/Request.cpp
-	${CMAKE_SOURCE_DIR}/src/http/CurlPerform.cpp
-	${CMAKE_SOURCE_DIR}/src/http/TransferManager.cpp
+	afv/test_api_session.cpp
 )
 
 target_link_libraries(afv_native_tests PRIVATE
+	afv_native
 	Catch2::Catch2WithMain
 	CURL::libcurl
 	nlohmann_json::nlohmann_json
-	Poco::Foundation Poco::Net
+	Poco::Foundation Poco::Net Poco::Util
+	OpenSSL::SSL OpenSSL::Crypto
 	Threads::Threads
 )
 
