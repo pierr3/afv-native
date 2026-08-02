@@ -9,6 +9,7 @@ add_executable(afv_native_tests
 	http/test_curl_perform.cpp
 	http/test_transfer_manager.cpp
 	afv/test_api_session.cpp
+	util/test_callbacks.cpp
 )
 
 target_link_libraries(afv_native_tests PRIVATE

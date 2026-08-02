@@ -79,8 +79,11 @@ namespace afv_native { namespace util {
                     snapshot.push_back(f.second);
                 }
             }
+            // Pass as lvalues.  Forwarding here would cast args to rvalues on
+            // every iteration, so the first callback moves the value out and
+            // every later one receives an empty object.
             for (auto &f: snapshot) {
-                std::invoke(f, std::forward<Args>(args)...);
+                std::invoke(f, args...);
             }
         }
     };
