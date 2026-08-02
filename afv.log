@@ -537,3 +537,18 @@ Sun Aug  2 16:57:10 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-
 Sun Aug  2 16:57:12 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
 Sun Aug  2 16:57:14 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
 Sun Aug  2 16:57:25 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(150): http error during login: Failed to connect to 127.0.0.1 port 1 after 0 ms: Could not connect to server
+Sun Aug  2 17:25:11 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(150): http error during login: Failed to connect to 127.0.0.1 port 1 after 0 ms: Could not connect to server
+Sun Aug  2 17:25:11 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(153): got error from API server: Response Code 403
+Sun Aug  2 17:25:15 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:25:17 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:25:19 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:26:10 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(150): http error during login: Failed to connect to 127.0.0.1 port 1 after 0 ms: Could not connect to server
+Sun Aug  2 17:26:10 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:26:12 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:26:14 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:26:28 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(153): got error from API server: Response Code 403
+Sun Aug  2 17:26:37 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(150): http error during login: Failed to connect to 127.0.0.1 port 1 after 0 ms: Could not connect to server
+Sun Aug  2 17:26:37 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:26:39 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:26:41 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(128): API Token Expires in 62 seconds
+Sun Aug  2 17:26:46 2026: APISession: /Users/pierre/Documents/GitHub/person/afv-native/src/afv/APISession.cpp(153): got error from API server: Response Code 403

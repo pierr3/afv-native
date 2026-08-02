@@ -22,6 +22,18 @@ namespace afv_native::event {
         virtual bool RemoveHandler(HandlerIdType id) = 0;
     };
 
+    /** Allocates handler ids that are unique across every event type.
+     *
+     * A counter per EventStream<T> would restart at zero for each type, and
+     * EventBus keys handlerTypes_ on the bare id - so the second type to
+     * register would overwrite the first entry and that first handler could
+     * never be removed.  Ids start at 1 so 0 is never a valid handler.
+     */
+    inline HandlerIdType NextHandlerId() {
+        static std::atomic<HandlerIdType> counter {0};
+        return ++counter;
+    }
+
     template <typename T>
     class EventStream : public IEventStream {
     public:
@@ -29,7 +41,7 @@ namespace afv_native::event {
 
         HandlerIdType AddHandler(const CallbackType &callback) {
             std::unique_lock lock(mutex_);
-            HandlerIdType id = nextHandlerId_++;
+            HandlerIdType id = NextHandlerId();
             handlers_[id] = callback;
             return id;
         }
@@ -57,7 +69,6 @@ namespace afv_native::event {
     private:
         std::unordered_map<HandlerIdType, CallbackType> handlers_;
         std::shared_mutex mutex_;
-        inline static HandlerIdType nextHandlerId_ = 0;
     };
 
     class EventBus {
