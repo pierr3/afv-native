@@ -42,6 +42,7 @@
 #include "afv-native/http/Response.h"
 #include "afv-native/http/TransferManager.h"
 #include "afv-native/util/ChainedCallback.h"
+#include <atomic>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -109,7 +110,10 @@ namespace afv_native { namespace afv {
 
         event::CallbackTimer mRefreshTokenTimer;
 
-        APISessionError mLastError;
+        /** Written on the completion dispatch thread, read by the application
+         * thread through getLastError().
+         */
+        std::atomic<APISessionError> mLastError;
 
         std::vector<dto::Station> mAliasedStations;
         /** Written by the transfer manager's callback thread, read by client
@@ -118,7 +122,12 @@ namespace afv_native { namespace afv {
         std::map<std::string, std::vector<dto::StationTransceiver>> mStationTransceivers;
 
       private:
-        APISessionState mState;
+        /** Written on the completion dispatch thread, read by the application
+         * thread through getState().  Atomic removes the data race on the
+         * field itself; it does not make a read-then-act sequence against the
+         * session as a whole safe.
+         */
+        std::atomic<APISessionState> mState;
     };
 }} // namespace afv_native::afv
 
