@@ -47,7 +47,14 @@ void CallbackTimer::enable(unsigned int delayMs) {
     }
     mPending.store(true);
     mTask = new CallbackTimerTask(mCallback, mPending);
-    mTimer.schedule(mTask, static_cast<long>(delayMs), 0);
+
+    // One-shot. The schedule(task, delay, interval) overload is the PERIODIC
+    // one: passing 0 as the interval re-runs the task with no delay, forever,
+    // from the moment it first fires. Every caller here re-arms from inside its
+    // own callback, so a repeating task is never what is wanted.
+    Poco::Clock clock;
+    clock += static_cast<Poco::Clock::ClockDiff>(delayMs) * 1000; // ms -> us
+    mTimer.schedule(mTask, clock);
 }
 
 void CallbackTimer::disable() {

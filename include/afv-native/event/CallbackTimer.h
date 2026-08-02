@@ -1,6 +1,7 @@
 #ifndef AFV_NATIVE_CALLBACKTIMER_H
 #define AFV_NATIVE_CALLBACKTIMER_H
 
+#include <Poco/Clock.h>
 #include <Poco/Util/Timer.h>
 #include <Poco/Util/TimerTask.h>
 #include <atomic>
