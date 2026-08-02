@@ -10,6 +10,7 @@ add_executable(afv_native_tests
 	http/test_transfer_manager.cpp
 	afv/test_api_session.cpp
 	util/test_callbacks.cpp
+	afv/test_radio_simulation.cpp
 )
 
 target_link_libraries(afv_native_tests PRIVATE
