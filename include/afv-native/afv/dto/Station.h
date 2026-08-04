@@ -35,6 +35,8 @@
 #define AFV_NATIVE_STATION_H
 
 #include <nlohmann/json.hpp>
+#include <cstddef>
+#include <optional>
 #include <string>
 
 namespace afv_native { namespace afv { namespace dto {
@@ -44,6 +46,8 @@ namespace afv_native { namespace afv { namespace dto {
         std::string  Name;
         unsigned int Frequency;
         unsigned int FrequencyAlias;
+        // Zero-based position in a VCCS response. Empty for ordinary station data.
+        std::optional<std::size_t> VccsOrder = std::nullopt;
 
         Station();
     };
