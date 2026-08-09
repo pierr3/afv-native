@@ -162,6 +162,7 @@ TEST_CASE("VCCS stations retain the order returned by the API", "[apisession][vc
             resp.setContentType("application/json");
             resp.send() << R"([
                 {"id":"1","name":"EKCH_W_APP","frequency":119805000,"frequencyAlias":0},
+                {"id":"invalid-without-name"},
                 {"id":"2","name":"EKCH_R_DEP","frequency":120255000,"frequencyAlias":0},
                 {"id":"3","name":"EKCH_O_APP","frequency":118155000,"frequencyAlias":0},
                 {"id":"4","name":"EKCH_K_DEP","frequency":124980000,"frequencyAlias":0}
@@ -200,9 +201,9 @@ TEST_CASE("VCCS stations retain the order returned by the API", "[apisession][vc
 
     REQUIRE(stations.size() == 4);
     REQUIRE(stations.at("EKCH_W_APP").VccsOrder == 0);
-    REQUIRE(stations.at("EKCH_R_DEP").VccsOrder == 1);
-    REQUIRE(stations.at("EKCH_O_APP").VccsOrder == 2);
-    REQUIRE(stations.at("EKCH_K_DEP").VccsOrder == 3);
+    REQUIRE(stations.at("EKCH_R_DEP").VccsOrder == 2);
+    REQUIRE(stations.at("EKCH_O_APP").VccsOrder == 3);
+    REQUIRE(stations.at("EKCH_K_DEP").VccsOrder == 4);
 
     session.Disconnect();
 }
