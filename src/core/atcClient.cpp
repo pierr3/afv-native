@@ -793,9 +793,5 @@ void afv_native::ATCClient::stopAdHocSounds() {
 }
 
 void afv_native::ATCClient::setLoopback(bool enabled, AdHocOutputTarget target, float gain, HardwareType hardware) {
-    if (!mAudioDevice) {
-        LOG("afv::ATCClient", "setLoopback: audio not running, ignoring");
-        return;
-    }
     mATCRadioStack->setLoopback(enabled, target, gain, hardware);
 }
