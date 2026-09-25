@@ -145,3 +145,66 @@ TEST_CASE("an unreachable API server reports a connection error", "[apisession]"
     REQUIRE(session.getLastError() == APISessionError::ConnectionError);
 }
 
+TEST_CASE("VCCS stations retain the order returned by the API", "[apisession][vccs]") {
+    dto::Station ordinaryStation;
+    REQUIRE_FALSE(ordinaryStation.VccsOrder.has_value());
+
+    afv_test::LoopbackServer server([](const std::string &method, const std::string &path,
+                                       const std::string &, Poco::Net::HTTPServerResponse &resp) {
+        if (path == "/api/v1/auth" && method == "POST") {
+            resp.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+            resp.setContentType("text/plain");
+            resp.send() << mintToken(3600);
+            return;
+        }
+        if (path == "/api/v1/stations/byName/EKCH_W_APP/vccsStations" && method == "GET") {
+            resp.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+            resp.setContentType("application/json");
+            resp.send() << R"([
+                {"id":"1","name":"EKCH_W_APP","frequency":119805000,"frequencyAlias":0},
+                {"id":"invalid-without-name"},
+                {"id":"2","name":"EKCH_R_DEP","frequency":120255000,"frequencyAlias":0},
+                {"id":"3","name":"EKCH_O_APP","frequency":118155000,"frequencyAlias":0},
+                {"id":"4","name":"EKCH_K_DEP","frequency":124980000,"frequencyAlias":0}
+            ])";
+            return;
+        }
+        resp.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
+        resp.send() << "";
+    });
+
+    http::TransferManager tm;
+    APISession            session(tm, server.url(""), "afv-native-test");
+    session.setUsername("tester");
+    session.setPassword("hunter2");
+
+    Counter runningStates;
+    session.StateCallback.addCallback(nullptr, [&](APISessionState state) {
+        if (state == APISessionState::Running) {
+            runningStates.bump();
+        }
+    });
+
+    std::map<std::string, dto::Station> stations;
+    Counter                             vccsResponses;
+    session.StationVccsCallback.addCallback(
+        nullptr, [&](const std::string &, std::map<std::string, dto::Station> response) {
+            stations = std::move(response);
+            vccsResponses.bump();
+        });
+
+    session.Connect();
+    REQUIRE(runningStates.waitFor(1, std::chrono::seconds(30)));
+
+    session.requestStationVccs("EKCH_W_APP");
+    REQUIRE(vccsResponses.waitFor(1, std::chrono::seconds(30)));
+
+    REQUIRE(stations.size() == 4);
+    REQUIRE(stations.at("EKCH_W_APP").VccsOrder == 0);
+    REQUIRE(stations.at("EKCH_R_DEP").VccsOrder == 2);
+    REQUIRE(stations.at("EKCH_O_APP").VccsOrder == 3);
+    REQUIRE(stations.at("EKCH_K_DEP").VccsOrder == 4);
+
+    session.Disconnect();
+}
+

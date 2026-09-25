@@ -553,7 +553,8 @@ void ATCClient::stationVccsCallback(std::string stationName, std::map<std::strin
     for (const auto &el: vccs) {
         vccsFreqs[el.first] = el.second.Frequency;
         vccsSimple[el.first] =
-            SimpleAtcStation {el.second.Name, el.second.Frequency, el.second.FrequencyAlias};
+            SimpleAtcStation {el.second.Name, el.second.Frequency, el.second.FrequencyAlias,
+                              el.second.VccsOrder};
     }
     LOG("ATCClient", "Received VCCS for station %s", stationName.c_str());
     event::EventBus::Instance().OnEventAsync(VccsReceivedEvent {stationName, vccsSimple});

@@ -335,10 +335,12 @@ void APISession::_stationVccsCallback(const http::Response &resp, std::string st
         if (!jsReturn.is_array()) {
             LOG("APISession", "station vccs data returned wasn't an array.  Ignoring.");
         } else {
-            for (const auto &sJson: jsReturn) {
+            for (std::size_t vccsOrder = 0; vccsOrder < jsReturn.size(); ++vccsOrder) {
+                const auto &sJson = jsReturn[vccsOrder];
                 try {
                     dto::Station s;
                     sJson.get_to(s);
+                    s.VccsOrder = vccsOrder;
                     ret.insert({sJson["name"].get<std::string>(), s});
                 } catch (nlohmann::json::exception &e) {
                     LOG("APISession", "couldn't decode station vccs: %s", e.what());

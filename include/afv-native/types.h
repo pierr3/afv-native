@@ -2,6 +2,8 @@
 #define AFV_NATIVE_COMMON_TYPES_H
 
 #include "hardwareType.h"
+#include <cstddef>
+#include <optional>
 #include <string>
 
 namespace afv_native {
@@ -23,6 +25,8 @@ namespace afv_native {
         std::string  name;
         unsigned int frequency;
         unsigned int frequencyAlias;
+        // Zero-based position returned by the AFV VCCS endpoint, when available.
+        std::optional<std::size_t> vccsOrder = std::nullopt;
     };
 } // namespace afv_native
 
