@@ -62,6 +62,7 @@
 #include "afv-native/hardwareType.h"
 #include "afv-native/util/other.h"
 #include "afv-native/utility.h"
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <iostream>
@@ -86,14 +87,9 @@ namespace afv_native { namespace afv {
         bool                              onHeadset = false;
     };
 
-    /** RadioState is the internal state object for each radio within a ATCRadioSimulation.
-     *
-     * It tracks the current playback position of the mixing effects, the channel frequency and gain.
-     */
-    class AtcRadioState {
-      public:
-        unsigned int                                 Frequency = 0;
-        float                                        Gain      = 1.0;
+    // Filters and effect cursors are independent for each playback channel: a
+    // caller can be suppressed on the left while still being audible on the right.
+    struct AtcRadioAudioState {
         std::shared_ptr<audio::RecordedSampleSource> Click;
         std::shared_ptr<audio::RecordedSampleSource> Crackle;
         std::shared_ptr<audio::RecordedSampleSource> AcBus;
@@ -102,6 +98,16 @@ namespace afv_native { namespace afv {
         std::shared_ptr<audio::SineToneSource>       BlockTone;
         audio::SimpleCompressorEffect                simpleCompressorEffect;
         std::shared_ptr<audio::VHFFilterSource>      vhfFilter;
+        unsigned                                     lastAudibleCount = 0;
+        void reset(bool exceptClick = false);
+    };
+
+    /** Per-frequency reception state, with separate mono/left and right audio. */
+    class AtcRadioState {
+      public:
+        unsigned int                                 Frequency = 0;
+        float                                        Gain      = 1.0f;
+        std::array<AtcRadioAudioState, 2>            audioState;
         int                                          mLastRxCount      = 0;
         bool                                         mBypassEffects    = false;
         bool                                         mHfSquelch        = false;
@@ -320,7 +326,7 @@ namespace afv_native { namespace afv {
 
         void resetRadioFx(unsigned int radio, bool except_click = false);
 
-        void set_radio_effects(unsigned int rxIter);
+        void set_radio_effects(AtcRadioState &radio, AtcRadioAudioState &audioState);
 
         bool mix_effect(std::shared_ptr<audio::ISampleSource> effect, float gain, std::shared_ptr<OutputDeviceState> state);
 
@@ -333,7 +339,9 @@ namespace afv_native { namespace afv {
         void maintainVoiceTimeout();
 
       private:
-        bool _process_radio(const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache, unsigned int rxIter, bool onHeadset);
+        using SelectedRadios = std::map<void *, std::array<std::optional<unsigned int>, 2>>;
+        SelectedRadios selectPlaybackRadios(bool onHeadset);
+        void _process_radio(const std::map<void *, audio::SampleType[audio::frameSizeSamples]> &sampleCache, const SelectedRadios &selectedRadios, unsigned int rxIter, bool onHeadset);
 
         void interleave(audio::SampleType *leftChannel, audio::SampleType *rightChannel, audio::SampleType *outputBuffer, size_t numSamples);
 

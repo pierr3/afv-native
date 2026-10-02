@@ -11,6 +11,7 @@ add_executable(afv_native_tests
 	afv/test_api_session.cpp
 	util/test_callbacks.cpp
 	afv/test_radio_simulation.cpp
+	afv/test_coupled_audio.cpp
 )
 
 target_link_libraries(afv_native_tests PRIVATE
@@ -21,6 +22,7 @@ target_link_libraries(afv_native_tests PRIVATE
 	Poco::Foundation Poco::Net Poco::Util
 	OpenSSL::SSL OpenSSL::Crypto
 	Threads::Threads
+	Opus::opus
 )
 
 target_include_directories(afv_native_tests PRIVATE
